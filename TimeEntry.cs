@@ -19,11 +19,12 @@ namespace TimeTrack
         private TimeOnly? start_time;
         private TimeOnly? end_time;
 
-        private volatile TimeEntryChangedEventHandler _timeEntryChanged = delegate { };
-        public event TimeEntryChangedEventHandler? TimeEntryChanged
+        // Simplest, UI-thread friendly event pattern
+        private event TimeEntryChangedEventHandler? _timeEntryChanged;
+        public event TimeEntryChangedEventHandler TimeEntryChanged
         {
-            add { lock (this) { _timeEntryChanged += value; } }
-            remove { lock (this) { _timeEntryChanged -= value; } }
+            add { if (value is not null) _timeEntryChanged += value; }
+            remove { if (value is not null) _timeEntryChanged -= value; }
         }
 
         public TimeEntry(DateTime date, int id)
@@ -115,18 +116,31 @@ namespace TimeTrack
 
         private readonly SynchronizationContext _synchronizationContext;
 
+        // Forward the string-based helper to the virtual override to avoid hiding pitfalls
         protected new void OnPropertyChanged([CallerMemberName] string? name = null)
         {
-            var ctx = _synchronizationContext;
-            if (ctx != null)
-                ctx.Post(_ => base.OnPropertyChanged(name), null);
-            else
-                base.OnPropertyChanged(name);
+            OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(name));
         }
 
+        // Marshal PropertyChanged via SynchronizationContext using the virtual override
+        protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            var ctx = _synchronizationContext;
+            if (ctx == null || ctx == SynchronizationContext.Current)
+            {
+                base.OnPropertyChanged(e);
+                return;
+            }
+
+            ctx.Post(_ => base.OnPropertyChanged(e), null);
+        }
+
+        // Capture and invoke delegate safely when notifying external listeners
         protected void OnTimeEntryChanged(bool time_changed)
         {
-            _synchronizationContext.Post(_ => _timeEntryChanged(time_changed), null);
+            var handler = _timeEntryChanged; // snapshot
+            if (handler is null) return;
+            _synchronizationContext.Post(_ => handler(time_changed), null);
         }
     }
 

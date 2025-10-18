@@ -9,12 +9,7 @@ public class TimeTrackDbContext : DbContext
 {
     private readonly string _dbPath;
 
-    public TimeTrackDbContext()
-    {
-        _dbPath = "timetrack.db";
-    }
-
-    public TimeTrackDbContext(string dbPath)
+    public TimeTrackDbContext(string dbPath = "timetrack.db")
     {
         _dbPath = dbPath;
     }
