@@ -98,6 +98,38 @@ public static class Database
     }
 
     /// <summary>
+    /// Seed __EFMigrationsHistory if the table exists but migrations are empty.
+    /// </summary>
+    private static void BaselineMigrationsIfNeeded(TimeTrackDbContext context)
+    {
+        try
+        {
+            var pending = context.Database.GetPendingMigrations();
+            var applied = context.Database.GetAppliedMigrations();
+            if (applied.Any() || !pending.Any()) return;
+
+            // Detect schema presence (table created by EnsureCreated previously)
+            var hasTimeEntries = context.Database
+                .ExecuteSqlRaw("SELECT 1 FROM sqlite_master WHERE type='table' AND name='time_entries';") >= 0; // will not throw
+
+            if (hasTimeEntries)
+            {
+                // Insert baseline row so Migrate() won't try to re-create existing tables
+                // This uses raw SQL because EF history manipulation isn't public API.
+                context.Database.ExecuteSqlRaw(
+                    "CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT PRIMARY KEY, ProductVersion TEXT NOT NULL);");
+                context.Database.ExecuteSqlRaw(
+                    "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({0}, {1});",
+                    "20251018000000_InitialCreate", "8.0.10");
+            }
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Failed to baseline EF migrations history.", ex);
+        }
+    }
+
+    /// <summary>
     /// Check if the database file exists (migrates from legacy location if needed)
     /// </summary>
     public static bool Exists()
@@ -129,7 +161,7 @@ public static class Database
     }
 
     /// <summary>
-    /// Create the database and ensure schema is up to date
+    /// Create or migrate the database and ensure schema is up to date
     /// </summary>
     public static void CreateDatabase()
     {
@@ -152,7 +184,12 @@ public static class Database
             BackupDatabase("daily");
 
             using var context = new TimeTrackDbContext(DatabasePath);
-            context.Database.EnsureCreated();
+
+            // Baseline migrations if the database already has tables from EnsureCreated
+            BaselineMigrationsIfNeeded(context);
+
+            // Use migrations instead of EnsureCreated
+            context.Database.Migrate();
 
             ApplySqlitePragmas(context);
 
