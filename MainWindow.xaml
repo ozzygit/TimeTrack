@@ -17,6 +17,7 @@
     <Window.Resources>
         <local:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
         <converters:AllNotEmptyConverter x:Key="AllNotEmptyConverter"/>
+        <converters:ShortcutDisplayConverter x:Key="ShortcutDisplayConverter"/>
 
         <!-- Modern Color Palette -->
         <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
@@ -412,8 +413,8 @@
 
         <!-- Notes Cell Text Style -->
         <Style x:Key="NotesCellTextStyle" TargetType="TextBlock">
-          <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-          <Setter Property="ToolTip" Value="{Binding Notes}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="ToolTip" Value="{Binding Notes}"/>
         </Style>
     </Window.Resources>
 
@@ -426,41 +427,44 @@
         <Menu DockPanel.Dock="Top" Height="40" Padding="8,4" 
               Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
             <MenuItem Header="_File">
-                <MenuItem Header="_Export Selected"
+                <MenuItem x:Name="ExportMenuItem" Header="_Export Selected"
                           Command="{x:Static local:MainWindow.ExportCommand}"
-                          InputGestureText="Ctrl+E"/>
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Export}"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem Header="_Submit Entry" Click="BtnSubmit" InputGestureText="Enter"/>
-                <MenuItem Header="_Insert Record"
+                <MenuItem x:Name="SubmitMenuItem" Header="_Submit Entry" Click="BtnSubmit"
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
+                <MenuItem x:Name="InsertMenuItem" Header="_Insert Record"
                           Command="{x:Static local:MainWindow.InsertCommand}"
-                          InputGestureText="Ctrl+I"/>
-                <MenuItem Header="_Delete Selected" Command="{Binding RemoveCommand}" InputGestureText="Delete"/>
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Insert}"/>
+                <MenuItem x:Name="DeleteMenuItem" Header="_Delete Selected" Command="{Binding RemoveCommand}"
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
                 <Separator/>
-                <MenuItem Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"/>
+                <MenuItem x:Name="ToggleAllMenuItem" Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=ToggleAll}"/>
             </MenuItem>
             <MenuItem Header="_Navigation">
-                <MenuItem Header="_Today"
+                <MenuItem x:Name="TodayMenuItem" Header="_Today"
                           Command="{x:Static local:MainWindow.TodayCommand}"
-                          InputGestureText="Ctrl+T"/>
-                <MenuItem Header="_Previous Day"
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Today}"/>
+                <MenuItem x:Name="PrevDayMenuItem" Header="_Previous Day"
                           Command="{x:Static local:MainWindow.PrevDayCommand}"
-                          InputGestureText="Ctrl+Left"/>
-                <MenuItem Header="_Next Day"
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=PrevDay}"/>
+                <MenuItem x:Name="NextDayMenuItem" Header="_Next Day"
                           Command="{x:Static local:MainWindow.NextDayCommand}"
-                          InputGestureText="Ctrl+Right"/>
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=NextDay}"/>
             </MenuItem>
             <MenuItem Header="_Tools">
-                <MenuItem Header="_Options"
+                <MenuItem x:Name="OptionsMenuItem" Header="_Options"
                           Command="{x:Static local:MainWindow.OptionsCommand}"
-                          InputGestureText="Ctrl+O"/>
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Options}"/>
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem Header="_About TimeTrack"
+                <MenuItem x:Name="AboutMenuItem" Header="_About TimeTrack"
                           Command="{x:Static local:MainWindow.HelpCommand}"
-                          InputGestureText="F1"/>
+                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=About}"/>
             </MenuItem>
         </Menu>
 
@@ -534,25 +538,26 @@
          ColumnWidth="Auto"
          RowHeaderWidth="0"
          MinColumnWidth="40">
-    <DataGrid.Columns>
-        <DataGridCheckBoxColumn Header="" Width="30"
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Header="" Width="30"
             Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
             ElementStyle="{StaticResource DataGridCheckBoxStyle}"
             EditingElementStyle="{StaticResource DataGridCheckBoxStyle}"/>
-        <DataGridTextColumn Header="Start" Width="Auto"
+                                    <DataGridTextColumn Header="Start" Width="Auto"
             Binding="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
-        <DataGridTextColumn Header="End" Width="Auto"
+                                    <DataGridTextColumn Header="End" Width="Auto"
             Binding="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
-        <DataGridTextColumn Header="Ticket Number" Width="Auto"
+                                    <DataGridTextColumn Header="Ticket Number" Width="Auto"
             Binding="{Binding CaseNumber}"/>
-        <DataGridTextColumn Header="Notes" Width="*"
+                                    <DataGridTextColumn Header="Notes" Width="*"
             Binding="{Binding Notes}">
-            <DataGridTextColumn.ElementStyle>
-                <Style TargetType="TextBlock" BasedOn="{StaticResource NotesCellTextStyle}"/>
-            </DataGridTextColumn.ElementStyle>
-        </DataGridTextColumn>
-    </DataGrid.Columns>
-</DataGrid>                        </Grid>
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource NotesCellTextStyle}"/>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
                     </Grid>
                 </Border>
 
@@ -713,12 +718,12 @@
                                          TabIndex="1"
                                          VerticalAlignment="Top"/>
 
-                                <Button Name="BtnEndTimePicker" Grid.Column="2" 
-                                        Width="28" Height="43" Content="🕒" FontSize="12"
+                                <Button Name="BtnEndTimePicker" Grid.Column="1" 
+                                        Width="28" Height="31" Content="🕒" FontSize="12"
                                         Padding="0"
                                         Click="BtnEndTimePicker_Click"
                                         ToolTip="Select end time from picker"
-                                        VerticalAlignment="Center"/>
+                                        VerticalAlignment="Center" Grid.ColumnSpan="2" Margin="2,0,0,0"/>
 
                                 <Popup Name="PopupEndTime" 
                                        PlacementTarget="{Binding ElementName=BtnEndTimePicker}"

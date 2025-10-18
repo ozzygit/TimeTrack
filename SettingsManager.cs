@@ -9,8 +9,8 @@ namespace TimeTrack
 {
     public class KeyboardShortcut
     {
-        public string ActionName { get; set; }
-        public string DisplayName { get; set; }
+        public string ActionName { get; set; } = "";
+        public string DisplayName { get; set; } = "";
         public Key Key { get; set; }
         public ModifierKeys Modifiers { get; set; }
 
@@ -37,7 +37,7 @@ namespace TimeTrack
     public static class SettingsManager
     {
         private static string settingsPath = "timetrack_settings.xml";
-        private static Dictionary<string, KeyboardShortcut> shortcuts;
+        private static Dictionary<string, KeyboardShortcut> shortcuts = new Dictionary<string, KeyboardShortcut>();
 
         static SettingsManager()
         {
@@ -67,7 +67,7 @@ namespace TimeTrack
             return new Dictionary<string, KeyboardShortcut>(shortcuts);
         }
 
-        public static KeyboardShortcut GetShortcut(string actionName)
+        public static KeyboardShortcut? GetShortcut(string actionName)
         {
             return shortcuts.ContainsKey(actionName) ? shortcuts[actionName] : null;
         }
@@ -120,9 +120,9 @@ namespace TimeTrack
                 {
                     foreach (var element in shortcutElements)
                     {
-                        string actionName = element.Attribute("ActionName")?.Value;
-                        string keyStr = element.Attribute("Key")?.Value;
-                        string modifiersStr = element.Attribute("Modifiers")?.Value;
+                        string? actionName = element.Attribute("ActionName")?.Value;
+                        string? keyStr = element.Attribute("Key")?.Value;
+                        string? modifiersStr = element.Attribute("Modifiers")?.Value;
 
                         if (actionName != null && keyStr != null && modifiersStr != null)
                         {

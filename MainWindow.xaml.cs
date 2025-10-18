@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data.SQLite;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,42 +11,44 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using TimeTrack.Data;
 
 namespace TimeTrack
 {
     public partial class MainWindow : Window
     {
-        private TimeKeeper time_keeper;
-        private Brush BtnBrush;
+        private TimeKeeper? time_keeper;
+        private Brush? BtnBrush;
 
+        // Existing routed commands (remove hardcoded InputGestureCollection)
         public static readonly RoutedUICommand ExportCommand =
-            new RoutedUICommand("Export Selected", "Export", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.E, ModifierKeys.Control) });
+            new RoutedUICommand("Export Selected", "Export", typeof(MainWindow));
 
         public static readonly RoutedUICommand InsertCommand =
-            new RoutedUICommand("Insert Record", "Insert", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.I, ModifierKeys.Control) });
+            new RoutedUICommand("Insert Record", "Insert", typeof(MainWindow));
 
         public static readonly RoutedUICommand TodayCommand =
-            new RoutedUICommand("Today", "Today", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.T, ModifierKeys.Control) });
+            new RoutedUICommand("Today", "Today", typeof(MainWindow));
 
         public static readonly RoutedUICommand PrevDayCommand =
-            new RoutedUICommand("Previous Day", "PrevDay", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.Left, ModifierKeys.Control) });
+            new RoutedUICommand("Previous Day", "PrevDay", typeof(MainWindow));
 
         public static readonly RoutedUICommand NextDayCommand =
-            new RoutedUICommand("Next Day", "NextDay", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.Right, ModifierKeys.Control) });
+            new RoutedUICommand("Next Day", "NextDay", typeof(MainWindow));
 
         public static readonly RoutedUICommand OptionsCommand =
-            new RoutedUICommand("Options", "Options", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.O, ModifierKeys.Control) });
+            new RoutedUICommand("Options", "Options", typeof(MainWindow));
 
         public static readonly RoutedUICommand HelpCommand =
-            new RoutedUICommand("About", "Help", typeof(MainWindow),
-                new InputGestureCollection { new KeyGesture(Key.F1) });
+            new RoutedUICommand("About", "Help", typeof(MainWindow));
 
+        // New routed commands used by customizable shortcuts
+        public static readonly RoutedUICommand SubmitCommand =
+            new RoutedUICommand("Submit Entry", "Submit", typeof(MainWindow));
+        public static readonly RoutedUICommand ToggleAllCommand =
+            new RoutedUICommand("Toggle All Recorded", "ToggleAll", typeof(MainWindow));
+
+        // Constructor — forward actual event args instead of passing null literals
         public MainWindow()
         {
             InitializeComponent();
@@ -67,37 +68,124 @@ namespace TimeTrack
             }
 
             InitializeWindow();
-            BtnBrush = BtnSub.Background;
+            
+            // Null check before accessing BtnSub
+            if (BtnSub != null)
+                BtnBrush = BtnSub.Background;
+            
             ApplyKeyboardShortcuts();
+            UpdateMenuGestureTexts();
 
-            // Ensure Ctrl+Left/Right work even inside TextBox
+            // Ensure global shortcuts work even inside TextBox
             this.PreviewKeyDown += OnGlobalPreviewKeyDown;
 
-            CommandBindings.Add(new CommandBinding(ExportCommand, (s, e) => BtnExport(null, null)));
-            CommandBindings.Add(new CommandBinding(InsertCommand, (s, e) => BtnInsert(null, null)));
-            CommandBindings.Add(new CommandBinding(TodayCommand, (s, e) => BtnGotoToday(null, null)));
-            CommandBindings.Add(new CommandBinding(PrevDayCommand, (s, e) => BtnGoBack(null, null)));
-            CommandBindings.Add(new CommandBinding(NextDayCommand, (s, e) => BtnGoForward(null, null)));
-            CommandBindings.Add(new CommandBinding(OptionsCommand, (s, e) => MenuOptions_Click(null, null)));
-            CommandBindings.Add(new CommandBinding(HelpCommand, (s, e) => BtnProjectInfo_Click(null, null)));
+            // Bind handlers for all routed commands
+            CommandBindings.Add(new CommandBinding(ExportCommand, (s, e) => BtnExport(s, e)));
+            CommandBindings.Add(new CommandBinding(InsertCommand, (s, e) => BtnInsert(s, e)));
+            CommandBindings.Add(new CommandBinding(TodayCommand, (s, e) => BtnGotoToday(s, e)));
+            CommandBindings.Add(new CommandBinding(PrevDayCommand, (s, e) => BtnGoBack(s, e)));
+            CommandBindings.Add(new CommandBinding(NextDayCommand, (s, e) => BtnGoForward(s, e)));
+            CommandBindings.Add(new CommandBinding(OptionsCommand, (s, e) => MenuOptions_Click(s, e)));
+            CommandBindings.Add(new CommandBinding(HelpCommand, (s, e) => BtnProjectInfo_Click(s, e)));
+            // Gate Submit via CanExecute
+            CommandBindings.Add(new CommandBinding(SubmitCommand, (s, e) => BtnSubmit(s, e), (s, e) => e.CanExecute = CanSubmit()));
+            CommandBindings.Add(new CommandBinding(ToggleAllCommand, (s, e) => BtnToggleAllRecorded(s, e)));
+
+            // Refresh CanExecute when input fields change
+            if (time_keeper != null)
+                time_keeper.PropertyChanged += TimeKeeper_PropertyChanged;
+        }
+
+        private void UpdateMenuGestureTexts()
+        {
+            try
+            {
+                void setText(MenuItem? mi, string action)
+                {
+                    var sc = SettingsManager.GetShortcut(action);
+                    if (mi != null)
+                        mi.InputGestureText = sc?.DisplayText ?? string.Empty;
+                }
+
+                setText(ExportMenuItem, "Export");
+                setText(SubmitMenuItem, "Submit");
+                setText(InsertMenuItem, "Insert");
+                setText(DeleteMenuItem, "Delete");
+                setText(ToggleAllMenuItem, "ToggleAll");
+                setText(TodayMenuItem, "Today");
+                setText(PrevDayMenuItem, "PrevDay");
+                setText(NextDayMenuItem, "NextDay");
+                setText(OptionsMenuItem, "Options");
+                setText(AboutMenuItem, "About");
+            }
+            catch { /* ignore */ }
+        }
+
+        private void TimeKeeper_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(TimeKeeper.StartTimeField)
+                or nameof(TimeKeeper.EndTimeField)
+                or nameof(TimeKeeper.CaseNumberField)
+                or nameof(TimeKeeper.NotesField))
+            {
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        // Require start, end, and either Lunch or Case Number; also require Notes
+        private bool CanSubmit()
+        {
+            if (time_keeper == null) return false;
+            var hasStart = time_keeper.StartTimeFieldAsTime().HasValue;
+            var hasEnd = time_keeper.EndTimeFieldAsTime().HasValue;
+            bool isLunch = ChkLunch != null && ChkLunch.IsChecked == true;
+            bool hasCase = !string.IsNullOrWhiteSpace(time_keeper.CaseNumberField);
+            bool hasNotes = !string.IsNullOrWhiteSpace(time_keeper.NotesField);
+            if (!hasStart || !hasEnd) return false;
+            if (!isLunch && !hasCase) return false;
+            if (!hasNotes) return false;
+            return true;
+        }
+
+        private static bool MatchesShortcut(KeyEventArgs e, KeyboardShortcut? shortcut)
+        {
+            if (shortcut is null) return false;
+            return e.Key == shortcut.Key && Keyboard.Modifiers == shortcut.Modifiers;
         }
 
         private void OnGlobalPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (Keyboard.Modifiers == ModifierKeys.Control)
+            // Block Enter/Return globally until Notes has data
+            if ((e.Key == Key.Enter || e.Key == Key.Return) && (time_keeper == null || string.IsNullOrWhiteSpace(time_keeper.NotesField)))
             {
-                if (e.Key == Key.Left)
-                {
-                    BtnGoBack(null, null);
-                    e.Handled = true;
-                    return;
-                }
-                if (e.Key == Key.Right)
-                {
-                    BtnGoForward(null, null);
-                    e.Handled = true;
-                    return;
-                }
+                e.Handled = true;
+                return;
+            }
+
+            // Dynamic Prev/Next day from settings
+            var prev = SettingsManager.GetShortcut("PrevDay");
+            if (MatchesShortcut(e, prev))
+            {
+                BtnGoBack(this, new RoutedEventArgs());
+                e.Handled = true;
+                return;
+            }
+
+            var next = SettingsManager.GetShortcut("NextDay");
+            if (MatchesShortcut(e, next))
+            {
+                BtnGoForward(this, new RoutedEventArgs());
+                e.Handled = true;
+                return;
+            }
+
+            // Options shortcut handled here to work everywhere
+            var options = SettingsManager.GetShortcut("Options");
+            if (MatchesShortcut(e, options))
+            {
+                MenuOptions_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+                return;
             }
 
             // Unified Submit shortcut handling (works in TextBoxes, including Notes)
@@ -111,18 +199,27 @@ namespace TimeTrack
 
                 if (keyMatch && Keyboard.Modifiers == submit.Modifiers)
                 {
-                    Submit();
-                    e.Handled = true; // prevents newline in Notes when Enter is the submit key
+                    if (CanSubmit())
+                    {
+                        Submit();
+                        e.Handled = true; // prevents newline when it’s a valid submit
+                    }
+                    // else: let the control handle Enter/Return normally
                 }
             }
         }
 
         private void InitializeWindow()
         {
-            FldStartTime.Focus();
-            time_keeper.UpdateSelectedTime();
-            time_keeper.SetStartTimeField();
-            time_keeper.UpdateTimeTotals();
+            if (FldStartTime != null)
+                FldStartTime.Focus();
+            
+            if (time_keeper != null)
+            {
+                time_keeper.UpdateSelectedTime();
+                time_keeper.SetStartTimeField();
+                time_keeper.UpdateTimeTotals();
+            }
         }
         
         private MessageBoxResult PromptForNewDatabase()
@@ -135,6 +232,9 @@ namespace TimeTrack
 
         private void LoadEntriesForDate(DateTime date)
         {
+            if (time_keeper == null)
+                return;
+
             time_keeper.Entries = Database.Retrieve(date);
             time_keeper.CurrentIdCount = Database.CurrentIdCount(date);
             time_keeper.Date = date;
@@ -142,13 +242,47 @@ namespace TimeTrack
 
         private void Submit()
         {
+            if (time_keeper == null)
+                return;
+
+            if (!CanSubmit())
+            {
+                ShowStatus("Please enter start, end, case number (unless Lunch), and notes", 5000);
+                if ((ChkLunch == null || ChkLunch.IsChecked != true) && string.IsNullOrWhiteSpace(time_keeper.CaseNumberField) && FldCaseNumber != null)
+                {
+                    FldCaseNumber.Focus();
+                }
+                else if (string.IsNullOrWhiteSpace(time_keeper.StartTimeField) && FldStartTime != null)
+                {
+                    FldStartTime.Focus();
+                }
+                else if (string.IsNullOrWhiteSpace(time_keeper.EndTimeField) && FldEndTime != null)
+                {
+                    FldEndTime.Focus();
+                }
+                else if (string.IsNullOrWhiteSpace(time_keeper.NotesField) && FldNotes != null)
+                {
+                    FldNotes.Focus();
+                }
+                return;
+            }
+
             if (time_keeper.SubmitEntry())
             {
                 time_keeper.ClearFieldsAndSetStartTime();
-                ChkLunch.IsChecked = false;
-                DgTimeRecords.SelectedIndex = time_keeper.Entries.Count - 1;
-                DgTimeRecords.ScrollIntoView(time_keeper.Entries.Last());
-                FldEndTime.Focus();
+                
+                if (ChkLunch != null)
+                    ChkLunch.IsChecked = false;
+                
+                if (DgTimeRecords != null)
+                {
+                    DgTimeRecords.SelectedIndex = time_keeper.Entries.Count - 1;
+                    DgTimeRecords.ScrollIntoView(time_keeper.Entries.Last());
+                }
+                
+                if (FldEndTime != null)
+                    FldEndTime.Focus();
+                
                 Database.Update(time_keeper.Entries);
                 ShowStatus("Entry submitted successfully");
             }
@@ -166,6 +300,9 @@ namespace TimeTrack
 
         private void BtnInsert(object sender, RoutedEventArgs e)
         {
+            if (time_keeper == null || DgTimeRecords == null)
+                return;
+
             int insertedIndex = DgTimeRecords.SelectedIndex;
             if (time_keeper.InsertBlankEntry(insertedIndex))
             {
@@ -183,91 +320,46 @@ namespace TimeTrack
 
         private void BtnExport(object sender, RoutedEventArgs e)
         {
-            if (DgTimeRecords.SelectedItem == null)
+            if (DgTimeRecords == null || DgTimeRecords.SelectedItem == null || time_keeper == null)
                 return;
 
-            TimeEntry selected = (TimeEntry)DgTimeRecords.SelectedItem;
+            TimeEntry? selected = DgTimeRecords.SelectedItem as TimeEntry;
+            if (selected == null)
+                return;
 
             if (selected.StartTime == null || selected.EndTime == null)
             {
-                MessageBox.Show("Record must have a valid start and end time", "TimeTrack - Error", 
+                MessageBox.Show("Record must have a valid start and end time", "TimeTrack - Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (selected.EndTime < selected.StartTime)
             {
-                MessageBox.Show("Cannot export a negative time duration", "TimeTrack - Error", 
+                MessageBox.Show("Cannot export a negative time duration", "TimeTrack - Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            
+
             string date_time = selected.Date.ToString("yyyy-MM-dd") + " " + selected.StartTime.ToString();
-            
+
             TimeSpan timespan_worked = (TimeSpan)(selected.EndTime - selected.StartTime);
             int hours_worked = timespan_worked.Hours;
             double minutes_worked = timespan_worked.Minutes;
             double time_worked = hours_worked + (Math.Ceiling((minutes_worked / 60) * 10) / 10);
 
-            string text = date_time + "," + time_worked + "," + selected.Notes;
+            string text = date_time + "," + time_worked + "," + (selected.Notes ?? string.Empty);
             Clipboard.SetData(DataFormats.UnicodeText, text);
             selected.Recorded = true;
             Database.Update(time_keeper.Entries);
             ShowStatus("Entry exported to clipboard");
         }
 
-        private void BtnExportAll(object sender, RoutedEventArgs e)
-        {
-            if (DgTimeRecords.Items.IsEmpty)
-                return;
-
-            try
-            {
-                string path = "C:\\temp\\_time_export.csv";
-                if (File.Exists(path))
-                    File.Delete(path);
-
-                string[] output = new string[DgTimeRecords.Items.Count];
-                var all_records = DgTimeRecords.Items;
-
-                for (int i = 0; i < all_records.Count; i++)
-                {
-                    TimeEntry entry = all_records[i] as TimeEntry;
-
-                    if (entry.Recorded || entry.CaseIsEmpty())
-                        continue;
-
-                    string case_number = entry.CaseNumber.Trim();
-                    string date = entry.Date.ToShortDateString().Replace("/", "-");
-                    string hours = entry.Hours().ToString();
-                    string minutes = entry.Minutes().ToString();
-                    string time_period = entry.StartTimeAsString() + " - " + entry.EndTimeAsString();
-
-                    if (date[1] == '-')
-                        date = "0" + date;
-
-                    output[i] = case_number + "," + date + "," + hours + "," + minutes + "," + time_period + "," + entry.Notes;
-                }
-                File.WriteAllLines(path, output);
-
-                foreach (var i in DgTimeRecords.Items)
-                {
-                    var entry = i as TimeEntry;
-                    if (entry.CaseIsEmpty())
-                        continue;
-                    entry.Recorded = true;
-                }
-            } 
-            catch (Exception exc)
-            {
-                Error.Handle("Something went wrong while exporting all entries", exc);
-            }
-
-            Database.Update(time_keeper.Entries);
-        }
-
         private void BtnToggleAllRecorded(object sender, RoutedEventArgs e)
         {
+            if (time_keeper == null)
+                return;
+
             bool new_status = true;
 
             foreach (var i in time_keeper.Entries)
@@ -281,7 +373,7 @@ namespace TimeTrack
 
             foreach (var i in time_keeper.Entries)
             {
-                if (new_status && string.IsNullOrEmpty(i.CaseNumber.Trim()))
+                if (new_status && string.IsNullOrEmpty(i.CaseNumber?.Trim()))
                     continue;
                 i.Recorded = new_status;
             }
@@ -296,19 +388,30 @@ namespace TimeTrack
             var date = time_keeper.Date;
             time_keeper.CurrentDate = date.Date.ToShortDateString();
 
-            if (date != DateTime.Today)
+            if (txtCurrentDate != null)
             {
-                txtCurrentDate.Background = Brushes.OrangeRed;
-                txtCurrentDate.Foreground = Brushes.White;
-                BtnSub.Background = Brushes.OrangeRed;
-                BtnSub.Foreground = Brushes.White;
-                BtnToday.IsEnabled = true;
-            } else {
-                txtCurrentDate.Background = null;
-                txtCurrentDate.Foreground = Brushes.Black;
-                BtnSub.Background = BtnBrush;
-                BtnSub.Foreground = Brushes.Black;
-                BtnToday.IsEnabled = false;
+                if (date != DateTime.Today)
+                {
+                    txtCurrentDate.Background = Brushes.OrangeRed;
+                    txtCurrentDate.Foreground = Brushes.White;
+                    if (BtnSub != null)
+                        BtnSub.Background = Brushes.OrangeRed;
+                    if (BtnSub != null)
+                        BtnSub.Foreground = Brushes.White;
+                    if (BtnToday != null)
+                        BtnToday.IsEnabled = true;
+                }
+                else
+                {
+                    txtCurrentDate.Background = null;
+                    txtCurrentDate.Foreground = Brushes.Black;
+                    if (BtnBrush != null && BtnSub != null)
+                        BtnSub.Background = BtnBrush;
+                    if (BtnSub != null)
+                        BtnSub.Foreground = Brushes.Black;
+                    if (BtnToday != null)
+                        BtnToday.IsEnabled = false;
+                }
             }
 
             LoadEntriesForDate(date);
@@ -319,30 +422,45 @@ namespace TimeTrack
 
         private void BtnGotoToday(object sender, RoutedEventArgs e)
         {
-            CalDate.SelectedDate = DateTime.Today;
+            if (CalDate != null)
+                CalDate.SelectedDate = DateTime.Today;
         }
 
         private void BtnGoForward(object sender, RoutedEventArgs e)
         {
-            CalDate.SelectedDate += TimeSpan.FromDays(1);
+            if (CalDate != null && CalDate.SelectedDate != null)
+                CalDate.SelectedDate = CalDate.SelectedDate.Value.AddDays(1);
         }
 
         private void BtnGoBack(object sender, RoutedEventArgs e)
         {
-            CalDate.SelectedDate -= TimeSpan.FromDays(1);
+            if (CalDate != null && CalDate.SelectedDate != null)
+                CalDate.SelectedDate = CalDate.SelectedDate.Value.AddDays(-1);
         }
 
+        // ChkLunch_Checked / Unchecked — clear fields with empty string instead of null
         private void ChkLunch_Checked(object sender, RoutedEventArgs e)
         {
-            time_keeper.CaseNumberField = null;
-            FldCaseNumber.IsEnabled = false;
-            FldCaseNumber.Background = Brushes.LightGray;
+            if (time_keeper == null)
+                return;
+
+            time_keeper.CaseNumberField = string.Empty;
+            
+            if (FldCaseNumber != null)
+            {
+                FldCaseNumber.IsEnabled = false;
+                FldCaseNumber.Background = Brushes.LightGray;
+            }
 
             time_keeper.NotesField = "Lunch";
-            FldNotes.IsEnabled = false;
-            FldNotes.Background = Brushes.LightGray;
+            
+            if (FldNotes != null)
+            {
+                FldNotes.IsEnabled = false;
+                FldNotes.Background = Brushes.LightGray;
+            }
 
-            if (time_keeper.EndTimeField == null || time_keeper.EndTimeField == "")
+            if (string.IsNullOrEmpty(time_keeper.EndTimeField))
             {
                 var startTimeSpan = TimeStringConverter.StringToTimeSpan(time_keeper.StartTimeField);
                 if (startTimeSpan != null)
@@ -352,29 +470,45 @@ namespace TimeTrack
                     time_keeper.EndTimeField = EndLunch.ToShortTimeString();
                 }
             }
+
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void ChkLunch_Unchecked(object sender, RoutedEventArgs e)
         {
-            time_keeper.CaseNumberField = null;
-            FldCaseNumber.IsEnabled = true;
-            FldCaseNumber.Background = Brushes.White;
+            if (time_keeper == null)
+                return;
 
-            time_keeper.EndTimeField = null;
-            time_keeper.NotesField = null;
-            FldNotes.IsEnabled = true;
-            FldNotes.Background = Brushes.White;
+            time_keeper.CaseNumberField = string.Empty;
+            if (FldCaseNumber != null)
+            {
+                FldCaseNumber.IsEnabled = true;
+                FldCaseNumber.Background = Brushes.White;
+            }
+
+            time_keeper.EndTimeField = string.Empty;
+            time_keeper.NotesField = string.Empty;
+            if (FldNotes != null)
+            {
+                FldNotes.IsEnabled = true;
+                FldNotes.Background = Brushes.White;
+            }
+
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void DgTimeRecords_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (DgTimeRecords.SelectedItem != null)
+            if (time_keeper == null)
+                return;
+
+            if (DgTimeRecords != null && DgTimeRecords.SelectedItem != null && time_keeper != null)
                 time_keeper.UpdateSelectedTime();
         }
 
         private void BtnProjectInfo_Click(object sender, RoutedEventArgs e)
         {
-            string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
             string messageBoxText = $"TimeTrack\nVersion: {version}\n\nA simple time tracking application for daily work entries.";
             string caption = "Project Information";
             MessageBox.Show(messageBoxText, caption, MessageBoxButton.OK, MessageBoxImage.Information);
@@ -387,65 +521,56 @@ namespace TimeTrack
 
         private void MenuOptions_Click(object sender, RoutedEventArgs e)
         {
-            // Open your OptionsWindow
-            var optionsWindow = new OptionsWindow();
-            optionsWindow.Owner = this;
+            var optionsWindow = new OptionsWindow { Owner = this };
             optionsWindow.ShowDialog();
+            // Re-apply shortcuts after possible changes
+            ApplyKeyboardShortcuts();
+            UpdateMenuGestureTexts();
         }
 
-        private void ApplyKeyboardShortcuts()
+        // Build key bindings based on SettingsManager values
+        public void ApplyKeyboardShortcuts()
         {
             this.InputBindings.Clear();
             var shortcuts = SettingsManager.GetAllShortcuts();
 
             if (shortcuts.ContainsKey("Export"))
             {
-                var s = shortcuts["Export"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => BtnExport(null, null)), s.Key, s.Modifiers));
+                var s = shortcuts["Export"]; this.InputBindings.Add(new KeyBinding(ExportCommand, s.Key, s.Modifiers));
             }
             if (shortcuts.ContainsKey("Insert"))
             {
-                var s = shortcuts["Insert"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => BtnInsert(null, null)), s.Key, s.Modifiers));
+                var s = shortcuts["Insert"]; this.InputBindings.Add(new KeyBinding(InsertCommand, s.Key, s.Modifiers));
             }
             if (shortcuts.ContainsKey("Today"))
             {
-                var s = shortcuts["Today"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => BtnGotoToday(null, null)), s.Key, s.Modifiers));
+                var s = shortcuts["Today"]; this.InputBindings.Add(new KeyBinding(TodayCommand, s.Key, s.Modifiers));
             }
             if (shortcuts.ContainsKey("PrevDay"))
             {
-                var s = shortcuts["PrevDay"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => BtnGoBack(null, null)), s.Key, s.Modifiers));
+                var s = shortcuts["PrevDay"]; this.InputBindings.Add(new KeyBinding(PrevDayCommand, s.Key, s.Modifiers));
             }
             if (shortcuts.ContainsKey("NextDay"))
             {
-                var s = shortcuts["NextDay"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => BtnGoForward(null, null)), s.Key, s.Modifiers));
+                var s = shortcuts["NextDay"]; this.InputBindings.Add(new KeyBinding(NextDayCommand, s.Key, s.Modifiers));
             }
             if (shortcuts.ContainsKey("Options"))
             {
-                var s = shortcuts["Options"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => MenuOptions_Click(null, null)), s.Key, s.Modifiers));
+                var s = shortcuts["Options"]; this.InputBindings.Add(new KeyBinding(OptionsCommand, s.Key, s.Modifiers));
             }
-            // Submit (respect configured key – Enter/Return supported)
             if (shortcuts.ContainsKey("Submit"))
             {
-                var s = shortcuts["Submit"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => Submit()), s.Key, s.Modifiers));
+                var s = shortcuts["Submit"]; this.InputBindings.Add(new KeyBinding(SubmitCommand, s.Key, s.Modifiers));
                 if (s.Key == Key.Enter || s.Key == Key.Return)
                 {
-                    // Add the other Enter variant too (main vs numpad)
                     var altKey = s.Key == Key.Enter ? Key.Return : Key.Enter;
-                    this.InputBindings.Add(new KeyBinding(new RelayCommand(p => Submit()), altKey, s.Modifiers));
+                    this.InputBindings.Add(new KeyBinding(SubmitCommand, altKey, s.Modifiers));
                 }
             }
-
-            // Back-compat: Toggle All vs Mark All
             if (shortcuts.ContainsKey("ToggleAll") || shortcuts.ContainsKey("MarkAll"))
             {
                 var s = shortcuts.ContainsKey("ToggleAll") ? shortcuts["ToggleAll"] : shortcuts["MarkAll"];
-                this.InputBindings.Add(new KeyBinding(new RelayCommand(p => BtnToggleAllRecorded(null, null)), s.Key, s.Modifiers));
+                this.InputBindings.Add(new KeyBinding(ToggleAllCommand, s.Key, s.Modifiers));
             }
         }
 
@@ -472,6 +597,10 @@ namespace TimeTrack
 
         private void InitializeTimePickerComboBoxes()
         {
+            if (CmbStartHour == null || CmbStartMinute == null || CmbStartPeriod == null ||
+                CmbEndHour == null || CmbEndMinute == null || CmbEndPeriod == null)
+                return;
+
             // Hours (1-12)
             for (int i = 1; i <= 12; i++)
             {
@@ -496,22 +625,32 @@ namespace TimeTrack
 
         private void BtnStartTimePicker_Click(object sender, RoutedEventArgs e)
         {
+            if (time_keeper == null || PopupStartTime == null)
+                return;
+
             // Parse current start time if it exists
             var currentTime = TimeStringConverter.StringToTimeSpan(time_keeper.StartTimeField);
             if (currentTime.HasValue)
             {
                 var dt = DateTime.Today + currentTime.Value;
                 int hour = dt.Hour > 12 ? dt.Hour - 12 : (dt.Hour == 0 ? 12 : dt.Hour);
-                CmbStartHour.SelectedItem = hour.ToString("00");
-                CmbStartMinute.SelectedItem = dt.Minute.ToString("00");
-                CmbStartPeriod.SelectedItem = dt.Hour >= 12 ? "PM" : "AM";
+                
+                if (CmbStartHour != null)
+                    CmbStartHour.SelectedItem = hour.ToString("00");
+                if (CmbStartMinute != null)
+                    CmbStartMinute.SelectedItem = dt.Minute.ToString("00");
+                if (CmbStartPeriod != null)
+                    CmbStartPeriod.SelectedItem = dt.Hour >= 12 ? "PM" : "AM";
             }
-    
+
             PopupStartTime.IsOpen = true;
         }
 
         private void BtnEndTimePicker_Click(object sender, RoutedEventArgs e)
         {
+            if (time_keeper == null || CmbEndHour == null || CmbEndMinute == null || CmbEndPeriod == null || PopupEndTime == null)
+                return;
+
             // Parse current end time if it exists
             var currentTime = TimeStringConverter.StringToTimeSpan(time_keeper.EndTimeField);
             if (currentTime.HasValue)
@@ -522,45 +661,36 @@ namespace TimeTrack
                 CmbEndMinute.SelectedItem = dt.Minute.ToString("00");
                 CmbEndPeriod.SelectedItem = dt.Hour >= 12 ? "PM" : "AM";
             }
-    
+
             PopupEndTime.IsOpen = true;
         }
 
         private void BtnSetStartTime_Click(object sender, RoutedEventArgs e)
         {
-            if (CmbStartHour.SelectedItem != null && 
-                CmbStartMinute.SelectedItem != null && 
-                CmbStartPeriod.SelectedItem != null)
-            {
-                string timeString = $"{CmbStartHour.SelectedItem}:{CmbStartMinute.SelectedItem} {CmbStartPeriod.SelectedItem}";
-                time_keeper.StartTimeField = timeString;
-                PopupStartTime.IsOpen = false;
-            }
+            if (CmbStartHour == null || CmbStartMinute == null || CmbStartPeriod == null ||
+                CmbStartHour.SelectedItem == null || 
+                CmbStartMinute.SelectedItem == null || 
+                CmbStartPeriod.SelectedItem == null ||
+                time_keeper == null || PopupStartTime == null)
+                return;
+
+            string timeString = $"{CmbStartHour.SelectedItem}:{CmbStartMinute.SelectedItem} {CmbStartPeriod.SelectedItem}";
+            time_keeper.StartTimeField = timeString;
+            PopupStartTime.IsOpen = false;
         }
 
         private void BtnSetEndTime_Click(object sender, RoutedEventArgs e)
         {
-            if (CmbEndHour.SelectedItem != null && 
-                CmbEndMinute.SelectedItem != null && 
-                CmbEndPeriod.SelectedItem != null)
-            {
-                string timeString = $"{CmbEndHour.SelectedItem}:{CmbEndMinute.SelectedItem} {CmbEndPeriod.SelectedItem}";
-                time_keeper.EndTimeField = timeString;
-                PopupEndTime.IsOpen = false;
-            }
-        }
+            if (CmbEndHour == null || CmbEndMinute == null || CmbEndPeriod == null ||
+                CmbEndHour.SelectedItem == null || 
+                CmbEndMinute.SelectedItem == null || 
+                CmbEndPeriod.SelectedItem == null ||
+                time_keeper == null || PopupEndTime == null)
+                return;
 
-        private void OnNotesKeyDown(object sender, KeyEventArgs e)
-        {
-            // Allow Enter to create new lines in Notes field
-            // Submit only on Ctrl+Enter
-            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control)
-            {
-                BtnSub.Focus();
-                Submit();
-                e.Handled = true;
-            }
-            // Allow normal Enter for new lines (don't handle the event)
+            string timeString = $"{CmbEndHour.SelectedItem}:{CmbEndMinute.SelectedItem} {CmbEndPeriod.SelectedItem}";
+            time_keeper.EndTimeField = timeString;
+            PopupEndTime.IsOpen = false;
         }
     }
 
@@ -637,7 +767,7 @@ namespace TimeTrack
             get => selected_mins;
             set { selected_mins = value; OnPropertyChanged(); }
         }
-        public TimeEntry SelectedItem
+        public TimeEntry? SelectedItem
         {
             get => selected_item;
             set
@@ -653,7 +783,8 @@ namespace TimeTrack
 
         public void AddEntry(DateTime date, int id, TimeSpan start_time, TimeSpan end_time, string case_number = "", string notes = "")
         {
-            var entry = new TimeEntry(date, id, start_time, end_time, case_number, notes);
+            // Convert TimeSpan to TimeOnly for TimeEntry constructor
+            var entry = new TimeEntry(date, id, TimeOnly.FromTimeSpan(start_time), TimeOnly.FromTimeSpan(end_time), case_number, notes);
             entry.TimeEntryChanged += OnTimeEntryChanged;
             time_records.Add(entry);
             UpdateTimeTotals();
@@ -777,14 +908,14 @@ namespace TimeTrack
             if (time_records.Count > 0)
                 StartTimeField = time_records.Last<TimeEntry>().EndTimeAsString();
             else
-                StartTimeField = null;
+                StartTimeField = string.Empty; // Changed from null to string.Empty
         }
 
         public void AddChangedHandlerToAllEntries()
         {
             foreach (var entry in time_records)
             {
-                ((TimeEntry)entry).TimeEntryChanged += OnTimeEntryChanged;
+                entry.TimeEntryChanged += OnTimeEntryChanged;
             }
         }
 
@@ -801,15 +932,15 @@ namespace TimeTrack
 
         // Inheritance items
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string name = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         // Event commands
 
-        private ICommand remove_command;
+        private ICommand? remove_command;
         public ICommand RemoveCommand
         {
             get
@@ -820,218 +951,27 @@ namespace TimeTrack
             }
         }
 
-        private ICommand submit_command;
-        public ICommand SubmitCommand
-        {
-            get => submit_command;
-            set => submit_command = value;
-        }
-
         // Private vars
 
         private DateTime date;
         private String current_date;
         private int current_id_count;
         private ObservableCollection<TimeEntry> time_records;
-        private string start_time;
-        private string end_time;
-        private string case_no;
-        private string notes;
+        private string start_time = string.Empty;
+        private string end_time = string.Empty;
+        private string case_no = string.Empty;
+        private string notes = string.Empty;
 
         private double hours_total;
         private double gaps_total;
-        private string selected_hours;
-        private string selected_mins;
-        private TimeEntry selected_item;
-    }
-
-    class Database
-    {
-        // Public variables
-        public const string date_format = "yyyy-MM-dd";
-
-        //Public functions
-        public static bool Exists()
-        {
-            return File.Exists(databasePath);
-        }
-        public static void CreateDatabase()
-        {
-            Connect();
-            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type = 'table'";
-            cmd.Prepare();
-            var result = cmd.ExecuteScalar();
-
-            if ((string)result == "time_entries")
-                return;
-
-            cmd.CommandText = @"CREATE TABLE time_entries(date TEXT, id INTEGER, start_time TEXT, end_time TEXT, case_number TEXT, notes TEXT, recorded INTEGER, CONSTRAINT pk PRIMARY KEY(date, id));";
-            cmd.ExecuteNonQuery();
-            Close();
-        }
-        public static int CurrentIdCount(DateTime date)
-        {
-            Connect();
-            cmd.CommandText = "SELECT MAX(id) FROM time_entries WHERE date = @date;";
-            cmd.Parameters.AddWithValue("@date", DateToString(date));
-            
-            int return_result = 0;
-            try
-            {
-                cmd.Prepare();
-                var query = cmd.ExecuteReader();
-
-                while (query.Read() && !query.IsDBNull(0))
-                    return_result = query.GetInt32(0);
-                query.Close();
-            }
-            catch (Exception e)
-            {
-                Close();
-                Error.Handle("Could not get current entry index.", e);
-                throw; // preserve original stack trace
-            }
-            
-            Close();
-            return return_result;
-        }
-        public static ObservableCollection<TimeEntry> Retrieve(DateTime date)
-        {
-            Connect();
-            var return_val = new ObservableCollection<TimeEntry>();
-            
-            cmd.CommandText = "SELECT * FROM time_entries WHERE date = @date ORDER BY start_time ASC, end_time ASC, id ASC";
-            cmd.Parameters.AddWithValue("@date", DateToString(date));
-
-            try
-            {
-                cmd.Prepare();
-                var query = cmd.ExecuteReader();
-
-                while (query.Read())
-                {
-                    var out_date = StringToDate(query.GetString(0));
-                    var id = query.GetInt32(1);
-                    int recorded = query.GetInt32(6);
-
-                    TimeSpan? start_time = null;
-                    TimeSpan? end_time = null;
-                    string case_no = "";
-                    string notes = "";
-                        
-
-                    if (!query.IsDBNull(2))
-                        start_time = StringToTimeSpan(query.GetString(2));
-                    if (!query.IsDBNull(3))
-                        end_time = StringToTimeSpan(query.GetString(3));
-                    if (!query.IsDBNull(4))
-                        case_no = query.GetString(4);
-                    if (!query.IsDBNull(5))
-                        notes = query.GetString(5);
-
-                    return_val.Add(new TimeEntry(out_date, id, start_time, end_time, case_no, notes, Convert.ToBoolean(recorded)));
-                }
-            } 
-            catch (Exception e)
-            {
-                Close();
-                Error.Handle("Something went wrong while retrieving today's entries.", e);
-                throw; // preserve original stack trace
-            }
-            Close();
-            return return_val;
-        }
-        public static void Update(ObservableCollection<TimeEntry> entries)
-        {
-            if (entries.Count < 1)
-                return;
-
-            Connect();
-            for (int i = 0; i < entries.Count; i++)
-            {
-                cmd.CommandText = "INSERT OR REPLACE INTO time_entries(date, id, start_time, end_time, case_number, notes, recorded) " +
-                    "VALUES(@date, @id, @start_time, @end_time, @case_number, @notes, @recorded)";
-                cmd.Parameters.AddWithValue("@date", DateToString(entries[i].Date));
-                cmd.Parameters.AddWithValue("@id", entries[i].ID);
-                cmd.Parameters.AddWithValue("@start_time", entries[i].StartTime);
-                cmd.Parameters.AddWithValue("@end_time", entries[i].EndTime);
-                cmd.Parameters.AddWithValue("@case_number", entries[i].CaseNumber);
-                cmd.Parameters.AddWithValue("@notes", entries[i].Notes);
-                cmd.Parameters.AddWithValue("@recorded", entries[i].Recorded);
-
-                try
-                {
-                    cmd.Prepare();
-                    cmd.ExecuteNonQuery();
-                }
-                catch (Exception e)
-                {
-                    Error.Handle("Something went wrong while updating the entries database.\nThe saved records may not be consistent with what is displayed.", e);
-                }
-            }
-            Close();
-        }
-        public static void Delete(DateTime date, int id)
-        {
-            Connect();
-            cmd.CommandText = "DELETE FROM time_entries WHERE date = @date AND id = @id";
-            cmd.Parameters.AddWithValue("@date", DateToString(date));
-            cmd.Parameters.AddWithValue("@id", id);
-            try
-            {
-                cmd.Prepare();
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception e)
-            {
-                Error.Handle("Could not delete the record from the database.\nThe saved records may not consistent with what is displayed.", e);
-            }
-            Close();
-        }
-
-        // Private functions
-        private static void Connect()
-        {
-            try
-            {
-                connection = new SQLiteConnection(databaseURI);
-                connection.Open();
-                cmd = connection.CreateCommand();
-            }
-            catch (Exception e)
-            {
-                Error.Handle("Could not open a connection to the database.", e);
-                throw; // preserve original stack trace
-            }
-        }
-        private static void Close()
-        {
-            connection.Close();
-            connection.Dispose();
-        }
-        private static string DateToString(DateTime date)
-        {
-            return date.ToString(date_format);
-        }
-        private static DateTime StringToDate(string str)
-        {
-            return DateTime.ParseExact(str, date_format, DateTimeFormatInfo.InvariantInfo);
-        }
-        private static TimeSpan StringToTimeSpan(string str)
-        {
-            return TimeSpan.ParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None);
-        }
-
-        // Private variables
-        private const string databasePath = "timetrack.db";
-        private const string databaseURI = @"URI=file:" + databasePath;
-        private static SQLiteConnection connection;
-        private static SQLiteCommand cmd;
+        private string selected_hours = "-";
+        private string selected_mins = "-";
+        private TimeEntry? selected_item;
     }
 
     public static class Error
     {
-        public static void Handle(string error_text, Exception e, [CallerLineNumber] int line_number = 0, [CallerMemberName] string caller = null)
+        public static void Handle(string error_text, Exception e, [CallerLineNumber] int line_number = 0, [CallerMemberName] string caller = "")
         {
             string caption = "TimeTrack - Error";
             string messageBoxText = error_text + "\n" + "\nFunction name: " + caller + "\nLine number: " + line_number + "\n\nException details:\n" + e.Message;
@@ -1078,7 +1018,7 @@ namespace TimeTrack
              * (PM)?            : PM - optional
              * $                : end of the string
              */
-            string valid_24hour_format = @"^\d{2}[;:.]?(\d{2})?(?i:(\s?)+(?!AM)(PM)?)?$";
+            string valid_24hour_format = @"^\d{2}[;:.]?(\d{2})?(?i:(\s?)+(?!AM)(PM)?)$";
 
             if (Regex.IsMatch(value, valid_time_format))
             {
@@ -1113,7 +1053,7 @@ namespace TimeTrack
         }
         private static bool ContainsMinutes(string value)
         {
-            // Regex: looks for 1 or 2 digits, a colon, then 2 digits .
+            // Regex: looks for 1 or 2 digits, a colon, then 2 digits .'
             return Regex.IsMatch(value, @"^\d{1,2}:\d{2}");
         }
         private static string CleanTimeString(string value, bool remove_period = false)
@@ -1130,8 +1070,8 @@ namespace TimeTrack
 
             if (!value.Contains(":"))
             {
-                // Regex: if there are only 3, or 1 digits
-                // followed by either a non digit, or the end of the string
+                // Regex: if there are only 3, or 1 digit
+                // followed by either a non digit, or the end of the string (not captured)
                 if (Regex.IsMatch(value, @"^(\d{3}|\d)(?:\D|$)"))
                     value = value.Insert(1, ":");
                 else
@@ -1161,103 +1101,73 @@ namespace TimeTrack
         }
         public static TimeSpan? StringToTimeSpan(string value)
         {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
             if (!IsValidTimeFormat(value))
                 return null;
 
-            DateTime return_val;
-            string time_format;
-            bool time_period_present = false;
-            bool format_24_hour = Is24HourFormat(value);
+            bool is24Hour = Is24HourFormat(value);
 
-            value = CleanTimeString(value, format_24_hour);
+            // Clean and normalize input first
+            value = CleanTimeString(value, is24Hour);
 
-            if (format_24_hour)
-                time_format = "HH:";
-            else
-            {
-                int hour_digit_count = value.Length;
+            // Re-evaluate after cleaning
+            bool hasPeriod = TimePeriodPresent(value);      // AM/PM present
+            bool hasMinutes = ContainsMinutes(value);       // contains ":mm"
 
-                if (time_period_present = TimePeriodPresent(value))
-                    hour_digit_count -= 2;
+            // Build the format in the correct order
+            string timeFormat =
+                is24Hour
+                    ? (hasMinutes ? "HH:mm" : "HH")
+                    : (hasMinutes ? "hh:mm" : "hh");
 
-                if (hour_digit_count > 3)
-                    time_format = "hh:";
-                else
-                    time_format = "hh:";
-            }
+            // Only 12-hour format should include AM/PM
+            if (!is24Hour && hasPeriod)
+                timeFormat += "tt"; // no space – CleanTimeString removed spaces
 
-            if (ContainsMinutes(value))
-                time_format += "mm";
-
-            if (!format_24_hour && TimePeriodPresent(value))
-                time_format += "tt";
-
-            if (!DateTime.TryParseExact(value, time_format, CultureInfo.InvariantCulture, DateTimeStyles.None, out return_val))
+            if (!DateTime.TryParseExact(value, timeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
                 return null;
-            else
-            {
-                if (!time_period_present && !format_24_hour)
-                    return_val = ClampToWorkHours(return_val);
 
-                return return_val.TimeOfDay;
-            }
+            // If no AM/PM and not 24-hour, clamp to work hours as before
+            if (!hasPeriod && !is24Hour)
+                parsed = ClampToWorkHours(parsed);
+
+            return parsed.TimeOfDay;
         }
     }
 
     public class RelayCommand : ICommand
     {
-        private Action<object> execute;
-        private Func<object, bool> canExecute;
+        private Action<object?> execute;
+        private Func<object?, bool>? canExecute; // Make canExecute nullable
 
-        public RelayCommand(Action<object> execute)
+        public RelayCommand(Action<object?> execute)
         {
             this.execute = execute;
             this.canExecute = null;
         }
 
-        public RelayCommand(Action<object> execute, Func<object, bool> canExecute)
+        public RelayCommand(Action<object?> execute, Func<object?, bool> canExecute)
         {
             this.execute = execute;
             this.canExecute = canExecute;
         }
 
-        public event EventHandler CanExecuteChanged
+        public event EventHandler? CanExecuteChanged // <-- Make nullable to match ICommand
         {
             add { CommandManager.RequerySuggested += value; }
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-        public bool CanExecute(object parameter)
+        public bool CanExecute(object? parameter)
         {
             return this.canExecute == null || this.canExecute(parameter);
         }
 
-        public void Execute(object parameter)
+        public void Execute(object? parameter)
         {
             this.execute(parameter);
         }
-    }
-
-    public class HotkeyDelegateCommand : ICommand
-    {
-        // Specify the keys and mouse actions that invoke the command. 
-        public Key HotKey { get; set; }
-
-        Action<object> _executeDelegate;
-
-        public HotkeyDelegateCommand(Action<object> executeDelegate)
-        {
-            _executeDelegate = executeDelegate;
-        }
-
-        public void Execute(object parameter)
-        {
-            _executeDelegate(parameter);
-        }
-
-        public bool CanExecute(object parameter) { return true; }
-#pragma warning disable CS0067 // boilerplate code
-        public event EventHandler CanExecuteChanged;
-#pragma warning restore CS0067 // boilerplate code
     }
 }
