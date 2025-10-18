@@ -506,6 +506,29 @@ namespace TimeTrack
                 time_keeper.UpdateSelectedTime();
         }
 
+        private void DgRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not DataGridRow row || row.Item is not TimeEntry entry)
+                return;
+
+            var editor = new EditEntryWindow(entry)
+            {
+                Owner = this
+            };
+
+            if (editor.ShowDialog() == true)
+            {
+                // Persist after editing (covers non-time property changes as well)
+                if (time_keeper != null)
+                {
+                    Database.Update(time_keeper.Entries);
+                    time_keeper.UpdateTimeTotals();
+                    time_keeper.UpdateSelectedTime();
+                    time_keeper.SetStartTimeField();
+                }
+            }
+        }
+
         private void BtnProjectInfo_Click(object sender, RoutedEventArgs e)
         {
             string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
@@ -715,6 +738,7 @@ namespace TimeTrack
         {
             set => current_id_count = value;
         }
+
         public ObservableCollection<TimeEntry> Entries
         {
             get => time_records;

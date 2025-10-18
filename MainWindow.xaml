@@ -305,6 +305,7 @@
         </Style>
 
         <Style TargetType="DataGridRow">
+            <EventSetter Event="MouseDoubleClick" Handler="DgRow_MouseDoubleClick"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#F0F6FC"/>
@@ -537,7 +538,8 @@
          HeadersVisibility="Column"
          ColumnWidth="Auto"
          RowHeaderWidth="0"
-         MinColumnWidth="40">
+         MinColumnWidth="40"
+         IsReadOnly="True">
                                 <DataGrid.Columns>
                                     <DataGridCheckBoxColumn Header="" Width="30"
             Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
@@ -556,6 +558,24 @@
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
                                 </DataGrid.Columns>
+                                <!-- Context menu for grid -->
+                                <DataGrid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Insert Record"
+                                                  Command="{x:Static local:MainWindow.InsertCommand}"
+                                                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                        <MenuItem Header="Export Selected"
+                                                  Command="{x:Static local:MainWindow.ExportCommand}"
+                                                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Delete Selected"
+                                                  Command="{Binding PlacementTarget.DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Toggle All Recorded"
+                                                  Command="{x:Static local:MainWindow.ToggleAllCommand}"
+                                                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    </ContextMenu>
+                                </DataGrid.ContextMenu>
                             </DataGrid>
                         </Grid>
                     </Grid>
