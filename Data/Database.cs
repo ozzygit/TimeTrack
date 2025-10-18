@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace TimeTrack.Data;
@@ -22,6 +24,9 @@ public static class Database
     // Legacy path (next to the executable) for migration support
     private static readonly string LegacyPath = Path.Combine(AppContext.BaseDirectory, "timetrack.db");
 
+    // Backups folder
+    private static readonly string BackupsFolder = Path.Combine(AppFolder, "Backups");
+
     /// <summary>
     /// Ensure the app data folder exists.
     /// </summary>
@@ -30,6 +35,65 @@ public static class Database
         if (!Directory.Exists(AppFolder))
         {
             Directory.CreateDirectory(AppFolder);
+        }
+    }
+
+    /// <summary>
+    /// Create a dated backup of the database if it exists. Only one backup per day.
+    /// </summary>
+    private static void BackupDatabase(string reason)
+    {
+        try
+        {
+            if (!File.Exists(DatabasePath)) return;
+            Directory.CreateDirectory(BackupsFolder);
+            var stamp = DateTime.Now.ToString("yyyyMMdd");
+            var target = Path.Combine(BackupsFolder, $"timetrack_{stamp}_{reason}.db");
+            if (File.Exists(target)) return; // already backed up today for this reason
+            File.Copy(DatabasePath, target, overwrite: false);
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Failed to create database backup.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Apply recommended SQLite PRAGMAs for reliability.
+    /// </summary>
+    private static void ApplySqlitePragmas(TimeTrackDbContext context)
+    {
+        try
+        {
+            context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+            context.Database.ExecuteSqlRaw("PRAGMA synchronous=NORMAL;");
+            context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Failed to apply SQLite PRAGMAs.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Run a lightweight SQLite integrity check. Returns true if OK.
+    /// </summary>
+    private static bool IntegrityCheck(TimeTrackDbContext context)
+    {
+        try
+        {
+            using var conn = context.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open)
+                conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA integrity_check;";
+            var result = cmd.ExecuteScalar()?.ToString();
+            return string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Failed to run SQLite integrity check.", ex);
+            return false;
         }
     }
 
@@ -75,6 +139,7 @@ public static class Database
 
             if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
             {
+                BackupDatabase("pre-migrate");
                 try { File.Move(LegacyPath, DatabasePath); }
                 catch (IOException moveEx)
                 {
@@ -83,8 +148,19 @@ public static class Database
                 }
             }
 
+            // Backup existing DB once per day before touching schema
+            BackupDatabase("daily");
+
             using var context = new TimeTrackDbContext(DatabasePath);
             context.Database.EnsureCreated();
+
+            ApplySqlitePragmas(context);
+
+            // Optional integrity check
+            if (!IntegrityCheck(context))
+            {
+                Error.Handle("SQLite integrity check failed. A backup has been kept.", new InvalidOperationException("PRAGMA integrity_check != ok"));
+            }
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -178,40 +254,87 @@ public static class Database
         if (entries.Count < 1)
             return;
 
+        // Basic validation: duplicates and invalid durations
         try
         {
-            using var context = new TimeTrackDbContext(DatabasePath);
-
-            foreach (var entry in entries)
+            var duplicateKeys = entries
+                .GroupBy(e => (Date: DateToString(e.Date), e.ID))
+                .Where(g => g.Count() > 1)
+                .Select(g => $"{g.Key.Date}#{g.Key.ID}")
+                .ToList();
+            if (duplicateKeys.Any())
             {
-                var dateString = DateToString(entry.Date);
-                var entity = TimeEntryToEntity(entry);
-
-                var existing = context.TimeEntries
-                    .FirstOrDefault(e => e.Date == dateString && e.Id == entry.ID);
-
-                if (existing != null)
-                {
-                    // Update existing entry
-                    context.Entry(existing).CurrentValues.SetValues(entity);
-                }
-                else
-                {
-                    // Add new entry
-                    context.TimeEntries.Add(entity);
-                }
+                Error.Handle($"Duplicate entry keys detected: {string.Join(", ", duplicateKeys)}", new InvalidOperationException("Duplicate keys"));
+                // Continue but may cause DbUpdateException
             }
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Validation error while checking for duplicates.", ex);
+        }
 
-            context.SaveChanges();
-        }
-        catch (DbUpdateException dbEx)
+        const int maxRetries = 3;
+        int attempt = 0;
+        while (true)
         {
-            var summary = string.Join(", ", entries.Select(e => $"{DateToString(e.Date)}#{e.ID}"));
-            Error.Handle($"Database update failed for entries: {summary}", dbEx);
-        }
-        catch (Exception e)
-        {
-            Error.Handle("Something went wrong while updating the entries database.\nThe saved records may not be consistent with what is displayed.", e);
+            try
+            {
+                using var context = new TimeTrackDbContext(DatabasePath);
+                using var tx = context.Database.BeginTransaction();
+
+                foreach (var entry in entries)
+                {
+                    // Skip invalid negative/zero durations when both times exist and case is empty (non-lunch)
+                    var start = entry.StartTime;
+                    var end = entry.EndTime;
+                    if (start.HasValue && end.HasValue && end <= start)
+                    {
+                        Error.Handle($"Skipping invalid duration for {DateToString(entry.Date)}#{entry.ID}", new InvalidOperationException("End <= Start"));
+                        continue;
+                    }
+
+                    var dateString = DateToString(entry.Date);
+                    var entity = TimeEntryToEntity(entry);
+
+                    var existing = context.TimeEntries
+                        .FirstOrDefault(e => e.Date == dateString && e.Id == entry.ID);
+
+                    if (existing != null)
+                    {
+                        context.Entry(existing).CurrentValues.SetValues(entity);
+                    }
+                    else
+                    {
+                        context.TimeEntries.Add(entity);
+                    }
+                }
+
+                context.SaveChanges();
+                tx.Commit();
+                break; // success
+            }
+            catch (DbUpdateException dbEx)
+            {
+                var summary = string.Join(", ", entries.Select(e => $"{DateToString(e.Date)}#{e.ID}"));
+                Error.Handle($"Database update failed for entries: {summary}", dbEx);
+                break; // do not retry non-SQLite busy/locked here
+            }
+            catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6) // SQLITE_BUSY or SQLITE_LOCKED
+            {
+                attempt++;
+                if (attempt >= maxRetries)
+                {
+                    Error.Handle("SQLite was busy/locked after multiple attempts during update.", sqlEx);
+                    break;
+                }
+                Thread.Sleep(200 * attempt); // backoff
+                continue;
+            }
+            catch (Exception e)
+            {
+                Error.Handle("Something went wrong while updating the entries database.\nThe saved records may not be consistent with what is displayed.", e);
+                break;
+            }
         }
     }
 
@@ -220,27 +343,49 @@ public static class Database
     /// </summary>
     public static void Delete(DateTime date, int id)
     {
-        try
+        const int maxRetries = 3;
+        int attempt = 0;
+        while (true)
         {
-            using var context = new TimeTrackDbContext(DatabasePath);
-            var dateString = DateToString(date);
-
-            var entity = context.TimeEntries
-                .FirstOrDefault(e => e.Date == dateString && e.Id == id);
-
-            if (entity != null)
+            try
             {
-                context.TimeEntries.Remove(entity);
-                context.SaveChanges();
+                using var context = new TimeTrackDbContext(DatabasePath);
+                using var tx = context.Database.BeginTransaction();
+                var dateString = DateToString(date);
+
+                var entity = context.TimeEntries
+                    .FirstOrDefault(e => e.Date == dateString && e.Id == id);
+
+                if (entity != null)
+                {
+                    context.TimeEntries.Remove(entity);
+                    context.SaveChanges();
+                }
+
+                tx.Commit();
+                break;
             }
-        }
-        catch (DbUpdateException dbEx)
-        {
-            Error.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx);
-        }
-        catch (Exception e)
-        {
-            Error.Handle("Could not delete the record from the database.\nThe saved records may not be consistent with what is displayed.", e);
+            catch (DbUpdateException dbEx)
+            {
+                Error.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx);
+                break;
+            }
+            catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6) // SQLITE_BUSY or SQLITE_LOCKED
+            {
+                attempt++;
+                if (attempt >= maxRetries)
+                {
+                    Error.Handle("SQLite was busy/locked after multiple attempts during delete.", sqlEx);
+                    break;
+                }
+                Thread.Sleep(200 * attempt);
+                continue;
+            }
+            catch (Exception e)
+            {
+                Error.Handle("Could not delete the record from the database.\nThe saved records may not be consistent with what is displayed.", e);
+                break;
+            }
         }
     }
 

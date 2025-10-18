@@ -22,11 +22,6 @@ public class TimeTrackDbContext : DbContext
         if (looksLikeDirectory)
             dbPath = Path.Combine(dbPath, DefaultDbFileName);
 
-        // Removed: Directory.CreateDirectory duplication; Database.EnsureAppFolder handles this
-        // var dir = Path.GetDirectoryName(Path.GetFullPath(dbPath));
-        // if (!string.IsNullOrEmpty(dir))
-        //     Directory.CreateDirectory(dir);
-
         _dbPath = dbPath;
     }
 
@@ -36,7 +31,8 @@ public class TimeTrackDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseSqlite($"Data Source={_dbPath}");
+            // Enable shared cache and pooling; set default timeout for commands
+            optionsBuilder.UseSqlite($"Data Source={_dbPath};Cache=Shared;Pooling=True;Default Timeout=5");
         }
     }
 
