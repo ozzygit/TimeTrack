@@ -16,12 +16,11 @@ public static class Database
 
     // Use user's Documents\TimeTrack\timetrack.db
     private static readonly string AppFolder =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TimeTrack");
-    private const string DatabaseFileName = "timetrack.db";
-    private static readonly string DatabasePath = Path.Combine(AppFolder, DatabaseFileName);
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
+    private static readonly string DatabasePath = Path.Combine(AppFolder, "timetrack.db");
 
     // Legacy path (next to the executable) for migration support
-    private static readonly string LegacyPath = Path.Combine(AppContext.BaseDirectory, DatabaseFileName);
+    private static readonly string LegacyPath = Path.Combine(AppContext.BaseDirectory, "timetrack.db");
 
     /// <summary>
     /// Ensure the app data folder exists.
@@ -65,6 +64,22 @@ public static class Database
         try
         {
             EnsureAppFolder();
+
+            // Migrate legacy DB beside the EXE to AppData if needed
+            if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
+            {
+                // Prefer move; fall back to copy+delete if cross-volume or locked scenarios arise
+                try
+                {
+                    File.Move(LegacyPath, DatabasePath);
+                }
+                catch (IOException)
+                {
+                    File.Copy(LegacyPath, DatabasePath, overwrite: true);
+                    try { File.Delete(LegacyPath); } catch { /* ignore delete failure */ }
+                }
+            }
+
             using var context = new TimeTrackDbContext(DatabasePath);
             context.Database.EnsureCreated();
         }

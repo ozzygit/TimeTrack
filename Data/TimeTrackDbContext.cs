@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.EntityFrameworkCore;
 
 namespace TimeTrack.Data;
@@ -7,10 +8,25 @@ namespace TimeTrack.Data;
 /// </summary>
 public class TimeTrackDbContext : DbContext
 {
+    private const string DefaultDbFileName = "timetrack.db";
     private readonly string _dbPath;
 
-    public TimeTrackDbContext(string dbPath = "timetrack.db")
+    public TimeTrackDbContext(string dbPath = DefaultDbFileName)
     {
+        // If a directory is passed, append the default file name
+        if (string.IsNullOrWhiteSpace(dbPath))
+            dbPath = DefaultDbFileName;
+
+        // Treat paths without extension as directories
+        bool looksLikeDirectory = !Path.HasExtension(dbPath);
+        if (looksLikeDirectory)
+            dbPath = Path.Combine(dbPath, DefaultDbFileName);
+
+        // Ensure directory exists
+        var dir = Path.GetDirectoryName(Path.GetFullPath(dbPath));
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
+
         _dbPath = dbPath;
     }
 

@@ -56,16 +56,9 @@ namespace TimeTrack
 
             InitializeTimePickerComboBoxes();
 
-            if (Database.Exists())
-                LoadEntriesForDate(DateTime.Today);
-            else
-            {
-                switch (PromptForNewDatabase())
-                {
-                    case MessageBoxResult.OK: Database.CreateDatabase(); break;
-                    case MessageBoxResult.Cancel: Application.Current.Shutdown(); break;
-                }
-            }
+            // Automatically ensure the database exists without prompting the user
+            Database.CreateDatabase();
+            LoadEntriesForDate(DateTime.Today);
 
             InitializeWindow();
             
@@ -222,14 +215,6 @@ namespace TimeTrack
             }
         }
         
-        private MessageBoxResult PromptForNewDatabase()
-        {
-            string messageBoxText = "The entries database could not be found in this directory.\nWould you like to create a new one?";
-            string caption = "TimeTrack - Error";
-
-            return MessageBox.Show(messageBoxText, caption, MessageBoxButton.OKCancel, MessageBoxImage.Error, MessageBoxResult.OK);
-        }
-
         private void LoadEntriesForDate(DateTime date)
         {
             if (time_keeper == null)
