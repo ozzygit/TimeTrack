@@ -1022,13 +1022,24 @@ namespace TimeTrack
     {
         public static void Handle(string error_text, Exception e, [CallerLineNumber] int line_number = 0, [CallerMemberName] string caller = "")
         {
-            string caption = "TimeTrack - Error";
-            string messageBoxText = error_text + "\n" + "\nFunction name: " + caller + "\nLine number: " + line_number + "\n\nException details:\n" + e.Message;
+            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
+            string logPath = Path.Combine(logDir, "time_track_log.txt");
+            try { Directory.CreateDirectory(logDir); } catch { /* ignore */ }
 
-            MessageBox.Show(messageBoxText, caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            string timestamp = DateTime.UtcNow.ToString("o");
+            string log = $"{timestamp},{caller},{e.GetType().Name},{e.Message.Replace("\r"," ").Replace("\n"," | ")},{error_text.Replace("\r"," ").Replace("\n"," | ")}\n";
+            try { File.AppendAllText(logPath, log); } catch { /* ignore */ }
 
-            string log_text = DateTime.Now.ToLocalTime() + "," + caller + "," + e.Message.Replace("\r", "").Replace("\n"," | ") + "," + error_text.Replace("\n", " | ");
-            File.AppendAllText("time_track_log.txt", log_text);
+            void show()
+            {
+                string caption = "TimeTrack - Error";
+                string msg = $"{error_text}\n\nFunction: {caller}\nLine: {line_number}\n\nException:\n{e}\nLog: {logPath}";
+                MessageBox.Show(msg, caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
+
+            var app = Application.Current;
+            if (app?.Dispatcher?.CheckAccess() == true) show();
+            else app?.Dispatcher?.BeginInvoke(show);
         }
     }
 

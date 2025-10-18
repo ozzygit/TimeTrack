@@ -22,10 +22,10 @@ public class TimeTrackDbContext : DbContext
         if (looksLikeDirectory)
             dbPath = Path.Combine(dbPath, DefaultDbFileName);
 
-        // Ensure directory exists
-        var dir = Path.GetDirectoryName(Path.GetFullPath(dbPath));
-        if (!string.IsNullOrEmpty(dir))
-            Directory.CreateDirectory(dir);
+        // Removed: Directory.CreateDirectory duplication; Database.EnsureAppFolder handles this
+        // var dir = Path.GetDirectoryName(Path.GetFullPath(dbPath));
+        // if (!string.IsNullOrEmpty(dir))
+        //     Directory.CreateDirectory(dir);
 
         _dbPath = dbPath;
     }

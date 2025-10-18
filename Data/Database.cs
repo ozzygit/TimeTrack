@@ -41,18 +41,26 @@ public static class Database
         try
         {
             EnsureAppFolder();
-
             if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
             {
-                // Migrate legacy DB beside exe to Documents folder
                 File.Copy(LegacyPath, DatabasePath, overwrite: true);
             }
         }
-        catch (Exception e)
+        catch (UnauthorizedAccessException ex)
         {
-            Error.Handle("Could not verify or migrate the database path.", e);
+            Error.Handle($"No access verifying/migrating DB.\nTarget: {DatabasePath}\nLegacy: {LegacyPath}", ex);
+            return false;
         }
-
+        catch (IOException ex)
+        {
+            Error.Handle($"I/O error verifying/migrating DB.\nTarget: {DatabasePath}\nLegacy: {LegacyPath}", ex);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Error.Handle($"Unexpected error verifying/migrating DB.\nTarget: {DatabasePath}\nLegacy: {LegacyPath}", ex);
+            return false;
+        }
         return File.Exists(DatabasePath);
     }
 
@@ -65,27 +73,37 @@ public static class Database
         {
             EnsureAppFolder();
 
-            // Migrate legacy DB beside the EXE to AppData if needed
             if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
             {
-                // Prefer move; fall back to copy+delete if cross-volume or locked scenarios arise
-                try
+                try { File.Move(LegacyPath, DatabasePath); }
+                catch (IOException moveEx)
                 {
-                    File.Move(LegacyPath, DatabasePath);
-                }
-                catch (IOException)
-                {
-                    File.Copy(LegacyPath, DatabasePath, overwrite: true);
-                    try { File.Delete(LegacyPath); } catch { /* ignore delete failure */ }
+                    try { File.Copy(LegacyPath, DatabasePath, overwrite: true); try { File.Delete(LegacyPath); } catch { } }
+                    catch (Exception copyEx) { Error.Handle($"Failed to migrate legacy DB.\nFrom: {LegacyPath}\nTo: {DatabasePath}", new AggregateException(moveEx, copyEx)); throw; }
                 }
             }
 
             using var context = new TimeTrackDbContext(DatabasePath);
             context.Database.EnsureCreated();
         }
-        catch (Exception e)
+        catch (UnauthorizedAccessException ex)
         {
-            Error.Handle("Could not create the database.", e);
+            Error.Handle($"No access creating DB at:\n{DatabasePath}", ex);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            Error.Handle($"I/O error creating DB at:\n{DatabasePath}", ex);
+            throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            Error.Handle("EF Core update error while ensuring DB schema.", ex);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Unexpected error creating the database.", ex);
             throw;
         }
     }
@@ -186,6 +204,11 @@ public static class Database
 
             context.SaveChanges();
         }
+        catch (DbUpdateException dbEx)
+        {
+            var summary = string.Join(", ", entries.Select(e => $"{DateToString(e.Date)}#{e.ID}"));
+            Error.Handle($"Database update failed for entries: {summary}", dbEx);
+        }
         catch (Exception e)
         {
             Error.Handle("Something went wrong while updating the entries database.\nThe saved records may not be consistent with what is displayed.", e);
@@ -210,6 +233,10 @@ public static class Database
                 context.TimeEntries.Remove(entity);
                 context.SaveChanges();
             }
+        }
+        catch (DbUpdateException dbEx)
+        {
+            Error.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx);
         }
         catch (Exception e)
         {
