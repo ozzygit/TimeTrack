@@ -4,8 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTrack"
+        xmlns:converters="clr-namespace:TimeTrack.Converters"
         mc:Ignorable="d"
-        Title="Time Track" Height="536" Width ="605" MinWidth="600" Icon="time2.png" SizeToContent="Width">
+        Title="Time Track" Height="900" Width="750" MinWidth="750" MaxWidth="1000" MinHeight="700"
+        Icon="time2.png" Background="#F5F5F5"
+        WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
         <local:TimeKeeper/>
@@ -13,26 +16,404 @@
 
     <Window.Resources>
         <local:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
-        
-        <Style TargetType="local:MainWindow">
+        <converters:AllNotEmptyConverter x:Key="AllNotEmptyConverter"/>
+
+        <!-- Modern Color Palette -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
+        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#106EBE"/>
+        <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#005A9E"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0078D4"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E1E1E1"/>
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#323130"/>
+        <SolidColorBrush x:Key="SubtleBrush" Color="#605E5C"/>
+
+        <!-- Modern Menu Styles -->
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
         </Style>
-        
+
+        <Style TargetType="MenuItem">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0"
+                                CornerRadius="4"
+                                Margin="2,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icon (for submenus if needed) -->
+                                <ContentPresenter x:Name="Icon"
+                                                Grid.Column="0"
+                                                Margin="6,0,6,0"
+                                                VerticalAlignment="Center"
+                                                ContentSource="Icon"/>
+
+                                <!-- Header Text -->
+                                <ContentPresenter x:Name="HeaderHost"
+                                                Grid.Column="1"
+                                                ContentSource="Header"
+                                                Margin="{TemplateBinding Padding}"
+                                                VerticalAlignment="Center"
+                                                RecognizesAccessKey="True"/>
+
+                                <!-- Input Gesture Text (Keyboard Shortcut) -->
+                                <TextBlock x:Name="InputGestureText"
+                                         Grid.Column="2"
+                                         Text="{TemplateBinding InputGestureText}"
+                                         Margin="20,0,10,0"
+                                         VerticalAlignment="Center"
+                                         Foreground="{StaticResource SubtleBrush}"
+                                         FontSize="12"/>
+
+                                <!-- Submenu Arrow -->
+                                <Path x:Name="ArrowPath"
+                                    Grid.Column="3"
+                                    Margin="4,0,6,0"
+                                    VerticalAlignment="Center"
+                                    Fill="{StaticResource TextBrush}"
+                                    Data="M 0 0 L 4 4 L 0 8 Z"
+                                    Visibility="Collapsed"/>
+
+                                <!-- Popup for submenus -->
+                                <Popup x:Name="PART_Popup"
+                                     AllowsTransparency="True"
+                                     Placement="Bottom"
+                                     IsOpen="{TemplateBinding IsSubmenuOpen}"
+                                     Focusable="False"
+                                     PopupAnimation="Fade"
+                                     VerticalOffset="2">
+                                    <Border Background="White"
+                                          BorderBrush="{StaticResource BorderBrush}"
+                                          BorderThickness="1"
+                                          CornerRadius="6"
+                                          Padding="4">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" Opacity="0.15" 
+                                                            BlurRadius="12" ShadowDepth="4" Direction="270"/>
+                                        </Border.Effect>
+                                        <ScrollViewer Style="{DynamicResource {ComponentResourceKey 
+                                                      TypeInTargetAssembly={x:Type FrameworkElement}, 
+                                                      ResourceId=MenuScrollViewer}}"
+                                                    MaxHeight="400">
+                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"
+                                                          Grid.IsSharedSizeScope="True"
+                                                          Margin="0,4"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Top level menu item (File, Edit, etc.) -->
+                            <Trigger Property="Role" Value="TopLevelHeader">
+                                <Setter TargetName="PART_Popup" Property="Placement" Value="Bottom"/>
+                                <Setter TargetName="ArrowPath" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+
+                            <!-- Submenu header (has children) -->
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="PART_Popup" Property="Placement" Value="Right"/>
+                                <Setter TargetName="ArrowPath" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+
+                            <!-- Mouse over effect -->
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F3F3F3"/>
+                            </Trigger>
+                            <!-- Pressed effect -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E8E8E8"/>
+                            </Trigger>
+
+                            <!-- Submenu open effect for top level -->
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSubmenuOpen" Value="True"/>
+                                    <Condition Property="Role" Value="TopLevelHeader"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#E8E8E8"/>
+                            </MultiTrigger>
+
+                            <!-- Disabled state -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Separator Style -->
+        <Style TargetType="Separator">
+            <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Margin" Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Background="{StaticResource BorderBrush}" 
+                              Height="1" 
+                              Margin="32,4,8,4"
+                              CornerRadius="0.5"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Modern Button Style -->
         <Style TargetType="Button">
-            <Setter Property="FontFamily" Value="Lucid Sans"/>
-            <Setter Property="Background" Value="WhiteSmoke"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"
+                                            Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F3F3"/>
+                    <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#E8E8E8"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern TextBlock Style -->
         <Style TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Helvetica"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         </Style>
 
+        <!-- Label Style -->
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Modern TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#C4C4C4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern DataGrid Style -->
         <Style TargetType="DataGrid">
             <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#F3F3F3"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FAFAFA"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
         </Style>
 
         <Style TargetType="DataGridColumnHeader">
-            <Setter Property="TextBlock.FontFamily" Value="Lucid Sans"/>
-            <Setter Property="TextBlock.FontWeight" Value="SemiBold"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="#F8F8F8"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Padding" Value="8,8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F0F6FC"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E5F1FB"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern DatePicker Style -->
+        <Style TargetType="DatePicker">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- Modern CheckBox Style -->
+        <Style TargetType="CheckBox">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        </Style>
+
+        <!-- Modern DataGrid CheckBox Style -->
+        <Style x:Key="DataGridCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Background="Transparent">
+                            <Border x:Name="CheckBoxBorder"
+                                    Width="18"
+                                    Height="18"
+                                    Background="White"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="2"
+                                    CornerRadius="3">
+                                <Path x:Name="CheckMark"
+                                      Width="12"
+                                      Height="12"
+                                      Data="M 0,5 L 4,9 L 10,1"
+                                      Stroke="{StaticResource PrimaryBrush}"
+                                      StrokeThickness="2.5"
+                                      StrokeLineJoin="Round"
+                                      Visibility="Collapsed"
+                                      Stretch="Uniform"
+                                      Margin="2"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <!-- Checked State -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="CheckBoxBorder" Property="Background" Value="#E5F1FB"/>
+                                <Setter TargetName="CheckBoxBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                            </Trigger>
+
+                            <!-- Mouse Over -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CheckBoxBorder" Property="BorderBrush" Value="{StaticResource PrimaryHoverBrush}"/>
+                                <Setter TargetName="CheckBoxBorder" Property="Background" Value="#F0F6FC"/>
+                            </Trigger>
+
+                            <!-- Mouse Over + Checked -->
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="CheckBoxBorder" Property="Background" Value="#D0E7F9"/>
+                                <Setter TargetName="CheckBoxBorder" Property="BorderBrush" Value="{StaticResource PrimaryHoverBrush}"/>
+                            </MultiTrigger>
+
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="CheckBoxBorder" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Card Style for Sections -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.05" 
+                                    BlurRadius="8" ShadowDepth="2" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Notes Cell Text Style -->
+        <Style x:Key="NotesCellTextStyle" TargetType="TextBlock">
+          <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+          <Setter Property="ToolTip" Value="{Binding Notes}"/>
         </Style>
     </Window.Resources>
 
@@ -40,280 +421,407 @@
         <!--<KeyBinding Key="Insert" Command="{Binding SubmitCommand}" -->
     </Window.InputBindings>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*"/>
-            <ColumnDefinition Width="1*" MinWidth="180" MaxWidth="150"/>
-        </Grid.ColumnDefinitions>
+    <DockPanel>
+        <!--Menu Bar-->
+        <Menu DockPanel.Dock="Top" Height="40" Padding="8,4" 
+              Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Export Selected"
+                          Command="{x:Static local:MainWindow.ExportCommand}"
+                          InputGestureText="Ctrl+E"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Submit Entry" Click="BtnSubmit" InputGestureText="Enter"/>
+                <MenuItem Header="_Insert Record"
+                          Command="{x:Static local:MainWindow.InsertCommand}"
+                          InputGestureText="Ctrl+I"/>
+                <MenuItem Header="_Delete Selected" Command="{Binding RemoveCommand}" InputGestureText="Delete"/>
+                <Separator/>
+                <MenuItem Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"/>
+            </MenuItem>
+            <MenuItem Header="_Navigation">
+                <MenuItem Header="_Today"
+                          Command="{x:Static local:MainWindow.TodayCommand}"
+                          InputGestureText="Ctrl+T"/>
+                <MenuItem Header="_Previous Day"
+                          Command="{x:Static local:MainWindow.PrevDayCommand}"
+                          InputGestureText="Ctrl+Left"/>
+                <MenuItem Header="_Next Day"
+                          Command="{x:Static local:MainWindow.NextDayCommand}"
+                          InputGestureText="Ctrl+Right"/>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Options"
+                          Command="{x:Static local:MainWindow.OptionsCommand}"
+                          InputGestureText="Ctrl+O"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About TimeTrack"
+                          Command="{x:Static local:MainWindow.HelpCommand}"
+                          InputGestureText="F1"/>
+            </MenuItem>
+        </Menu>
 
-        <!--Left Column-->
-        <Grid Grid.Column="0" Margin="0, 0, 0, 0">
-            <Grid.ColumnDefinitions >
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!--Status Bar - MOVED OUTSIDE ScrollViewer-->
+        <StatusBar DockPanel.Dock="Bottom" Height="25">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Ready" />
+            </StatusBarItem>
+        </StatusBar>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!--Date picker-->
-            <Grid Grid.Row="0" Margin="12, 12, 12, 0">
-                <Grid.ColumnDefinitions >
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition Width="*" MaxWidth="30"/>
-                    <ColumnDefinition Width="*" MaxWidth="70"/>
-                    <ColumnDefinition Width="*" MaxWidth="30"/>
-                </Grid.ColumnDefinitions>
-            
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                </Grid.RowDefinitions>            
-
-                <TextBlock Grid.Column="0" FontWeight="SemiBold" VerticalAlignment="Center" Width="auto" Text="Date: "/>
-                <TextBlock Name="txtCurrentDate"  Grid.Column="1" VerticalAlignment="Center" Width="auto" Text="{Binding CurrentDate}"/>
-                <DatePicker Name="CalDate"  Grid.Column="2" Margin="6, 0, 0, 0" Width="auto" SelectedDate="{Binding Date}" SelectedDateChanged="CalLoadDate"/>
-
-                <Button Name="BtnBack" Grid.Column="3" Width="auto" Margin="6, 0, 0, 0" 
-                        Click="BtnGoBack" ClickMode="Release" IsEnabled="True">
-                    ←
-                </Button>
-
-                <Button Name="BtnToday" Grid.Column="4" Width="auto" Margin="3, 0, 0, 0" 
-                        Click="BtnGotoToday" ClickMode="Release" IsEnabled="False">
-                    Today
-                </Button>
-                
-                <Button Name="BtnForward" Grid.Column="5" Width="auto" Margin="3, 0, 0, 0" 
-                        Click="BtnGoForward" ClickMode="Release" IsEnabled="True">
-                    →
-                </Button>
-            </Grid>
-
-            <!--Entries Window-->
-            <DataGrid 
-                Name="DgTimeRecords" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedItem}"
-                AutoGenerateColumns="False" Grid.Row="1" Margin="12, 12, 12, 12"
-                HorizontalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled"
-                CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False"
-                CanUserResizeColumns="False" CanUserReorderColumns="False" CanUserSortColumns="False" 
-                BorderBrush="LightCoral" BorderThickness="1" 
-                HorizontalGridLinesBrush="White" VerticalGridLinesBrush="White" AlternatingRowBackground="GhostWhite"
-                SelectionChanged="DgTimeRecords_SelectionChanged">
-
-                <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Header="" Width="30" Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"/>
-                    <DataGridTextColumn Header="Start" Width="60" Binding="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
-                    <DataGridTextColumn Header="End" Width="60" Binding="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
-                    <DataGridTextColumn Header="Case" Width="87" Binding="{Binding CaseNumber}"/>
-                    <DataGridTextColumn Header="Notes" Width="138" Binding="{Binding Notes}"/>
-                </DataGrid.Columns>
-
-                <DataGrid.InputBindings>
-                    <KeyBinding Key="Delete" Command="{Binding RemoveCommand}" />
-                </DataGrid.InputBindings>
-            </DataGrid>
-        </Grid>
-
-        <!--Right Column-->
-        <Grid Grid.Column="1" Margin="0, 12, 12, 12">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Column="1" Margin="0, 0, 0, 0">
+        <!--Main Content with ScrollViewer-->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="12">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="1*"/>
-                    <RowDefinition Height="1*"/>
-                </Grid.RowDefinitions>
-
-                <!--Hours/gaps-->
-                <Grid Grid.Row="0" Margin="0, 0, 0, 0" HorizontalAlignment="Stretch">
-
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="1*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="2"/>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="12"/>
-                    </Grid.RowDefinitions>
-
-
-                    <TextBlock Grid.Row="0" FontWeight="SemiBold" HorizontalAlignment="Stretch" TextAlignment="Center">Total</TextBlock>
-                    <TextBlock Grid.Row="1" Foreground="SlateGray" FontWeight="Normal" HorizontalAlignment="Stretch" TextAlignment="Center">hours</TextBlock>
-                    <TextBlock Grid.Row="3" HorizontalAlignment="Stretch" TextAlignment="Center" Text="{Binding HoursTotal}"/>
-
-                    <TextBlock Grid.Row="0" Grid.Column="1" FontWeight="SemiBold" HorizontalAlignment="Stretch" TextAlignment="Center">Gaps</TextBlock>
-                    <TextBlock Grid.Row="1" Grid.Column="1" Foreground="SlateGray" FontWeight="Normal" HorizontalAlignment="Stretch" TextAlignment="Center">minutes</TextBlock>
-                    <TextBlock Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" TextAlignment="Center" Text="{Binding GapsTotal}"/>
-                </Grid>
-
-                <!--Selected Time-->
-                <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="1*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="2"/>
-                        <RowDefinition Height="auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" FontWeight="SemiBold" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" TextAlignment="Center">Selected Time</TextBlock>
-                    <TextBlock Grid.Row="1" Grid.Column="0" Foreground="SlateGray" FontWeight="Normal" HorizontalAlignment="Stretch" TextAlignment="Center">hours</TextBlock>
-                    <TextBlock Grid.Row="1" Grid.Column="1" Foreground="SlateGray" FontWeight="Normal" HorizontalAlignment="Stretch" TextAlignment="Center">minutes</TextBlock>
-                    <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Stretch" TextAlignment="Center" Text="{Binding SelectedHours}"/>
-                    <TextBlock Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" TextAlignment="Center" Text="{Binding SelectedMins}"/>
-                </Grid>
-
-            </Grid>
-
-            <!--Input Fields-->
-            <Grid Margin="0,12,0,0" Grid.Row="1">
-
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="6"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="6"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="6"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="6"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="12"/>
-                </Grid.RowDefinitions>
-
-                <TextBlock Grid.Row="0" FontWeight="SemiBold">Start Time</TextBlock>
-                <TextBlock Grid.Row="4" FontWeight="SemiBold">Finish Time</TextBlock>
-                <TextBlock Grid.Row="8" FontWeight="SemiBold">Case Number</TextBlock>
-                <TextBlock Grid.Row="12" FontWeight="SemiBold">Notes</TextBlock>                
-
-                <TextBox Name="FldStartTime" Text="{Binding StartTimeField}" 
-                         Grid.Row="2" 
-                         BorderBrush="LightCoral" BorderThickness="1" 
-                         TabIndex="0"
-                         PreviewKeyDown="OnKeyDown"/>
-                
-                <TextBox Name="FldEndTime" Text="{Binding EndTimeField}" 
-                         Grid.Row="6" 
-                         BorderBrush="LightCoral" BorderThickness="1" 
-                         TabIndex="1"
-                         PreviewKeyDown="OnKeyDown"/>
-                
-                <TextBox Name="FldCaseNumber" Text="{Binding CaseNumberField}" 
-                         Grid.Row="10" 
-                         BorderBrush="LightCoral" BorderThickness="1" 
-                         TabIndex="2"
-                         PreviewKeyDown="OnKeyDown"/>
-
-                <TextBox Name="FldNotes" Text="{Binding NotesField}" 
-                         Grid.Row="14" 
-                         BorderBrush="LightCoral" BorderThickness="1" TextWrapping="Wrap" Height="50"
-                         TabIndex="3"
-                         PreviewKeyDown="OnKeyDown"/>
-            </Grid>
-
-            <!--Buttons & checkbox-->
-            <Grid Margin="0,0,0,0" Grid.Row="2">
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="*" MinWidth="420"/>
                     <ColumnDefinition Width="4"/>
-                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="12"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="4"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="4"/>
-                    <RowDefinition Height="auto"/>
-                </Grid.RowDefinitions>
+                <!-- Left -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                <Grid Grid.Column="0" HorizontalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="4"/>
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
+                        <!--Date picker Section-->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions >
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="auto"/>
+                            </Grid.ColumnDefinitions>
 
-                    <CheckBox Name="ChkLunch"
-                              VerticalAlignment="Center" HorizontalAlignment="Center"
-                              Checked="ChkLunch_Checked" Unchecked="ChkLunch_Unchecked" 
-                              DataContext="null"/>
-                    <TextBlock Grid.Column="2">Lunch</TextBlock>
-                </Grid>
+                            <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="14" 
+                                     VerticalAlignment="Center" Margin="0,0,8,0" Text="Date:"/>
+                            <TextBlock Name="txtCurrentDate" Grid.Column="1" VerticalAlignment="Center" 
+                                     Margin="0,0,12,0" FontSize="14" Text="{Binding CurrentDate}"/>
+                            <DatePicker Name="CalDate" Grid.Column="2" Width="140" 
+                                      HorizontalAlignment="Left" Margin="0,0,12,0"
+                                      SelectedDate="{Binding Date}" SelectedDateChanged="CalLoadDate"
+                                      ToolTip="Select a date to view entries"/>
 
-                <Grid Grid.Column="2" HorizontalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="4"/>
-                        <ColumnDefinition Width="auto"/>
-                    </Grid.ColumnDefinitions>
-                </Grid>
+                            <Button Name="BtnBack" Grid.Column="3" Width="32" Height="32" 
+                                  Margin="0,0,4,0" Content="←" FontSize="16"
+                                  Click="BtnGoBack" ClickMode="Release" IsEnabled="True"
+                                  ToolTip="Go to previous day (Ctrl+Left)"/>
 
-                <Button Name="BtnSub" Grid.Row="2" Grid.ColumnSpan="3" TabIndex="4"
-                        Height="30" HorizontalAlignment="Stretch" 
-                        BorderBrush="Black" BorderThickness="1"
-                        Click="BtnSubmit" ClickMode="Release">
-                    Submit
-                </Button>
+                            <Button Name="BtnToday" Grid.Column="4" Height="32" Padding="12,0"
+                                  Margin="0,0,4,0" Content="Today"
+                                  Click="BtnGotoToday" ClickMode="Release" IsEnabled="False"
+                                  ToolTip="Return to today's date (Ctrl+T)"/>
 
-                <Button Grid.Column="0" Grid.Row="4" TabIndex="7"
-                        Height="30" HorizontalAlignment="Stretch"
-                        BorderBrush="Black" BorderThickness="1"
-                        Click="BtnToggleAllRecorded" ClickMode="Release">
-                    Toggle All
-                </Button>
+                            <Button Name="BtnForward" Grid.Column="5" Width="32" Height="32" 
+                                  Content="→" FontSize="16"
+                                  Click="BtnGoForward" ClickMode="Release" IsEnabled="True"
+                                  ToolTip="Go to next day (Ctrl+Right)"/>
+                        </Grid>
 
-                <Button Grid.Column="2" Grid.Row="4" TabIndex="8"
-                        Height="30" HorizontalAlignment="Stretch"
-                        BorderBrush="Black" BorderThickness="1"
-                        Click="BtnInsert" ClickMode="Release">
-                    Insert Record
-                </Button>
+                        <!--Entries DataGrid-->
+                        <Grid Grid.Row="1">
+                            <DataGrid Name="DgTimeRecords"
+         ItemsSource="{Binding Entries}"
+         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+         AutoGenerateColumns="False"
+         HeadersVisibility="Column"
+         ColumnWidth="Auto"
+         RowHeaderWidth="0"
+         MinColumnWidth="40">
+    <DataGrid.Columns>
+        <DataGridCheckBoxColumn Header="" Width="30"
+            Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
+            ElementStyle="{StaticResource DataGridCheckBoxStyle}"
+            EditingElementStyle="{StaticResource DataGridCheckBoxStyle}"/>
+        <DataGridTextColumn Header="Start" Width="Auto"
+            Binding="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
+        <DataGridTextColumn Header="End" Width="Auto"
+            Binding="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
+        <DataGridTextColumn Header="Ticket Number" Width="Auto"
+            Binding="{Binding CaseNumber}"/>
+        <DataGridTextColumn Header="Notes" Width="*"
+            Binding="{Binding Notes}">
+            <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource NotesCellTextStyle}"/>
+            </DataGridTextColumn.ElementStyle>
+        </DataGridTextColumn>
+    </DataGrid.Columns>
+</DataGrid>                        </Grid>
+                    </Grid>
+                </Border>
 
-                <Button Grid.Column="0" Grid.Row="6" Grid.ColumnSpan="3" TabIndex="5"
-                        Height="30" HorizontalAlignment="Stretch"
-                        BorderBrush="Black" BorderThickness="1"
-                        Click="BtnExport" ClickMode="Release">
-                    Export
-                </Button>
-                <!--
-                <Button Grid.Column="2" Grid.Row="6" TabIndex="6"
-                        Height="30" HorizontalAlignment="Stretch"
-                        BorderBrush="Black" BorderThickness="1"
-                        Click="BtnExportAll" ClickMode="Release">
-                    Export All
-                </Button>
-                -->
+                <!-- Splitter -->
+                <GridSplitter Grid.Column="1"
+                              Width="4"
+                              Background="#DDDDDD"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              ResizeBehavior="PreviousAndNext"
+                              ResizeDirection="Columns"
+                              ShowsPreview="True"/>
+
+                <!-- Right -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}"
+                        MinWidth="140" MaxWidth="180">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!--Statistics Section-->
+                        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                            <!-- Total Hours & Gaps -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Total" FontSize="11" Foreground="{StaticResource SubtleBrush}" 
+                                             HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    <TextBlock Text="{Binding HoursTotal}" FontSize="20" FontWeight="SemiBold" 
+                                             HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    <TextBlock Text="hours" FontSize="10" Foreground="{StaticResource SubtleBrush}" 
+                                             HorizontalAlignment="Center"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Gaps" FontSize="11" Foreground="{StaticResource SubtleBrush}" 
+                                             HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    <TextBlock Text="{Binding GapsTotal}" FontSize="20" FontWeight="SemiBold" 
+                                             HorizontalAlignment="Center" Margin="0,0,0,2"/>
+                                    <TextBlock Text="minutes" FontSize="10" Foreground="{StaticResource SubtleBrush}" 
+                                             HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Selected Time -->
+                            <Border Background="#F8F8F8" CornerRadius="4" Padding="12,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Selected Time" 
+                                             FontSize="11" FontWeight="SemiBold"
+                                             HorizontalAlignment="Center" Margin="0,0,0,6"/>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedHours}" FontSize="16" FontWeight="SemiBold" 
+                                                 HorizontalAlignment="Center"/>
+                                        <TextBlock Text="hours" FontSize="9" Foreground="{StaticResource SubtleBrush}" 
+                                                 HorizontalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding SelectedMins}" FontSize="16" FontWeight="SemiBold" 
+                                                 HorizontalAlignment="Center"/>
+                                        <TextBlock Text="minutes" FontSize="9" Foreground="{StaticResource SubtleBrush}" 
+                                                 HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <!--Input Fields Section-->
+                        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                            <TextBlock Text="Start Time" Style="{StaticResource LabelStyle}"/>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="2"/>
+                                    <ColumnDefinition Width="28"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Name="FldStartTime" Grid.Column="0"
+                                         Text="{Binding StartTimeField, UpdateSourceTrigger=PropertyChanged}" 
+                                         TabIndex="0"/>
+
+                                <Button Name="BtnStartTimePicker" Grid.Column="2" 
+                                        Width="28" Content="🕒" FontSize="12"
+                                        Padding="0"
+                                        Click="BtnStartTimePicker_Click"
+                                        ToolTip="Select start time from picker"/>
+
+                                <Popup Name="PopupStartTime" 
+                                       PlacementTarget="{Binding ElementName=BtnStartTimePicker}"
+                                       Placement="Bottom"
+                                       StaysOpen="False"
+                                       AllowsTransparency="True">
+                                    <Border Background="White" 
+                                            BorderBrush="{StaticResource BorderBrush}" 
+                                            BorderThickness="1" 
+                                            CornerRadius="6"
+                                            Padding="8">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" Opacity="0.15" 
+                                                            BlurRadius="12" ShadowDepth="4" Direction="270"/>
+                                        </Border.Effect>
+                                        <StackPanel>
+                                            <TextBlock Text="Select Start Time" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <ComboBox Name="CmbStartHour" Grid.Column="0" Width="60" 
+                                                          SelectedIndex="8"/>
+                                                <TextBlock Grid.Column="1" Text=":" VerticalAlignment="Center" 
+                                                           FontSize="16" FontWeight="Bold"/>
+                                                <ComboBox Name="CmbStartMinute" Grid.Column="2" Width="60" 
+                                                          SelectedIndex="0"/>
+                                                <ComboBox Name="CmbStartPeriod" Grid.Column="4" Width="60" 
+                                                          SelectedIndex="0"/>
+                                            </Grid>
+                                            <Button Content="Set Time" Margin="0,8,0,0" 
+                                                    Click="BtnSetStartTime_Click"
+                                                    Style="{StaticResource PrimaryButton}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <TextBlock Text="Finish Time" Style="{StaticResource LabelStyle}"/>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="2"/>
+                                    <ColumnDefinition Width="28"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Name="FldEndTime" Grid.Column="0"
+                                         Text="{Binding EndTimeField, UpdateSourceTrigger=PropertyChanged}" 
+                                         TabIndex="1"
+                                         VerticalAlignment="Top"/>
+
+                                <Button Name="BtnEndTimePicker" Grid.Column="2" 
+                                        Width="28" Height="43" Content="🕒" FontSize="12"
+                                        Padding="0"
+                                        Click="BtnEndTimePicker_Click"
+                                        ToolTip="Select end time from picker"
+                                        VerticalAlignment="Center"/>
+
+                                <Popup Name="PopupEndTime" 
+                                       PlacementTarget="{Binding ElementName=BtnEndTimePicker}"
+                                       Placement="Bottom"
+                                       StaysOpen="False"
+                                       AllowsTransparency="True">
+                                    <Border Background="White" 
+                                            BorderBrush="{StaticResource BorderBrush}" 
+                                            BorderThickness="1" 
+                                            CornerRadius="6"
+                                            Padding="8">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" Opacity="0.15" 
+                                                            BlurRadius="12" ShadowDepth="4" Direction="270"/>
+                                        </Border.Effect>
+                                        <StackPanel>
+                                            <TextBlock Text="Select End Time" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="8"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <ComboBox Name="CmbEndHour" Grid.Column="0" Width="60" 
+                                                          SelectedIndex="8"/>
+                                                <TextBlock Grid.Column="1" Text=":" VerticalAlignment="Center" 
+                                                           FontSize="16" FontWeight="Bold"/>
+                                                <ComboBox Name="CmbEndMinute" Grid.Column="2" Width="60" 
+                                                          SelectedIndex="0"/>
+                                                <ComboBox Name="CmbEndPeriod" Grid.Column="4" Width="60" 
+                                                          SelectedIndex="0"/>
+                                            </Grid>
+                                            <Button Content="Set Time" Margin="0,8,0,0" 
+                                                    Click="BtnSetEndTime_Click"
+                                                    Style="{StaticResource PrimaryButton}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <TextBlock Text="Ticket Number" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Name="FldCaseNumber"
+                                     Text="{Binding CaseNumberField, UpdateSourceTrigger=PropertyChanged}"
+                                     TabIndex="2" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Name="FldNotes"
+                                     Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
+                                     TextWrapping="NoWrap"
+                                     Height="130"
+                                     AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto"
+                                     TabIndex="3"/>
+                        </StackPanel>
+
+                        <!--Actions Section-->
+                        <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                            <CheckBox Name="ChkLunch" Content="Lunch Break" Margin="0,0,0,12"
+                                    Checked="ChkLunch_Checked" Unchecked="ChkLunch_Unchecked" 
+                                    DataContext="{x:Null}"
+                                    ToolTip="Automatically create a 1-hour lunch break entry"/>
+
+                            <Button Name="BtnSub" Content="Submit Entry" Height="36"
+                                  Style="{StaticResource PrimaryButton}"
+                                  TabIndex="4" Margin="0,0,0,8"
+                                  Click="BtnSubmit" ClickMode="Release"
+                                  ToolTip="Add a new time entry to the current day (Enter)">
+                                <Button.IsEnabled>
+                                    <MultiBinding Converter="{StaticResource AllNotEmptyConverter}">
+                                        <Binding Path="StartTimeField" UpdateSourceTrigger="PropertyChanged"/>
+                                        <Binding Path="EndTimeField" UpdateSourceTrigger="PropertyChanged"/>
+                                        <Binding Path="CaseNumberField" UpdateSourceTrigger="PropertyChanged"/>
+                                        <Binding Path="NotesField" UpdateSourceTrigger="PropertyChanged"/>
+                                    </MultiBinding>
+                                </Button.IsEnabled>
+                            </Button>
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0" Content="Toggle All" Height="32"
+                                      TabIndex="7" Click="BtnToggleAllRecorded" ClickMode="Release" Padding="6,6"
+                                      ToolTip="Toggle the recorded status for all entries"/>
+
+                                <Button Grid.Column="2" Content="Insert" Height="32"
+                                      TabIndex="8" Click="BtnInsert" ClickMode="Release"
+                                      ToolTip="Insert a blank entry above the selected row (Ctrl+I)"/>
+                            </Grid>
+
+                            <Button Content="Export Selected" Height="32"
+                                  TabIndex="5" Click="BtnExport" ClickMode="Release"
+                                  ToolTip="Copy selected entry to clipboard and mark as recorded (Ctrl+E)"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
-        </Grid>
-    </Grid>
+        </ScrollViewer>
+    </DockPanel>
 </Window>

@@ -123,7 +123,8 @@ namespace TimeTrack
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        public event TimeEntryChangedEventHandler TimeEntryChanged;
+        // Add this event declaration
+        public event Action<bool> TimeEntryChanged;
         protected void OnTimeEntryChanged(bool time_changed)
         {
             TimeEntryChanged?.Invoke(time_changed);
