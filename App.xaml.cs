@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using TimeTrack; // for Error
+using TimeTrack.Data; // for Database
 
 namespace TimeTrack
 {
@@ -33,6 +34,22 @@ namespace TimeTrack
                 if (e.ExceptionObject is Exception ex)
                     Error.Handle("Unhandled domain exception.", ex);
             };
+        }
+
+        private void OnStartup(object sender, StartupEventArgs e)
+        {
+            // Run DB setup/migrations before any window or DB usage
+            try
+            {
+                Database.CreateDatabase();
+            }
+            catch
+            {
+                // Errors are already logged/shown via Error.Handle; decide whether to continue
+            }
+
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
         }
     }
 }
