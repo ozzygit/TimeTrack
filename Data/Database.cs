@@ -1,7 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO; // <-- Add this using directive
+using System.IO;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
 namespace TimeTrack.Data;
@@ -12,13 +13,47 @@ namespace TimeTrack.Data;
 public static class Database
 {
     public const string DateFormat = "yyyy-MM-dd";
-    private const string DatabasePath = "timetrack.db";
+
+    // Use user's Documents\TimeTrack\timetrack.db
+    private static readonly string AppFolder =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TimeTrack");
+    private const string DatabaseFileName = "timetrack.db";
+    private static readonly string DatabasePath = Path.Combine(AppFolder, DatabaseFileName);
+
+    // Legacy path (next to the executable) for migration support
+    private static readonly string LegacyPath = Path.Combine(AppContext.BaseDirectory, DatabaseFileName);
 
     /// <summary>
-    /// Check if the database file exists
+    /// Ensure the app data folder exists.
+    /// </summary>
+    private static void EnsureAppFolder()
+    {
+        if (!Directory.Exists(AppFolder))
+        {
+            Directory.CreateDirectory(AppFolder);
+        }
+    }
+
+    /// <summary>
+    /// Check if the database file exists (migrates from legacy location if needed)
     /// </summary>
     public static bool Exists()
     {
+        try
+        {
+            EnsureAppFolder();
+
+            if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
+            {
+                // Migrate legacy DB beside exe to Documents folder
+                File.Copy(LegacyPath, DatabasePath, overwrite: true);
+            }
+        }
+        catch (Exception e)
+        {
+            Error.Handle("Could not verify or migrate the database path.", e);
+        }
+
         return File.Exists(DatabasePath);
     }
 
@@ -29,6 +64,7 @@ public static class Database
     {
         try
         {
+            EnsureAppFolder();
             using var context = new TimeTrackDbContext(DatabasePath);
             context.Database.EnsureCreated();
         }
