@@ -529,6 +529,48 @@ namespace TimeTrack
             }
         }
 
+        private void BtnNotesPopOut_Click(object sender, RoutedEventArgs e)
+        {
+            if (time_keeper == null)
+                return;
+
+            var notesEditor = new NotesEditorWindow(time_keeper.NotesField)
+            {
+                Owner = this
+            };
+
+            if (notesEditor.ShowDialog() == true)
+            {
+                time_keeper.NotesField = notesEditor.NotesText ?? string.Empty;
+            }
+        }
+
+        private void TimeField_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Return || e.Key == Key.Tab)
+            {
+                FormatTimeField(sender as TextBox);
+            }
+        }
+
+        private void TimeField_LostFocus(object sender, RoutedEventArgs e)
+        {
+            FormatTimeField(sender as TextBox);
+        }
+
+        private void FormatTimeField(TextBox? tb)
+        {
+            if (tb == null || time_keeper == null) return;
+            var ts = TimeStringConverter.StringToTimeSpan(tb.Text);
+            if (!ts.HasValue) return;
+            var formatted = (DateTime.Today + ts.Value).ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            tb.Text = formatted;
+            if (tb == FldStartTime)
+                time_keeper.StartTimeField = formatted;
+            else if (tb == FldEndTime)
+                time_keeper.EndTimeField = formatted;
+        }
+
         private void BtnProjectInfo_Click(object sender, RoutedEventArgs e)
         {
             string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";

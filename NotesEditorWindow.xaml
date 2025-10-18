@@ -1,0 +1,26 @@
+<Window x:Class="TimeTrack.NotesEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Edit Notes" Height="380" Width="520"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBox x:Name="NotesBox"
+                 Grid.Row="0"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 AcceptsReturn="True"
+                 FontFamily="Consolas"
+                 FontSize="13"
+                 Text="{Binding NotesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Width="90" Margin="0,0,8,0" IsDefault="True" Click="OnSave">Save</Button>
+            <Button Width="90" IsCancel="True">Cancel</Button>
+        </StackPanel>
+    </Grid>
+</Window>

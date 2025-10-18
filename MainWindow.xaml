@@ -674,7 +674,9 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBox Name="FldStartTime" Grid.Column="0"
-                                         Text="{Binding StartTimeField, UpdateSourceTrigger=PropertyChanged}" 
+                                         Text="{Binding StartTimeField, UpdateSourceTrigger=PropertyChanged}"
+                                         LostFocus="TimeField_LostFocus"
+                                         PreviewKeyDown="TimeField_PreviewKeyDown"
                                          TabIndex="0"/>
 
                                 <Button Name="BtnStartTimePicker" Grid.Column="2" 
@@ -734,7 +736,9 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBox Name="FldEndTime" Grid.Column="0"
-                                         Text="{Binding EndTimeField, UpdateSourceTrigger=PropertyChanged}" 
+                                         Text="{Binding EndTimeField, UpdateSourceTrigger=PropertyChanged}"
+                                         LostFocus="TimeField_LostFocus"
+                                         PreviewKeyDown="TimeField_PreviewKeyDown"
                                          TabIndex="1"
                                          VerticalAlignment="Top"/>
 
@@ -793,13 +797,30 @@
                                      TabIndex="2" Margin="0,0,0,12"/>
 
                             <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Name="FldNotes"
-                                     Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
-                                     TextWrapping="NoWrap"
-                                     Height="130"
-                                     AcceptsReturn="True"
-                                     VerticalScrollBarVisibility="Auto"
-                                     TabIndex="3"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="2"/>
+                                    <ColumnDefinition Width="28"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Name="FldNotes"
+                                         Grid.Column="0"
+                                         Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
+                                         TextWrapping="NoWrap"
+                                         Height="130"
+                                         AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         TabIndex="3"/>
+                                <Button Name="BtnNotesPopOut"
+                                        Grid.Column="2"
+                                        Width="28"
+                                        Height="130"
+                                        Content="↗"
+                                        FontSize="12"
+                                        Padding="0"
+                                        Click="BtnNotesPopOut_Click"
+                                        ToolTip="Pop out notes editor"/>
+                            </Grid>
                         </StackPanel>
 
                         <!--Actions Section-->
