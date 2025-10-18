@@ -7,7 +7,7 @@
         xmlns:converters="clr-namespace:TimeTrack.Converters"
         mc:Ignorable="d"
         Title="Time Track" Height="900" Width="750" MinWidth="750" MaxWidth="1000" MinHeight="700"
-        Icon="time2.png" Background="#F5F5F5"
+        Icon="pack://application:,,,/TimeTrack;component/Resources/time.png" Background="#F5F5F5"
         WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>

@@ -1,45 +1,23 @@
-﻿<!--
-  Changelog - 2025-10-17
-  - 2025-10-17: Converted project to SDK-style WPF targeting .NET Framework 4.7.2.
-  - Added PackageReference for System.Data.SQLite (Version 1.0.116.0) so MSBuild/NuGet deploys native SQLite.Interop.dll automatically.
-  - Removed embedding of the managed System.Data.SQLite.dll and old NuGet stub/import targets that prevented native assets from being copied.
-  - Disabled SDK auto-generation of assembly attributes (<GenerateAssemblyInfo>false</GenerateAssemblyInfo>) to resolve duplicate CS0579 errors.
-  - Set PlatformTarget to x64 and Prefer32Bit to false to match native interop expectations.
-  - Recommended: remove AppDomain.CurrentDomain.AssemblyResolve extraction code from MainWindow.xaml.cs (it breaks native DLL resolution).
-  - Post-change actions: Clean solution → Restore NuGet Packages → Rebuild → verify SQLite.Interop.dll is present in output and loads at runtime.
--->
-<!--
-  Changes:
-  - Disabled SDK auto-generation of assembly attributes to avoid duplicates with Properties\AssemblyInfo.cs.
-  - Keeps SDK-style WPF targeting .NET Framework 4.7.2 and System.Data.SQLite PackageReference.
--->
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <RootNamespace>TimeTrack</RootNamespace>
-    <AssemblyName>TimeTrack</AssemblyName>
-
-    <!-- Avoid duplicate attributes with Properties\AssemblyInfo.cs -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-
-    <!-- Ensure all package outputs (incl. native) are copied -->
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-
-    <!-- Your app metadata -->
     <StartupObject>TimeTrack.App</StartupObject>
-    <ApplicationIcon>ExeIcon.ico</ApplicationIcon>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Use the Core package that carries the native interop assets -->
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118.0" />
+    <!-- Embedded resources -->
+    <Resource Include="Resources\time.xcf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\time.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="time2.png" />
-    <Content Include="ExeIcon.ico" />
-    <None Include="App.config" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118.0" />
   </ItemGroup>
 </Project>

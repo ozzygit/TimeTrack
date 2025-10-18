@@ -889,7 +889,7 @@ namespace TimeTrack
             {
                 Close();
                 Error.Handle("Could not get current entry index.", e);
-                throw e;
+                throw; // preserve original stack trace
             }
             
             Close();
@@ -936,7 +936,7 @@ namespace TimeTrack
             {
                 Close();
                 Error.Handle("Something went wrong while retrieving today's entries.", e);
-                throw e;
+                throw; // preserve original stack trace
             }
             Close();
             return return_val;
@@ -1001,7 +1001,7 @@ namespace TimeTrack
             catch (Exception e)
             {
                 Error.Handle("Could not open a connection to the database.", e);
-                throw e;
+                throw; // preserve original stack trace
             }
         }
         private static void Close()
