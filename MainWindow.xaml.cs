@@ -971,10 +971,8 @@ namespace TimeTrack
 
         public void SetStartTimeField()
         {
-            if (time_records.Count > 0)
-                StartTimeField = time_records.Last<TimeEntry>().EndTimeAsString();
-            else
-                StartTimeField = string.Empty; // Changed from null to string.Empty
+            // Always pre-populate with current local time in the expected display format
+            StartTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
         }
 
         public void AddChangedHandlerToAllEntries()
