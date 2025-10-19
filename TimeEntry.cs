@@ -106,7 +106,13 @@ namespace TimeTrack
                 if (!_startTime.HasValue || !_endTime.HasValue) return null;
                 var start = _startTime.Value.ToTimeSpan();
                 var end = _endTime.Value.ToTimeSpan();
+                
+                // If end equals start, duration is zero (not overnight)
+                if (end == start) return TimeSpan.Zero;
+                
+                // If end is before start, assume it's an overnight shift (spans to next day)
                 if (end < start) end += TimeSpan.FromDays(1);
+                
                 return end - start;
             }
         }

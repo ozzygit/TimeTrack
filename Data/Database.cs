@@ -264,17 +264,11 @@ public static class Database
                     var start = entry.StartTime;
                     var end = entry.EndTime;
                     
-                    if (start.HasValue && end.HasValue && end <= start)
+                    // Skip validation - allow equal times (0 duration) and let overnight shifts be handled by Duration property
+                    // Only skip entries with no times set
+                    if (!start.HasValue || !end.HasValue)
                     {
-                        try 
-                        { 
-                            ErrorHandler.Handle($"Skipping invalid duration for {DateToString(entry.Date)}#{entry.ID}", 
-                                new InvalidOperationException("End <= Start")); 
-                        } 
-                        catch (Exception logEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
-                        }
+                        System.Diagnostics.Debug.WriteLine($"Skipping entry with missing times for {DateToString(entry.Date)}#{entry.ID}");
                         continue;
                     }
 
