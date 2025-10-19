@@ -17,19 +17,29 @@ public static class Database
     public const string DateFormat = "yyyy-MM-dd";
 
     // Use user's LocalApplicationData\TimeTrack with new DB file name to avoid confusion
-    private static readonly string AppFolder =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
-    private static readonly string DatabaseFileName = "timetrack_v2.db";
-    private static readonly string DatabasePath = Path.Combine(AppFolder, DatabaseFileName);
+    private static string GetAppFolder()
+    {
+        var overridePath = Environment.GetEnvironmentVariable("TIMETRACK_APPDATA");
+        if (!string.IsNullOrWhiteSpace(overridePath))
+        {
+            // If user provides TIMETRACK_APPDATA, treat it as the parent folder and append TimeTrack
+            return Path.Combine(overridePath, "TimeTrack");
+        }
 
-    // Legacy paths
-    private static readonly string LegacyExePath = Path.Combine(AppContext.BaseDirectory, "timetrack.db");
-    private static readonly string LegacyDocumentsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TimeTrack", "timetrack.db");
-    private static readonly string LegacyRoamingAppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack", "timetrack.db");
-    private static readonly string LegacyLocalAppDataPath = Path.Combine(AppFolder, "timetrack.db"); // old name in same folder
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
+    }
+
+    private static readonly string DatabaseFileName = "timetrack_v2.db";
+    private static string DatabasePath => Path.Combine(GetAppFolder(), DatabaseFileName);
+
+    // Legacy paths (use AppContext.BaseDirectory and standard folders)
+    private static string LegacyExePath => Path.Combine(AppContext.BaseDirectory, "timetrack.db");
+    private static string LegacyDocumentsPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TimeTrack", "timetrack.db");
+    private static string LegacyRoamingAppDataPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack", "timetrack.db");
+    private static string LegacyLocalAppDataPath => Path.Combine(GetAppFolder(), "timetrack.db"); // old name in same folder
 
     // Backups folder
-    private static readonly string BackupsFolder = Path.Combine(AppFolder, "Backups");
+    private static string BackupsFolder => Path.Combine(GetAppFolder(), "Backups");
 
     private const int BackupRetentionCount = 7;
 
@@ -38,9 +48,10 @@ public static class Database
     /// </summary>
     private static void EnsureAppFolder()
     {
-        if (!Directory.Exists(AppFolder))
+        var appFolder = GetAppFolder();
+        if (!Directory.Exists(appFolder))
         {
-            Directory.CreateDirectory(AppFolder);
+            Directory.CreateDirectory(appFolder);
         }
     }
 
@@ -112,7 +123,7 @@ public static class Database
 
     /// <summary>
     /// Try migrate a legacy database to the current AppFolder if target does not exist.
-    /// Checks EXE directory, MyDocuments\\TimeTrack, Roaming AppData\\TimeTrack, and LocalAppData old filename.
+    /// Checks EXE directory, MyDocuments\TimeTrack, Roaming AppData\TimeTrack, and LocalAppData old filename.
     /// </summary>
     private static void TryMigrateLegacyDatabase()
     {
@@ -298,6 +309,32 @@ public static class Database
             if (!IntegrityCheck(context))
             {
                 Error.Handle("SQLite integrity check failed. A backup has been kept.", new InvalidOperationException("PRAGMA integrity_check != ok"));
+            }
+        }
+        catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode == 26 || (sqlEx.Message?.IndexOf("file is not a database", StringComparison.OrdinalIgnoreCase) >= 0))
+        {
+            // Handle corrupted DB file: backup, remove, and recreate a fresh DB using migrations
+            try
+            {
+                Error.Handle("Detected corrupted SQLite database. Attempting recovery.", sqlEx);
+                // Ensure no open connections
+                SqliteConnection.ClearAllPools();
+
+                // Backup corrupted DB with explicit reason
+                BackupDatabase("corrupted");
+
+                // Remove corrupted file
+                try { File.Delete(DatabasePath); } catch { /* ignore */ }
+
+                // Recreate database from migrations
+                using var recreateContext = new TimeTrackDbContext(DatabasePath);
+                recreateContext.Database.Migrate();
+                ApplySqlitePragmas(recreateContext);
+            }
+            catch (Exception ex)
+            {
+                Error.Handle("Failed to recover from corrupted database.", ex);
+                throw; // escalate if recovery fails
             }
         }
         catch (UnauthorizedAccessException ex)

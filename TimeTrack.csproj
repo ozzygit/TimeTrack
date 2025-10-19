@@ -7,13 +7,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
-	<SelfContained>true</SelfContained>
-	<PublishSingleFile>true</PublishSingleFile>
-	<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- Prevent duplicate attributes in WPF temporary project -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
+
+  <!-- Release-specific publish packaging settings -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <!-- Exclude test project sources from this app project -->
   <ItemGroup>
-    <None Include="Tests\IntegrationRunner\IntegrationRunner.csproj" />
+    <Compile Remove="Tests\IntegrationRunner\**\*.cs" />
+    <EmbeddedResource Remove="Tests\IntegrationRunner\**\*.*" />
+    <None Remove="Tests\IntegrationRunner\**\*.*" />
+    <Page Remove="Tests\IntegrationRunner\**\*.*" />
   </ItemGroup>
 
   <ItemGroup>
