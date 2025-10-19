@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:TimeTrack"
         xmlns:converters="clr-namespace:TimeTrack.Converters"
         mc:Ignorable="d"
-        Title="Time Track" Height="900" Width="750" MinWidth="750" MaxWidth="1000" MinHeight="700"
+        Title="TimeTrack v2" Height="900" Width="750" MinWidth="750" MaxWidth="1000" MinHeight="700"
         Icon="pack://application:,,,/TimeTrack;component/Resources/time.png" Background="#F5F5F5"
         WindowStartupLocation="CenterScreen">
 
@@ -463,7 +463,7 @@
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Options}"/>
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem x:Name="AboutMenuItem" Header="_About TimeTrack"
+                <MenuItem x:Name="AboutMenuItem" Header="_About TimeTrack v2"
                           Command="{x:Static local:MainWindow.HelpCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=About}"/>
             </MenuItem>

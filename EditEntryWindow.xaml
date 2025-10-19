@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTrack"
         mc:Ignorable="d"
-        Title="Edit Entry" Height="260" Width="380"
+        Title="Edit Entry - TimeTrack v2" Height="260" Width="380"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
 

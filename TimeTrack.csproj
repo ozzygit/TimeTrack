@@ -10,6 +10,9 @@
     <!-- Prevent duplicate attributes in WPF temporary project -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <!-- Display name for the built assembly -->
+    <AssemblyName>TimeTrack</AssemblyName>
+    <Product>TimeTrack v2</Product>
   </PropertyGroup>
 
   <!-- Release-specific publish packaging settings -->
@@ -22,9 +25,13 @@
 
   <!-- Exclude test project sources from this app project -->
   <ItemGroup>
+    <Compile Remove="scripts\**" />
     <Compile Remove="Tests\IntegrationRunner\**\*.cs" />
+    <EmbeddedResource Remove="scripts\**" />
     <EmbeddedResource Remove="Tests\IntegrationRunner\**\*.*" />
+    <None Remove="scripts\**" />
     <None Remove="Tests\IntegrationRunner\**\*.*" />
+    <Page Remove="scripts\**" />
     <Page Remove="Tests\IntegrationRunner\**\*.*" />
   </ItemGroup>
 
@@ -46,9 +53,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="scripts\" />
   </ItemGroup>
 </Project>

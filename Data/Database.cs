@@ -20,9 +20,9 @@ public static class Database
     {
         var overridePath = Environment.GetEnvironmentVariable("TIMETRACK_APPDATA");
         if (!string.IsNullOrWhiteSpace(overridePath))
-            return Path.Combine(overridePath, "TimeTrack");
+            return Path.Combine(overridePath, "TimeTrack v2");
 
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack v2");
     }
 
     private static readonly string DatabaseFileName = "timetrack_v2.db";

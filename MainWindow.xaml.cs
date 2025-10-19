@@ -324,14 +324,14 @@ namespace TimeTrack
 
             if (selected.StartTime == null || selected.EndTime == null)
             {
-                MessageBox.Show("Record must have a valid start and end time", "TimeTrack - Error",
+                MessageBox.Show("Record must have a valid start and end time", "TimeTrack v2 - Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (selected.EndTime < selected.StartTime)
             {
-                MessageBox.Show("Cannot export a negative time duration", "TimeTrack - Error",
+                MessageBox.Show("Cannot export a negative time duration", "TimeTrack v2 - Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -569,8 +569,8 @@ namespace TimeTrack
         private void BtnProjectInfo_Click(object sender, RoutedEventArgs e)
         {
             string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
-            string messageBoxText = $"TimeTrack\nVersion: {version}\n\nA simple time tracking application for daily work entries.";
-            string caption = "Project Information";
+            string messageBoxText = $"TimeTrack v2\nVersion: {version}\n\nA simple time tracking application for daily work entries.";
+            string caption = "TimeTrack v2 - About";
             MessageBox.Show(messageBoxText, caption, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
@@ -1047,7 +1047,7 @@ namespace TimeTrack
     {
         public static void Handle(string error_text, Exception e, [CallerLineNumber] int line_number = 0, [CallerMemberName] string caller = "")
         {
-            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
+            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack v2");
             string logPath = Path.Combine(logDir, "time_track_log.txt");
             try { Directory.CreateDirectory(logDir); } catch { /* ignore */ }
 
@@ -1057,7 +1057,7 @@ namespace TimeTrack
 
             void show()
             {
-                string caption = "TimeTrack - Error";
+                string caption = "TimeTrack v2 - Error";
                 string msg = $"{error_text}\n\nFunction: {caller}\nLine: {line_number}\n\nException:\n{e}\nLog: {logPath}";
                 MessageBox.Show(msg, caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }
