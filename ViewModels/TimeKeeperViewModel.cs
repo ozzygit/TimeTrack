@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using TimeTrack.Data;
 using TimeTrack.Utilities;
@@ -197,6 +198,9 @@ namespace TimeTrack.ViewModels
             SetStartTimeField();
             Database.Update(Entries);
         }
+
+        // Expose the generated command with the old name for backward compatibility
+        public ICommand RemoveCommand => RemoveCurrentlySelectedEntryCommand;
 
         public void SelectLastEntry()
         {
