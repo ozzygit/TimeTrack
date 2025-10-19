@@ -638,6 +638,7 @@ namespace TimeTrack
             AddBinding("PrevDay", PrevDayCommand);
             AddBinding("NextDay", NextDayCommand);
             AddBinding("Options", OptionsCommand);
+            AddBinding("About", HelpCommand);  // Add this line
 
             if (shortcuts.TryGetValue("Submit", out var submitShortcut))
             {
@@ -739,6 +740,19 @@ namespace TimeTrack
                     CmbEndMinute.SelectedItem = dt.Minute.ToString("00");
                 if (CmbEndPeriod != null)
                     CmbEndPeriod.SelectedItem = dt.Hour >= 12 ? "PM" : "AM";
+            }
+            else
+            {
+                // Default to current local time when EndTimeField is empty
+                var now = DateTime.Now;
+                int hour = now.Hour > 12 ? now.Hour - 12 : (now.Hour == 0 ? 12 : now.Hour);
+                
+                if (CmbEndHour != null)
+                    CmbEndHour.SelectedItem = hour.ToString("00");
+                if (CmbEndMinute != null)
+                    CmbEndMinute.SelectedItem = now.Minute.ToString("00");
+                if (CmbEndPeriod != null)
+                    CmbEndPeriod.SelectedItem = now.Hour >= 12 ? "PM" : "AM";
             }
 
             PopupEndTime.IsOpen = true;

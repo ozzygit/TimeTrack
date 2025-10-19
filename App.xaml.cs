@@ -31,11 +31,14 @@ namespace TimeTrack
             };
         }
 
-        private void OnStartup(object sender, StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
+            base.OnStartup(e);
+            
             try
             {
                 Database.CreateDatabase();
+                Database.BackupDatabaseIfNeeded();
             }
             catch (Exception ex)
             {

@@ -28,12 +28,19 @@ public static class Database
 
     private static readonly string DatabaseFileName = "timetrack_v2.db";
     private static string DatabasePath => Path.Combine(GetAppFolder(), DatabaseFileName);
+    private static string BackupFolder => Path.Combine(GetAppFolder(), "Backups");
 
     private static void EnsureAppFolder()
     {
         var appFolder = GetAppFolder();
         if (!Directory.Exists(appFolder))
             Directory.CreateDirectory(appFolder);
+    }
+
+    private static void EnsureBackupFolder()
+    {
+        if (!Directory.Exists(BackupFolder))
+            Directory.CreateDirectory(BackupFolder);
     }
 
     private static void ApplySqlitePragmas(TimeTrackDbContext context)
@@ -49,6 +56,90 @@ public static class Database
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to apply SQLite pragmas: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Create a backup of the database if one hasn't been created today.
+    /// </summary>
+    public static void BackupDatabaseIfNeeded()
+    {
+        try
+        {
+            var dbPath = DatabasePath;
+            
+            // Skip if database doesn't exist yet
+            if (!File.Exists(dbPath))
+                return;
+
+            EnsureBackupFolder();
+
+            // Check if a backup already exists for today
+            var today = DateTime.Today.ToString("yyyy-MM-dd");
+            var backupFileName = $"timetrack_v2_backup_{today}.db";
+            var backupPath = Path.Combine(BackupFolder, backupFileName);
+
+            if (File.Exists(backupPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"Backup already exists for today: {backupPath}");
+                return;
+            }
+
+            // Create the backup
+            File.Copy(dbPath, backupPath, overwrite: false);
+            System.Diagnostics.Debug.WriteLine($"Database backed up to: {backupPath}");
+
+            // Clean up old backups (keep last 5 copies)
+            CleanupOldBackups(5);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                ErrorHandler.Handle("Failed to backup database.", ex);
+            }
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to log backup error: {logEx.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Remove old backup files, keeping only the specified number of most recent backups.
+    /// </summary>
+    private static void CleanupOldBackups(int keepCount)
+    {
+        try
+        {
+            if (!Directory.Exists(BackupFolder))
+                return;
+
+            var backupFiles = Directory.GetFiles(BackupFolder, "timetrack_v2_backup_*.db")
+                .Select(filePath => new
+                {
+                    FilePath = filePath,
+                    FileName = Path.GetFileNameWithoutExtension(filePath),
+                    CreationTime = File.GetCreationTime(filePath)
+                })
+                .OrderByDescending(f => f.CreationTime)
+                .ToList();
+
+            // If we have more backups than we want to keep, delete the oldest ones
+            if (backupFiles.Count > keepCount)
+            {
+                var filesToDelete = backupFiles.Skip(keepCount);
+                
+                foreach (var fileInfo in filesToDelete)
+                {
+                    File.Delete(fileInfo.FilePath);
+                    System.Diagnostics.Debug.WriteLine($"Deleted old backup: {fileInfo.FilePath}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to cleanup old backups: {ex.Message}");
         }
     }
 
