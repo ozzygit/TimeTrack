@@ -16,13 +16,17 @@ public static class Database
 {
     public const string DateFormat = "yyyy-MM-dd";
 
-    // Use user's Documents\TimeTrack\timetrack.db
+    // Use user's LocalApplicationData\TimeTrack with new DB file name to avoid confusion
     private static readonly string AppFolder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
-    private static readonly string DatabasePath = Path.Combine(AppFolder, "timetrack.db");
+    private static readonly string DatabaseFileName = "timetrack_v2.db";
+    private static readonly string DatabasePath = Path.Combine(AppFolder, DatabaseFileName);
 
-    // Legacy path (next to the executable) for migration support
-    private static readonly string LegacyPath = Path.Combine(AppContext.BaseDirectory, "timetrack.db");
+    // Legacy paths
+    private static readonly string LegacyExePath = Path.Combine(AppContext.BaseDirectory, "timetrack.db");
+    private static readonly string LegacyDocumentsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TimeTrack", "timetrack.db");
+    private static readonly string LegacyRoamingAppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack", "timetrack.db");
+    private static readonly string LegacyLocalAppDataPath = Path.Combine(AppFolder, "timetrack.db"); // old name in same folder
 
     // Backups folder
     private static readonly string BackupsFolder = Path.Combine(AppFolder, "Backups");
@@ -50,10 +54,11 @@ public static class Database
             if (!File.Exists(DatabasePath)) return;
             Directory.CreateDirectory(BackupsFolder);
             var stamp = DateTime.Now.ToString("yyyyMMdd");
-            var target = Path.Combine(BackupsFolder, $"timetrack_{stamp}_{reason}.db");
+            var baseName = Path.GetFileNameWithoutExtension(DatabasePath); // timetrack_v2
+            var target = Path.Combine(BackupsFolder, $"{baseName}_{stamp}_{reason}.db");
             if (File.Exists(target)) return; // already backed up today for this reason
             File.Copy(DatabasePath, target, overwrite: false);
-            PruneBackups();
+            PruneBackups(baseName);
         }
         catch (Exception ex)
         {
@@ -62,15 +67,36 @@ public static class Database
     }
 
     /// <summary>
-    /// Keep only the newest N backups.
+    /// Backup a legacy database file prior to migration.
     /// </summary>
-    private static void PruneBackups()
+    private static void BackupLegacyFile(string legacyPath, string reason)
+    {
+        try
+        {
+            if (!File.Exists(legacyPath)) return;
+            Directory.CreateDirectory(BackupsFolder);
+            var stamp = DateTime.Now.ToString("yyyyMMdd");
+            var name = Path.GetFileNameWithoutExtension(DatabasePath); // normalize to new base name
+            var target = Path.Combine(BackupsFolder, $"{name}_{stamp}_{reason}.db");
+            if (!File.Exists(target))
+                File.Copy(legacyPath, target, overwrite: false);
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Failed to backup legacy database prior to migration.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Keep only the newest N backups (filtered by base name).
+    /// </summary>
+    private static void PruneBackups(string baseName)
     {
         try
         {
             if (!Directory.Exists(BackupsFolder)) return;
             var files = new DirectoryInfo(BackupsFolder)
-                .GetFiles("timetrack_*.db")
+                .GetFiles($"{baseName}_*.db")
                 .OrderByDescending(f => f.CreationTimeUtc)
                 .ToList();
             foreach (var file in files.Skip(BackupRetentionCount))
@@ -81,6 +107,47 @@ public static class Database
         catch (Exception ex)
         {
             Error.Handle("Failed to prune old database backups.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Try migrate a legacy database to the current AppFolder if target does not exist.
+    /// Checks EXE directory, MyDocuments\\TimeTrack, Roaming AppData\\TimeTrack, and LocalAppData old filename.
+    /// </summary>
+    private static void TryMigrateLegacyDatabase()
+    {
+        if (File.Exists(DatabasePath)) return; // nothing to do
+
+        string[] candidates = new[] { LegacyExePath, LegacyDocumentsPath, LegacyRoamingAppDataPath, LegacyLocalAppDataPath };
+        foreach (var legacy in candidates)
+        {
+            try
+            {
+                if (!File.Exists(legacy)) continue;
+
+                // Backup the legacy file for safety
+                BackupLegacyFile(legacy, "pre-migrate-legacy");
+
+                // Ensure destination directory exists
+                EnsureAppFolder();
+
+                try
+                {
+                    File.Move(legacy, DatabasePath);
+                }
+                catch (IOException)
+                {
+                    File.Copy(legacy, DatabasePath, overwrite: true);
+                    try { File.Delete(legacy); } catch { /* ignore */ }
+                }
+
+                // migrated one source; stop
+                return;
+            }
+            catch (Exception ex)
+            {
+                Error.Handle($"Failed to migrate legacy database from: {legacy}", ex);
+            }
         }
     }
 
@@ -175,31 +242,28 @@ public static class Database
     }
 
     /// <summary>
-    /// Check if the database file exists (migrates from legacy location if needed)
+    /// Check if the database file exists (migrates from legacy locations if needed)
     /// </summary>
     public static bool Exists()
     {
         try
         {
             EnsureAppFolder();
-            if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
-            {
-                File.Copy(LegacyPath, DatabasePath, overwrite: true);
-            }
+            TryMigrateLegacyDatabase();
         }
         catch (UnauthorizedAccessException ex)
         {
-            Error.Handle($"No access verifying/migrating DB.\nTarget: {DatabasePath}\nLegacy: {LegacyPath}", ex);
+            Error.Handle($"No access verifying/migrating DB.\nTarget: {DatabasePath}", ex);
             return false;
         }
         catch (IOException ex)
         {
-            Error.Handle($"I/O error verifying/migrating DB.\nTarget: {DatabasePath}\nLegacy: {LegacyPath}", ex);
+            Error.Handle($"I/O error verifying/migrating DB.\nTarget: {DatabasePath}", ex);
             return false;
         }
         catch (Exception ex)
         {
-            Error.Handle($"Unexpected error verifying/migrating DB.\nTarget: {DatabasePath}\nLegacy: {LegacyPath}", ex);
+            Error.Handle($"Unexpected error verifying/migrating DB.\nTarget: {DatabasePath}", ex);
             return false;
         }
         return File.Exists(DatabasePath);
@@ -214,16 +278,8 @@ public static class Database
         {
             EnsureAppFolder();
 
-            if (!File.Exists(DatabasePath) && File.Exists(LegacyPath))
-            {
-                BackupDatabase("pre-migrate");
-                try { File.Move(LegacyPath, DatabasePath); }
-                catch (IOException moveEx)
-                {
-                    try { File.Copy(LegacyPath, DatabasePath, overwrite: true); try { File.Delete(LegacyPath); } catch { } }
-                    catch (Exception copyEx) { Error.Handle($"Failed to migrate legacy DB.\nFrom: {LegacyPath}\nTo: {DatabasePath}", new AggregateException(moveEx, copyEx)); throw; }
-                }
-            }
+            // Migrate from legacy locations if target doesn't exist
+            TryMigrateLegacyDatabase();
 
             // Backup existing DB once per day before touching schema
             BackupDatabase("daily");

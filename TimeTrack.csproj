@@ -12,6 +12,9 @@
 	<PublishSingleFile>true</PublishSingleFile>
 	<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="Tests\IntegrationRunner\IntegrationRunner.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Embedded resources -->
