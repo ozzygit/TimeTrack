@@ -3,14 +3,15 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using TimeTrack.Utilities;
 
 namespace TimeTrack.Data;
 
 /// <summary>
 /// Simplified database access: create the application's DB if it does not exist.
-/// Migration-related logic has been removed; the app will just ensure the new DB is created.
 /// </summary>
 public static class Database
 {
@@ -28,11 +29,6 @@ public static class Database
     private static readonly string DatabaseFileName = "timetrack_v2.db";
     private static string DatabasePath => Path.Combine(GetAppFolder(), DatabaseFileName);
 
-    private static string BackupsFolder => Path.Combine(GetAppFolder(), "Backups");
-
-    /// <summary>
-    /// Ensure the app data folder exists.
-    /// </summary>
     private static void EnsureAppFolder()
     {
         var appFolder = GetAppFolder();
@@ -50,11 +46,14 @@ public static class Database
             context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
             context.Database.ExecuteSqlRaw("PRAGMA optimize;");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to apply SQLite pragmas: {ex.Message}");
+        }
     }
 
     /// <summary>
-    /// Create the database if it does not exist. This intentionally does not run EF migrations.
+    /// Create the database if it does not exist.
     /// </summary>
     public static void CreateDatabase()
     {
@@ -63,21 +62,22 @@ public static class Database
             EnsureAppFolder();
 
             using var context = new TimeTrackDbContext(DatabasePath);
-
-            // EnsureCreated will create the database and schema if missing, without using migrations.
             context.Database.EnsureCreated();
-
             ApplySqlitePragmas(context);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Keep behavior simple: log via Error.Handle if available, otherwise swallow to avoid breaking startup.
-            try { Error.Handle("Unexpected error creating the database.", new Exception("CreateDatabase failed")); } catch { }
+            try 
+            { 
+                ErrorHandler.Handle("Unexpected error creating the database.", ex); 
+            } 
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+            }
             throw;
         }
     }
-
-    // Minimal read/update helpers remain unchanged and continue to use the configured DB path.
 
     public static int CurrentIdCount(DateTime date)
     {
@@ -94,7 +94,14 @@ public static class Database
         }
         catch (Exception e)
         {
-            try { Error.Handle("Could not get current entry index.", e); } catch { }
+            try 
+            { 
+                ErrorHandler.Handle("Could not get current entry index.", e); 
+            } 
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+            }
             throw;
         }
     }
@@ -111,9 +118,6 @@ public static class Database
             var entities = context.TimeEntries
                 .Where(e => e.Date == dateString)
                 .AsNoTracking()
-                .ToList();
-
-            entities = entities
                 .OrderBy(e => e.StartTime)
                 .ThenBy(e => e.EndTime)
                 .ThenBy(e => e.Id)
@@ -127,7 +131,14 @@ public static class Database
         }
         catch (Exception e)
         {
-            try { Error.Handle("Something went wrong while retrieving today's entries.", e); } catch { }
+            try 
+            { 
+                ErrorHandler.Handle("Something went wrong while retrieving today's entries.", e); 
+            } 
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+            }
             throw;
         }
 
@@ -139,8 +150,8 @@ public static class Database
         if (entries.Count < 1) return;
 
         const int maxRetries = 3;
-        int attempt = 0;
-        while (true)
+        
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
             try
             {
@@ -151,9 +162,18 @@ public static class Database
                 {
                     var start = entry.StartTime;
                     var end = entry.EndTime;
+                    
                     if (start.HasValue && end.HasValue && end <= start)
                     {
-                        try { Error.Handle($"Skipping invalid duration for {DateToString(entry.Date)}#{entry.ID}", new InvalidOperationException("End <= Start")); } catch { }
+                        try 
+                        { 
+                            ErrorHandler.Handle($"Skipping invalid duration for {DateToString(entry.Date)}#{entry.ID}", 
+                                new InvalidOperationException("End <= Start")); 
+                        } 
+                        catch (Exception logEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                        }
                         continue;
                     }
 
@@ -175,28 +195,49 @@ public static class Database
 
                 context.SaveChanges();
                 tx.Commit();
-                break;
+                return; // Success
             }
             catch (DbUpdateException dbEx)
             {
-                try { Error.Handle("Database update failed.", dbEx); } catch { }
-                break;
+                try 
+                { 
+                    ErrorHandler.Handle("Database update failed.", dbEx); 
+                } 
+                catch (Exception logEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                }
+                return;
             }
             catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6)
             {
-                attempt++;
-                if (attempt >= maxRetries)
+                if (attempt >= maxRetries - 1)
                 {
-                    try { Error.Handle("SQLite was busy/locked after multiple attempts during update.", sqlEx); } catch { }
-                    break;
+                    try 
+                    { 
+                        ErrorHandler.Handle("SQLite was busy/locked after multiple attempts during update.", sqlEx); 
+                    } 
+                    catch (Exception logEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                    }
+                    return;
                 }
-                System.Threading.Thread.Sleep(200 * attempt);
-                continue;
+                
+                // Use Task.Delay for async wait - wrapped in Task.Run for sync context
+                Task.Delay(200 * (attempt + 1)).Wait();
             }
             catch (Exception e)
             {
-                try { Error.Handle("Something went wrong while updating the entries database.", e); } catch { }
-                break;
+                try 
+                { 
+                    ErrorHandler.Handle("Something went wrong while updating the entries database.", e); 
+                } 
+                catch (Exception logEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                }
+                return;
             }
         }
     }
@@ -204,8 +245,8 @@ public static class Database
     public static void Delete(DateTime date, int id)
     {
         const int maxRetries = 3;
-        int attempt = 0;
-        while (true)
+        
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
             try
             {
@@ -223,28 +264,48 @@ public static class Database
                 }
 
                 tx.Commit();
-                break;
+                return; // Success
             }
             catch (DbUpdateException dbEx)
             {
-                try { Error.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx); } catch { }
-                break;
+                try 
+                { 
+                    ErrorHandler.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx); 
+                } 
+                catch (Exception logEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                }
+                return;
             }
             catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6)
             {
-                attempt++;
-                if (attempt >= maxRetries)
+                if (attempt >= maxRetries - 1)
                 {
-                    try { Error.Handle("SQLite was busy/locked after multiple attempts during delete.", sqlEx); } catch { }
-                    break;
+                    try 
+                    { 
+                        ErrorHandler.Handle("SQLite was busy/locked after multiple attempts during delete.", sqlEx); 
+                    } 
+                    catch (Exception logEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                    }
+                    return;
                 }
-                System.Threading.Thread.Sleep(200 * attempt);
-                continue;
+                
+                Task.Delay(200 * (attempt + 1)).Wait();
             }
             catch (Exception e)
             {
-                try { Error.Handle("Could not delete the record from the database.", e); } catch { }
-                break;
+                try 
+                { 
+                    ErrorHandler.Handle("Could not delete the record from the database.", e); 
+                } 
+                catch (Exception logEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}");
+                }
+                return;
             }
         }
     }
@@ -252,9 +313,14 @@ public static class Database
     private static string DateToString(DateTime date) => date.ToString(DateFormat);
     private static DateTime StringToDate(string str) => DateTime.ParseExact(str, DateFormat, DateTimeFormatInfo.InvariantInfo);
     private static string? TimeOnlyToString(TimeOnly? time) => time.HasValue ? time.Value.ToTimeSpan().ToString("c") : null;
-    private static TimeOnly? StringToTimeOnly(string? str) { if (string.IsNullOrEmpty(str)) return null; if (TimeSpan.TryParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var ts)) return TimeOnly.FromTimeSpan(ts); return null; }
-
-    // Entity conversion methods
+    
+    private static TimeOnly? StringToTimeOnly(string? str) 
+    { 
+        if (string.IsNullOrEmpty(str)) return null; 
+        if (TimeSpan.TryParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var ts)) 
+            return TimeOnly.FromTimeSpan(ts); 
+        return null; 
+    }
 
     private static TimeEntryEntity TimeEntryToEntity(TimeEntry entry) => new()
     {

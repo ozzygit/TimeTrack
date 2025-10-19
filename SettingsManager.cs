@@ -4,13 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using System.Xml.Linq;
+using TimeTrack.Utilities;
 
 namespace TimeTrack
 {
     public class KeyboardShortcut
     {
-        public string ActionName { get; set; } = "";
-        public string DisplayName { get; set; } = "";
+        public string ActionName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
         public Key Key { get; set; }
         public ModifierKeys Modifiers { get; set; }
 
@@ -18,7 +19,7 @@ namespace TimeTrack
         {
             get
             {
-                string result = "";
+                string result = string.Empty;
                 if (Modifiers.HasFlag(ModifierKeys.Control))
                     result += "Ctrl+";
                 if (Modifiers.HasFlag(ModifierKeys.Alt))
@@ -36,8 +37,8 @@ namespace TimeTrack
 
     public static class SettingsManager
     {
-        private static string settingsPath = "timetrack_settings.xml";
-        private static Dictionary<string, KeyboardShortcut> shortcuts = new Dictionary<string, KeyboardShortcut>();
+        private static readonly string SettingsPath = "timetrack_settings.xml";
+        private static Dictionary<string, KeyboardShortcut> _shortcuts = new();
 
         static SettingsManager()
         {
@@ -47,7 +48,7 @@ namespace TimeTrack
 
         private static void InitializeDefaults()
         {
-            shortcuts = new Dictionary<string, KeyboardShortcut>
+            _shortcuts = new Dictionary<string, KeyboardShortcut>
             {
                 { "Export", new KeyboardShortcut { ActionName = "Export", DisplayName = "Export Selected", Key = Key.E, Modifiers = ModifierKeys.Control } },
                 { "Submit", new KeyboardShortcut { ActionName = "Submit", DisplayName = "Submit Entry", Key = Key.Enter, Modifiers = ModifierKeys.None } },
@@ -64,20 +65,20 @@ namespace TimeTrack
 
         public static Dictionary<string, KeyboardShortcut> GetAllShortcuts()
         {
-            return new Dictionary<string, KeyboardShortcut>(shortcuts);
+            return new Dictionary<string, KeyboardShortcut>(_shortcuts);
         }
 
         public static KeyboardShortcut? GetShortcut(string actionName)
         {
-            return shortcuts.ContainsKey(actionName) ? shortcuts[actionName] : null;
+            return _shortcuts.TryGetValue(actionName, out var shortcut) ? shortcut : null;
         }
 
         public static void UpdateShortcut(string actionName, Key key, ModifierKeys modifiers)
         {
-            if (shortcuts.ContainsKey(actionName))
+            if (_shortcuts.ContainsKey(actionName))
             {
-                shortcuts[actionName].Key = key;
-                shortcuts[actionName].Modifiers = modifiers;
+                _shortcuts[actionName].Key = key;
+                _shortcuts[actionName].Modifiers = modifiers;
             }
         }
 
@@ -87,7 +88,7 @@ namespace TimeTrack
             {
                 var root = new XElement("Settings",
                     new XElement("Shortcuts",
-                        shortcuts.Values.Select(s =>
+                        _shortcuts.Values.Select(s =>
                             new XElement("Shortcut",
                                 new XAttribute("ActionName", s.ActionName),
                                 new XAttribute("Key", s.Key.ToString()),
@@ -98,22 +99,22 @@ namespace TimeTrack
                 );
 
                 var doc = new XDocument(root);
-                doc.Save(settingsPath);
+                doc.Save(SettingsPath);
             }
             catch (Exception e)
             {
-                Error.Handle("Failed to save settings.", e);
+                ErrorHandler.Handle("Failed to save settings.", e);
             }
         }
 
         public static void Load()
         {
-            if (!File.Exists(settingsPath))
+            if (!File.Exists(SettingsPath))
                 return;
 
             try
             {
-                var doc = XDocument.Load(settingsPath);
+                var doc = XDocument.Load(SettingsPath);
                 var shortcutElements = doc.Root?.Element("Shortcuts")?.Elements("Shortcut");
 
                 if (shortcutElements != null)
@@ -130,10 +131,10 @@ namespace TimeTrack
                                 int.TryParse(modifiersStr, out int modifiersInt))
                             {
                                 ModifierKeys modifiers = (ModifierKeys)modifiersInt;
-                                if (shortcuts.ContainsKey(actionName))
+                                if (_shortcuts.ContainsKey(actionName))
                                 {
-                                    shortcuts[actionName].Key = key;
-                                    shortcuts[actionName].Modifiers = modifiers;
+                                    _shortcuts[actionName].Key = key;
+                                    _shortcuts[actionName].Modifiers = modifiers;
                                 }
                             }
                         }
@@ -142,7 +143,7 @@ namespace TimeTrack
             }
             catch (Exception e)
             {
-                Error.Handle("Failed to load settings. Using defaults.", e);
+                ErrorHandler.Handle("Failed to load settings. Using defaults.", e);
             }
         }
 

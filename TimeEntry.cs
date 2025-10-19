@@ -3,12 +3,12 @@ using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Threading;
+using TimeTrack.Utilities;
 
 namespace TimeTrack
 {
-    public delegate void TimeEntryChangedEventHandler(bool time_changed);
+    public delegate void TimeEntryChangedEventHandler(bool timeChanged);
 
-    // Could be converted to a record for immutable properties
     public partial class TimeEntry : ObservableObject
     {
         #pragma warning disable CS8618
@@ -16,10 +16,9 @@ namespace TimeTrack
         private readonly int id;
         #pragma warning restore CS8618
 
-        private TimeOnly? start_time;
-        private TimeOnly? end_time;
+        private TimeOnly? _startTime;
+        private TimeOnly? _endTime;
 
-        // Simplest, UI-thread friendly event pattern
         private event TimeEntryChangedEventHandler? _timeEntryChanged;
         public event TimeEntryChangedEventHandler TimeEntryChanged
         {
@@ -31,14 +30,14 @@ namespace TimeTrack
         {
             this.date = date;
             this.id = id;
-            start_time = null;
-            end_time = null;
+            _startTime = null;
+            _endTime = null;
 
             _synchronizationContext = SynchronizationContext.Current
                 ?? throw new InvalidOperationException("No SynchronizationContext available");
         }
 
-        public TimeEntry(DateTime date, int id, TimeOnly? start_time, TimeOnly? end_time, string? case_number, string? notes, bool recorded = false)
+        public TimeEntry(DateTime date, int id, TimeOnly? startTime, TimeOnly? endTime, string? caseNumber, string? notes, bool recorded = false)
         {
             _synchronizationContext = SynchronizationContext.Current
                 ?? throw new InvalidOperationException("No SynchronizationContext available");
@@ -46,11 +45,11 @@ namespace TimeTrack
             this.date = date;
             this.id = id;
 
-            StartTime = start_time;
-            EndTime = end_time;
+            StartTime = startTime;
+            EndTime = endTime;
             Notes = notes ?? string.Empty;
             Recorded = recorded;
-            CaseNumber = case_number ?? string.Empty;
+            CaseNumber = caseNumber ?? string.Empty;
         }
 
         public DateTime Date => date;
@@ -58,10 +57,10 @@ namespace TimeTrack
 
         public TimeOnly? StartTime
         {
-            get => start_time;
+            get => _startTime;
             set
             {
-                if (SetProperty(ref start_time, value))
+                if (SetProperty(ref _startTime, value))
                 {
                     OnPropertyChanged(nameof(Duration));
                     OnPropertyChanged(nameof(IsValid));
@@ -72,10 +71,10 @@ namespace TimeTrack
 
         public TimeOnly? EndTime
         {
-            get => end_time;
+            get => _endTime;
             set
             {
-                if (SetProperty(ref end_time, value))
+                if (SetProperty(ref _endTime, value))
                 {
                     OnPropertyChanged(nameof(Duration));
                     OnPropertyChanged(nameof(IsValid));
@@ -95,8 +94,8 @@ namespace TimeTrack
         private bool recorded;
 
         private const string TimeFormat = "t";
-        public string StartTimeAsString() => start_time?.ToString(TimeFormat) ?? string.Empty;
-        public string EndTimeAsString() => end_time?.ToString(TimeFormat) ?? string.Empty;
+        public string StartTimeAsString() => _startTime?.ToString(TimeFormat) ?? string.Empty;
+        public string EndTimeAsString() => _endTime?.ToString(TimeFormat) ?? string.Empty;
 
         public bool CaseIsEmpty() => string.IsNullOrWhiteSpace(CaseNumber);
 
@@ -104,9 +103,9 @@ namespace TimeTrack
         {
             get
             {
-                if (!start_time.HasValue || !end_time.HasValue) return null;
-                var start = start_time.Value.ToTimeSpan();
-                var end = end_time.Value.ToTimeSpan();
+                if (!_startTime.HasValue || !_endTime.HasValue) return null;
+                var start = _startTime.Value.ToTimeSpan();
+                var end = _endTime.Value.ToTimeSpan();
                 if (end < start) end += TimeSpan.FromDays(1);
                 return end - start;
             }
@@ -116,13 +115,11 @@ namespace TimeTrack
 
         private readonly SynchronizationContext _synchronizationContext;
 
-        // Forward the string-based helper to the virtual override to avoid hiding pitfalls
         protected new void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(name));
         }
 
-        // Marshal PropertyChanged via SynchronizationContext using the virtual override
         protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
         {
             var ctx = _synchronizationContext;
@@ -135,16 +132,14 @@ namespace TimeTrack
             ctx.Post(_ => base.OnPropertyChanged(e), null);
         }
 
-        // Capture and invoke delegate safely when notifying external listeners
-        protected void OnTimeEntryChanged(bool time_changed)
+        protected void OnTimeEntryChanged(bool timeChanged)
         {
-            var handler = _timeEntryChanged; // snapshot
+            var handler = _timeEntryChanged;
             if (handler is null) return;
-            _synchronizationContext.Post(_ => handler(time_changed), null);
+            _synchronizationContext.Post(_ => handler(timeChanged), null);
         }
     }
 
-    // Converter: support TimeOnly and TimeSpan
     public sealed class TimeEntryUIConverter : IValueConverter
     {
         private const string TimeFormat = "hh:mm tt";
@@ -169,7 +164,7 @@ namespace TimeTrack
                 return System.Windows.DependencyProperty.UnsetValue;
             }
 
-            var parsed = TimeTrack.TimeStringConverter.StringToTimeSpan(s);
+            var parsed = TimeStringConverter.StringToTimeSpan(s);
             if (!parsed.HasValue)
                 return System.Windows.DependencyProperty.UnsetValue;
 
