@@ -30,6 +30,16 @@ public static class Database
     private static string DatabasePath => Path.Combine(GetAppFolder(), DatabaseFileName);
     private static string BackupFolder => Path.Combine(GetAppFolder(), "Backups");
 
+    /// <summary>
+    /// Get the full path to the database file.
+    /// </summary>
+    public static string GetDatabasePath() => DatabasePath;
+
+    /// <summary>
+    /// Get the directory containing the database file.
+    /// </summary>
+    public static string GetDatabaseDirectory() => GetAppFolder();
+
     private static void EnsureAppFolder()
     {
         var appFolder = GetAppFolder();

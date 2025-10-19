@@ -600,10 +600,8 @@ namespace TimeTrack
 
         private void BtnProjectInfo_Click(object sender, RoutedEventArgs e)
         {
-            string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
-            string messageBoxText = $"TimeTrack v2\nVersion: {version}\n\nA simple time tracking application for daily work entries.";
-            string caption = "TimeTrack v2 - About";
-            MessageBox.Show(messageBoxText, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+            var aboutWindow = new AboutWindow { Owner = this };
+            aboutWindow.ShowDialog();
         }
 
         private void MenuExit_Click(object sender, RoutedEventArgs e)
@@ -624,7 +622,7 @@ namespace TimeTrack
             InputBindings.Clear();
             var shortcuts = SettingsManager.GetAllShortcuts();
 
-            void AddBinding(string key, RoutedUICommand command)
+            void AddBinding(String key, RoutedUICommand command)
             {
                 if (shortcuts.TryGetValue(key, out var shortcut))
                 {
