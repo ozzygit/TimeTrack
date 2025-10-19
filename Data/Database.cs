@@ -27,6 +27,8 @@ public static class Database
     // Backups folder
     private static readonly string BackupsFolder = Path.Combine(AppFolder, "Backups");
 
+    private const int BackupRetentionCount = 7;
+
     /// <summary>
     /// Ensure the app data folder exists.
     /// </summary>
@@ -51,10 +53,34 @@ public static class Database
             var target = Path.Combine(BackupsFolder, $"timetrack_{stamp}_{reason}.db");
             if (File.Exists(target)) return; // already backed up today for this reason
             File.Copy(DatabasePath, target, overwrite: false);
+            PruneBackups();
         }
         catch (Exception ex)
         {
             Error.Handle("Failed to create database backup.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Keep only the newest N backups.
+    /// </summary>
+    private static void PruneBackups()
+    {
+        try
+        {
+            if (!Directory.Exists(BackupsFolder)) return;
+            var files = new DirectoryInfo(BackupsFolder)
+                .GetFiles("timetrack_*.db")
+                .OrderByDescending(f => f.CreationTimeUtc)
+                .ToList();
+            foreach (var file in files.Skip(BackupRetentionCount))
+            {
+                try { file.Delete(); } catch { /* ignore */ }
+            }
+        }
+        catch (Exception ex)
+        {
+            Error.Handle("Failed to prune old database backups.", ex);
         }
     }
 
@@ -65,9 +91,11 @@ public static class Database
     {
         try
         {
+            context.Database.ExecuteSqlRaw("PRAGMA foreign_keys=ON;");
             context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
             context.Database.ExecuteSqlRaw("PRAGMA synchronous=NORMAL;");
             context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+            context.Database.ExecuteSqlRaw("PRAGMA optimize;");
         }
         catch (Exception ex)
         {
@@ -108,19 +136,36 @@ public static class Database
             var applied = context.Database.GetAppliedMigrations();
             if (applied.Any() || !pending.Any()) return;
 
-            // Detect schema presence (table created by EnsureCreated previously)
-            var hasTimeEntries = context.Database
-                .ExecuteSqlRaw("SELECT 1 FROM sqlite_master WHERE type='table' AND name='time_entries';") >= 0; // will not throw
+            using var conn = context.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open)
+                conn.Open();
 
-            if (hasTimeEntries)
+            // Check if time_entries table exists
+            using (var checkCmd = conn.CreateCommand())
             {
-                // Insert baseline row so Migrate() won't try to re-create existing tables
-                // This uses raw SQL because EF history manipulation isn't public API.
-                context.Database.ExecuteSqlRaw(
-                    "CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT PRIMARY KEY, ProductVersion TEXT NOT NULL);");
-                context.Database.ExecuteSqlRaw(
-                    "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ({0}, {1});",
-                    "20251018000000_InitialCreate", "8.0.10");
+                checkCmd.CommandText = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='time_entries';";
+                var exists = Convert.ToInt32(checkCmd.ExecuteScalar() ?? 0) > 0;
+                if (!exists) return; // nothing to baseline
+            }
+
+            // Ensure history table exists and seed initial migration if history is empty
+            using (var createHistory = conn.CreateCommand())
+            {
+                createHistory.CommandText = "CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT PRIMARY KEY, ProductVersion TEXT NOT NULL);";
+                createHistory.ExecuteNonQuery();
+            }
+            using (var countHistory = conn.CreateCommand())
+            {
+                countHistory.CommandText = "SELECT COUNT(1) FROM __EFMigrationsHistory;";
+                var count = Convert.ToInt32(countHistory.ExecuteScalar() ?? 0);
+                if (count == 0)
+                {
+                    using var insert = conn.CreateCommand();
+                    insert.CommandText = "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES (@m, @v);";
+                    var p1 = insert.CreateParameter(); p1.ParameterName = "@m"; p1.Value = "20251018000000_InitialCreate"; insert.Parameters.Add(p1);
+                    var p2 = insert.CreateParameter(); p2.ParameterName = "@v"; p2.Value = "8.0.10"; insert.Parameters.Add(p2);
+                    insert.ExecuteNonQuery();
+                }
             }
         }
         catch (Exception ex)

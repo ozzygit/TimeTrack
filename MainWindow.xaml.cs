@@ -56,8 +56,7 @@ namespace TimeTrack
 
             InitializeTimePickerComboBoxes();
 
-            // Automatically ensure the database exists without prompting the user
-            Database.CreateDatabase();
+            // DB is initialized at application startup (App.OnStartup)
             LoadEntriesForDate(DateTime.Today);
 
             InitializeWindow();
