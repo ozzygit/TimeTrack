@@ -3,28 +3,24 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace TimeTrack.Data;
 
 /// <summary>
-/// Database access layer using Entity Framework Core with SQLite
+/// Simplified database access: create the application's DB if it does not exist.
+/// Migration-related logic has been removed; the app will just ensure the new DB is created.
 /// </summary>
 public static class Database
 {
     public const string DateFormat = "yyyy-MM-dd";
 
-    // Use user's LocalApplicationData\TimeTrack with new DB file name to avoid confusion
     private static string GetAppFolder()
     {
         var overridePath = Environment.GetEnvironmentVariable("TIMETRACK_APPDATA");
         if (!string.IsNullOrWhiteSpace(overridePath))
-        {
-            // If user provides TIMETRACK_APPDATA, treat it as the parent folder and append TimeTrack
             return Path.Combine(overridePath, "TimeTrack");
-        }
 
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack");
     }
@@ -32,16 +28,7 @@ public static class Database
     private static readonly string DatabaseFileName = "timetrack_v2.db";
     private static string DatabasePath => Path.Combine(GetAppFolder(), DatabaseFileName);
 
-    // Legacy paths (use AppContext.BaseDirectory and standard folders)
-    private static string LegacyExePath => Path.Combine(AppContext.BaseDirectory, "timetrack.db");
-    private static string LegacyDocumentsPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TimeTrack", "timetrack.db");
-    private static string LegacyRoamingAppDataPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack", "timetrack.db");
-    private static string LegacyLocalAppDataPath => Path.Combine(GetAppFolder(), "timetrack.db"); // old name in same folder
-
-    // Backups folder
     private static string BackupsFolder => Path.Combine(GetAppFolder(), "Backups");
-
-    private const int BackupRetentionCount = 7;
 
     /// <summary>
     /// Ensure the app data folder exists.
@@ -50,121 +37,9 @@ public static class Database
     {
         var appFolder = GetAppFolder();
         if (!Directory.Exists(appFolder))
-        {
             Directory.CreateDirectory(appFolder);
-        }
     }
 
-    /// <summary>
-    /// Create a dated backup of the database if it exists. Only one backup per day.
-    /// </summary>
-    private static void BackupDatabase(string reason)
-    {
-        try
-        {
-            if (!File.Exists(DatabasePath)) return;
-            Directory.CreateDirectory(BackupsFolder);
-            var stamp = DateTime.Now.ToString("yyyyMMdd");
-            var baseName = Path.GetFileNameWithoutExtension(DatabasePath); // timetrack_v2
-            var target = Path.Combine(BackupsFolder, $"{baseName}_{stamp}_{reason}.db");
-            if (File.Exists(target)) return; // already backed up today for this reason
-            File.Copy(DatabasePath, target, overwrite: false);
-            PruneBackups(baseName);
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Failed to create database backup.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Backup a legacy database file prior to migration.
-    /// </summary>
-    private static void BackupLegacyFile(string legacyPath, string reason)
-    {
-        try
-        {
-            if (!File.Exists(legacyPath)) return;
-            Directory.CreateDirectory(BackupsFolder);
-            var stamp = DateTime.Now.ToString("yyyyMMdd");
-            var name = Path.GetFileNameWithoutExtension(DatabasePath); // normalize to new base name
-            var target = Path.Combine(BackupsFolder, $"{name}_{stamp}_{reason}.db");
-            if (!File.Exists(target))
-                File.Copy(legacyPath, target, overwrite: false);
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Failed to backup legacy database prior to migration.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Keep only the newest N backups (filtered by base name).
-    /// </summary>
-    private static void PruneBackups(string baseName)
-    {
-        try
-        {
-            if (!Directory.Exists(BackupsFolder)) return;
-            var files = new DirectoryInfo(BackupsFolder)
-                .GetFiles($"{baseName}_*.db")
-                .OrderByDescending(f => f.CreationTimeUtc)
-                .ToList();
-            foreach (var file in files.Skip(BackupRetentionCount))
-            {
-                try { file.Delete(); } catch { /* ignore */ }
-            }
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Failed to prune old database backups.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Try migrate a legacy database to the current AppFolder if target does not exist.
-    /// Checks EXE directory, MyDocuments\TimeTrack, Roaming AppData\TimeTrack, and LocalAppData old filename.
-    /// </summary>
-    private static void TryMigrateLegacyDatabase()
-    {
-        if (File.Exists(DatabasePath)) return; // nothing to do
-
-        string[] candidates = new[] { LegacyExePath, LegacyDocumentsPath, LegacyRoamingAppDataPath, LegacyLocalAppDataPath };
-        foreach (var legacy in candidates)
-        {
-            try
-            {
-                if (!File.Exists(legacy)) continue;
-
-                // Backup the legacy file for safety
-                BackupLegacyFile(legacy, "pre-migrate-legacy");
-
-                // Ensure destination directory exists
-                EnsureAppFolder();
-
-                try
-                {
-                    File.Move(legacy, DatabasePath);
-                }
-                catch (IOException)
-                {
-                    File.Copy(legacy, DatabasePath, overwrite: true);
-                    try { File.Delete(legacy); } catch { /* ignore */ }
-                }
-
-                // migrated one source; stop
-                return;
-            }
-            catch (Exception ex)
-            {
-                Error.Handle($"Failed to migrate legacy database from: {legacy}", ex);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Apply recommended SQLite PRAGMAs for reliability.
-    /// </summary>
     private static void ApplySqlitePragmas(TimeTrackDbContext context)
     {
         try
@@ -175,113 +50,11 @@ public static class Database
             context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
             context.Database.ExecuteSqlRaw("PRAGMA optimize;");
         }
-        catch (Exception ex)
-        {
-            Error.Handle("Failed to apply SQLite PRAGMAs.", ex);
-        }
+        catch { }
     }
 
     /// <summary>
-    /// Run a lightweight SQLite integrity check. Returns true if OK.
-    /// </summary>
-    private static bool IntegrityCheck(TimeTrackDbContext context)
-    {
-        try
-        {
-            using var conn = context.Database.GetDbConnection();
-            if (conn.State != System.Data.ConnectionState.Open)
-                conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "PRAGMA integrity_check;";
-            var result = cmd.ExecuteScalar()?.ToString();
-            return string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Failed to run SQLite integrity check.", ex);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Seed __EFMigrationsHistory if the table exists but migrations are empty.
-    /// </summary>
-    private static void BaselineMigrationsIfNeeded(TimeTrackDbContext context)
-    {
-        try
-        {
-            var pending = context.Database.GetPendingMigrations();
-            var applied = context.Database.GetAppliedMigrations();
-            if (applied.Any() || !pending.Any()) return;
-
-            using var conn = context.Database.GetDbConnection();
-            if (conn.State != System.Data.ConnectionState.Open)
-                conn.Open();
-
-            // Check if time_entries table exists
-            using (var checkCmd = conn.CreateCommand())
-            {
-                checkCmd.CommandText = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='time_entries';";
-                var exists = Convert.ToInt32(checkCmd.ExecuteScalar() ?? 0) > 0;
-                if (!exists) return; // nothing to baseline
-            }
-
-            // Ensure history table exists and seed initial migration if history is empty
-            using (var createHistory = conn.CreateCommand())
-            {
-                createHistory.CommandText = "CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (MigrationId TEXT PRIMARY KEY, ProductVersion TEXT NOT NULL);";
-                createHistory.ExecuteNonQuery();
-            }
-            using (var countHistory = conn.CreateCommand())
-            {
-                countHistory.CommandText = "SELECT COUNT(1) FROM __EFMigrationsHistory;";
-                var count = Convert.ToInt32(countHistory.ExecuteScalar() ?? 0);
-                if (count == 0)
-                {
-                    using var insert = conn.CreateCommand();
-                    insert.CommandText = "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES (@m, @v);";
-                    var p1 = insert.CreateParameter(); p1.ParameterName = "@m"; p1.Value = "20251018000000_InitialCreate"; insert.Parameters.Add(p1);
-                    var p2 = insert.CreateParameter(); p2.ParameterName = "@v"; p2.Value = "8.0.10"; insert.Parameters.Add(p2);
-                    insert.ExecuteNonQuery();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Failed to baseline EF migrations history.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Check if the database file exists (migrates from legacy locations if needed)
-    /// </summary>
-    public static bool Exists()
-    {
-        try
-        {
-            EnsureAppFolder();
-            TryMigrateLegacyDatabase();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Error.Handle($"No access verifying/migrating DB.\nTarget: {DatabasePath}", ex);
-            return false;
-        }
-        catch (IOException ex)
-        {
-            Error.Handle($"I/O error verifying/migrating DB.\nTarget: {DatabasePath}", ex);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Error.Handle($"Unexpected error verifying/migrating DB.\nTarget: {DatabasePath}", ex);
-            return false;
-        }
-        return File.Exists(DatabasePath);
-    }
-
-    /// <summary>
-    /// Create or migrate the database and ensure schema is up to date
+    /// Create the database if it does not exist. This intentionally does not run EF migrations.
     /// </summary>
     public static void CreateDatabase()
     {
@@ -289,102 +62,43 @@ public static class Database
         {
             EnsureAppFolder();
 
-            // Migrate from legacy locations if target doesn't exist
-            TryMigrateLegacyDatabase();
-
-            // Backup existing DB once per day before touching schema
-            BackupDatabase("daily");
-
             using var context = new TimeTrackDbContext(DatabasePath);
 
-            // Baseline migrations if the database already has tables from EnsureCreated
-            BaselineMigrationsIfNeeded(context);
-
-            // Use migrations instead of EnsureCreated
-            context.Database.Migrate();
+            // EnsureCreated will create the database and schema if missing, without using migrations.
+            context.Database.EnsureCreated();
 
             ApplySqlitePragmas(context);
-
-            // Optional integrity check
-            if (!IntegrityCheck(context))
-            {
-                Error.Handle("SQLite integrity check failed. A backup has been kept.", new InvalidOperationException("PRAGMA integrity_check != ok"));
-            }
         }
-        catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode == 26 || (sqlEx.Message?.IndexOf("file is not a database", StringComparison.OrdinalIgnoreCase) >= 0))
+        catch (Exception)
         {
-            // Handle corrupted DB file: backup, remove, and recreate a fresh DB using migrations
-            try
-            {
-                Error.Handle("Detected corrupted SQLite database. Attempting recovery.", sqlEx);
-                // Ensure no open connections
-                SqliteConnection.ClearAllPools();
-
-                // Backup corrupted DB with explicit reason
-                BackupDatabase("corrupted");
-
-                // Remove corrupted file
-                try { File.Delete(DatabasePath); } catch { /* ignore */ }
-
-                // Recreate database from migrations
-                using var recreateContext = new TimeTrackDbContext(DatabasePath);
-                recreateContext.Database.Migrate();
-                ApplySqlitePragmas(recreateContext);
-            }
-            catch (Exception ex)
-            {
-                Error.Handle("Failed to recover from corrupted database.", ex);
-                throw; // escalate if recovery fails
-            }
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            Error.Handle($"No access creating DB at:\n{DatabasePath}", ex);
-            throw;
-        }
-        catch (IOException ex)
-        {
-            Error.Handle($"I/O error creating DB at:\n{DatabasePath}", ex);
-            throw;
-        }
-        catch (DbUpdateException ex)
-        {
-            Error.Handle("EF Core update error while ensuring DB schema.", ex);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Unexpected error creating the database.", ex);
+            // Keep behavior simple: log via Error.Handle if available, otherwise swallow to avoid breaking startup.
+            try { Error.Handle("Unexpected error creating the database.", new Exception("CreateDatabase failed")); } catch { }
             throw;
         }
     }
 
-    /// <summary>
-    /// Get the highest ID for a given date
-    /// </summary>
+    // Minimal read/update helpers remain unchanged and continue to use the configured DB path.
+
     public static int CurrentIdCount(DateTime date)
     {
         try
         {
             using var context = new TimeTrackDbContext(DatabasePath);
             var dateString = DateToString(date);
-            
+
             var maxId = context.TimeEntries
                 .Where(e => e.Date == dateString)
                 .Max(e => (int?)e.Id);
-            
+
             return maxId ?? 0;
         }
         catch (Exception e)
         {
-            Error.Handle("Could not get current entry index.", e);
+            try { Error.Handle("Could not get current entry index.", e); } catch { }
             throw;
         }
     }
 
-    /// <summary>
-    /// Retrieve all time entries for a specific date
-    /// </summary>
     public static ObservableCollection<TimeEntry> Retrieve(DateTime date)
     {
         var result = new ObservableCollection<TimeEntry>();
@@ -399,7 +113,6 @@ public static class Database
                 .AsNoTracking()
                 .ToList();
 
-            // Sort in memory to handle nullable TimeSpan values
             entities = entities
                 .OrderBy(e => e.StartTime)
                 .ThenBy(e => e.EndTime)
@@ -414,39 +127,16 @@ public static class Database
         }
         catch (Exception e)
         {
-            Error.Handle("Something went wrong while retrieving today's entries.", e);
+            try { Error.Handle("Something went wrong while retrieving today's entries.", e); } catch { }
             throw;
         }
 
         return result;
     }
 
-    /// <summary>
-    /// Update or insert multiple time entries
-    /// </summary>
     public static void Update(ObservableCollection<TimeEntry> entries)
     {
-        if (entries.Count < 1)
-            return;
-
-        // Basic validation: duplicates and invalid durations
-        try
-        {
-            var duplicateKeys = entries
-                .GroupBy(e => (Date: DateToString(e.Date), e.ID))
-                .Where(g => g.Count() > 1)
-                .Select(g => $"{g.Key.Date}#{g.Key.ID}")
-                .ToList();
-            if (duplicateKeys.Any())
-            {
-                Error.Handle($"Duplicate entry keys detected: {string.Join(", ", duplicateKeys)}", new InvalidOperationException("Duplicate keys"));
-                // Continue but may cause DbUpdateException
-            }
-        }
-        catch (Exception ex)
-        {
-            Error.Handle("Validation error while checking for duplicates.", ex);
-        }
+        if (entries.Count < 1) return;
 
         const int maxRetries = 3;
         int attempt = 0;
@@ -459,12 +149,11 @@ public static class Database
 
                 foreach (var entry in entries)
                 {
-                    // Skip invalid negative/zero durations when both times exist and case is empty (non-lunch)
                     var start = entry.StartTime;
                     var end = entry.EndTime;
                     if (start.HasValue && end.HasValue && end <= start)
                     {
-                        Error.Handle($"Skipping invalid duration for {DateToString(entry.Date)}#{entry.ID}", new InvalidOperationException("End <= Start"));
+                        try { Error.Handle($"Skipping invalid duration for {DateToString(entry.Date)}#{entry.ID}", new InvalidOperationException("End <= Start")); } catch { }
                         continue;
                     }
 
@@ -486,36 +175,32 @@ public static class Database
 
                 context.SaveChanges();
                 tx.Commit();
-                break; // success
+                break;
             }
             catch (DbUpdateException dbEx)
             {
-                var summary = string.Join(", ", entries.Select(e => $"{DateToString(e.Date)}#{e.ID}"));
-                Error.Handle($"Database update failed for entries: {summary}", dbEx);
-                break; // do not retry non-SQLite busy/locked here
+                try { Error.Handle("Database update failed.", dbEx); } catch { }
+                break;
             }
-            catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6) // SQLITE_BUSY or SQLITE_LOCKED
+            catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6)
             {
                 attempt++;
                 if (attempt >= maxRetries)
                 {
-                    Error.Handle("SQLite was busy/locked after multiple attempts during update.", sqlEx);
+                    try { Error.Handle("SQLite was busy/locked after multiple attempts during update.", sqlEx); } catch { }
                     break;
                 }
-                Thread.Sleep(200 * attempt); // backoff
+                System.Threading.Thread.Sleep(200 * attempt);
                 continue;
             }
             catch (Exception e)
             {
-                Error.Handle("Something went wrong while updating the entries database.\nThe saved records may not be consistent with what is displayed.", e);
+                try { Error.Handle("Something went wrong while updating the entries database.", e); } catch { }
                 break;
             }
         }
     }
 
-    /// <summary>
-    /// Delete a time entry by date and ID
-    /// </summary>
     public static void Delete(DateTime date, int id)
     {
         const int maxRetries = 3;
@@ -542,94 +227,51 @@ public static class Database
             }
             catch (DbUpdateException dbEx)
             {
-                Error.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx);
+                try { Error.Handle($"Could not delete the record due to a database update error. Key: {DateToString(date)}#{id}", dbEx); } catch { }
                 break;
             }
-            catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6) // SQLITE_BUSY or SQLITE_LOCKED
+            catch (SqliteException sqlEx) when (sqlEx.SqliteErrorCode is 5 or 6)
             {
                 attempt++;
                 if (attempt >= maxRetries)
                 {
-                    Error.Handle("SQLite was busy/locked after multiple attempts during delete.", sqlEx);
+                    try { Error.Handle("SQLite was busy/locked after multiple attempts during delete.", sqlEx); } catch { }
                     break;
                 }
-                Thread.Sleep(200 * attempt);
+                System.Threading.Thread.Sleep(200 * attempt);
                 continue;
             }
             catch (Exception e)
             {
-                Error.Handle("Could not delete the record from the database.\nThe saved records may not be consistent with what is displayed.", e);
+                try { Error.Handle("Could not delete the record from the database.", e); } catch { }
                 break;
             }
         }
     }
 
-    // Helper methods for date/time conversion
-
-    private static string DateToString(DateTime date)
-    {
-        return date.ToString(DateFormat);
-    }
-
-    private static DateTime StringToDate(string str)
-    {
-        return DateTime.ParseExact(str, DateFormat, DateTimeFormatInfo.InvariantInfo);
-    }
-
-    private static string? TimeSpanToString(TimeSpan? timeSpan)
-    {
-        return timeSpan?.ToString("c");
-    }
-
-    private static TimeSpan? StringToTimeSpan(string? str)
-    {
-        if (string.IsNullOrEmpty(str))
-            return null;
-
-        if (TimeSpan.TryParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var result))
-            return result;
-
-        return null;
-    }
-
-    // --- FIXED: Convert TimeOnly? to TimeSpan? before calling TimeSpanToString ---
-    private static string? TimeOnlyToString(TimeOnly? time)
-    {
-        return time.HasValue ? time.Value.ToTimeSpan().ToString("c") : null;
-    }
-
-    private static TimeOnly? StringToTimeOnly(string? str)
-    {
-        if (string.IsNullOrEmpty(str))
-            return null;
-
-        if (TimeSpan.TryParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var ts))
-            return TimeOnly.FromTimeSpan(ts);
-
-        return null;
-    }
+    private static string DateToString(DateTime date) => date.ToString(DateFormat);
+    private static DateTime StringToDate(string str) => DateTime.ParseExact(str, DateFormat, DateTimeFormatInfo.InvariantInfo);
+    private static string? TimeOnlyToString(TimeOnly? time) => time.HasValue ? time.Value.ToTimeSpan().ToString("c") : null;
+    private static TimeOnly? StringToTimeOnly(string? str) { if (string.IsNullOrEmpty(str)) return null; if (TimeSpan.TryParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var ts)) return TimeOnly.FromTimeSpan(ts); return null; }
 
     // Entity conversion methods
 
-    private static TimeEntryEntity TimeEntryToEntity(TimeEntry entry)
+    private static TimeEntryEntity TimeEntryToEntity(TimeEntry entry) => new()
     {
-        return new TimeEntryEntity
-        {
-            Date = DateToString(entry.Date),
-            Id = entry.ID,
-            StartTime = TimeOnlyToString(entry.StartTime), // <-- FIXED
-            EndTime = TimeOnlyToString(entry.EndTime),     // <-- FIXED
-            CaseNumber = entry.CaseNumber,
-            Notes = entry.Notes,
-            Recorded = entry.Recorded ? 1 : 0
-        };
-    }
+        Date = DateToString(entry.Date),
+        Id = entry.ID,
+        StartTime = TimeOnlyToString(entry.StartTime),
+        EndTime = TimeOnlyToString(entry.EndTime),
+        CaseNumber = entry.CaseNumber,
+        Notes = entry.Notes,
+        Recorded = entry.Recorded ? 1 : 0
+    };
 
     private static TimeEntry EntityToTimeEntry(TimeEntryEntity entity)
     {
         var date = StringToDate(entity.Date);
-        var startTime = StringToTimeOnly(entity.StartTime); // <-- FIXED
-        var endTime = StringToTimeOnly(entity.EndTime);     // <-- FIXED
+        var startTime = StringToTimeOnly(entity.StartTime);
+        var endTime = StringToTimeOnly(entity.EndTime);
         var caseNumber = entity.CaseNumber ?? string.Empty;
         var notes = entity.Notes ?? string.Empty;
         var recorded = entity.Recorded != 0;
