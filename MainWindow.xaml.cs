@@ -491,6 +491,49 @@ namespace TimeTrack
             _timeKeeper.UpdateSelectedTime();
         }
 
+        private void DgTimeRecords_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Find the DataGridRow that was right-clicked
+            var row = FindVisualParent<DataGridRow>(e.OriginalSource as DependencyObject);
+            
+            if (row != null && DgTimeRecords != null)
+            {
+                // Explicitly set multiple selection properties to ensure it sticks
+                row.IsSelected = true;
+                row.Focus();
+                
+                // Update both DataGrid selection properties
+                DgTimeRecords.SelectedItem = row.Item;
+                DgTimeRecords.CurrentItem = row.Item;
+                DgTimeRecords.SelectedIndex = DgTimeRecords.Items.IndexOf(row.Item);
+                
+                // Update the ViewModel's selected item as well
+                if (_timeKeeper != null && row.Item is TimeEntry entry)
+                {
+                    _timeKeeper.SelectedItem = entry;
+                }
+                
+                // Force immediate visual refresh
+                DgTimeRecords.UpdateLayout();
+                row.UpdateLayout();
+                
+                // Mark the event as handled so it doesn't bubble up
+                e.Handled = true;
+            }
+        }
+
+        private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T parent)
+                    return parent;
+                
+                child = System.Windows.Media.VisualTreeHelper.GetParent(child);
+            }
+            return null;
+        }
+
         private void DgRow_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (sender is not DataGridRow row || row.Item is not TimeEntry entry)

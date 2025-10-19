@@ -304,13 +304,35 @@
 
         <Style TargetType="DataGridRow">
             <EventSetter Event="MouseDoubleClick" Handler="DgRow_MouseDoubleClick"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
+                <!-- MouseOver on unselected rows only - must come BEFORE IsSelected -->
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                        <Condition Property="IsSelected" Value="False"/>
+                    </MultiTrigger.Conditions>
                     <Setter Property="Background" Value="#F0F6FC"/>
-                </Trigger>
+                </MultiTrigger>
+                <!-- Selected state - AFTER MouseOver so it takes precedence -->
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#E5F1FB"/>
+                    <Setter Property="Background" Value="#CCE4F7"/>
                     <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Override DataGridCell style to prevent cell borders from showing -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Style.Triggers>
+                <!-- Keep cell background transparent when row is selected -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -542,7 +564,8 @@
          EnableColumnVirtualization="True"
          ScrollViewer.CanContentScroll="True"
          VirtualizingPanel.IsVirtualizing="True"
-         VirtualizingPanel.VirtualizationMode="Recycling">
+         VirtualizingPanel.VirtualizationMode="Recycling"
+         PreviewMouseRightButtonDown="DgTimeRecords_PreviewMouseRightButtonDown">
                                 <DataGrid.Columns>
                                     <DataGridCheckBoxColumn Header="" Width="30"
             Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
