@@ -439,8 +439,8 @@
         </Style>
     </Window.Resources>
 
+    <!-- Keyboard bindings are configured dynamically in MainWindow.xaml.cs via ApplyKeyboardShortcuts() -->
     <Window.InputBindings>
-        <!--<KeyBinding Key="Insert" Command="{Binding SubmitCommand}" -->
     </Window.InputBindings>
 
     <DockPanel>
