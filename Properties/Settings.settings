@@ -1,4 +1,6 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
+<!-- This file is no longer used in .NET 8+ projects -->
+<!-- Settings are now managed via SettingsManager.cs which uses XML serialization -->
 <SettingsFile xmlns="uri:settings" CurrentProfile="(Default)">
   <Profiles>
     <Profile Name="(Default)" />

@@ -1,45 +1,71 @@
-﻿<!--
-  Changelog - 2025-10-17
-  - 2025-10-17: Converted project to SDK-style WPF targeting .NET Framework 4.7.2.
-  - Added PackageReference for System.Data.SQLite (Version 1.0.116.0) so MSBuild/NuGet deploys native SQLite.Interop.dll automatically.
-  - Removed embedding of the managed System.Data.SQLite.dll and old NuGet stub/import targets that prevented native assets from being copied.
-  - Disabled SDK auto-generation of assembly attributes (<GenerateAssemblyInfo>false</GenerateAssemblyInfo>) to resolve duplicate CS0579 errors.
-  - Set PlatformTarget to x64 and Prefer32Bit to false to match native interop expectations.
-  - Recommended: remove AppDomain.CurrentDomain.AssemblyResolve extraction code from MainWindow.xaml.cs (it breaks native DLL resolution).
-  - Post-change actions: Clean solution → Restore NuGet Packages → Rebuild → verify SQLite.Interop.dll is present in output and loads at runtime.
--->
-<!--
-  Changes:
-  - Disabled SDK auto-generation of assembly attributes to avoid duplicates with Properties\AssemblyInfo.cs.
-  - Keeps SDK-style WPF targeting .NET Framework 4.7.2 and System.Data.SQLite PackageReference.
--->
-<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <RootNamespace>TimeTrack</RootNamespace>
-    <AssemblyName>TimeTrack</AssemblyName>
-
-    <!-- Avoid duplicate attributes with Properties\AssemblyInfo.cs -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-
-    <!-- Ensure all package outputs (incl. native) are copied -->
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-
-    <!-- Your app metadata -->
     <StartupObject>TimeTrack.App</StartupObject>
-    <ApplicationIcon>ExeIcon.ico</ApplicationIcon>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- Display name for the built assembly -->
+    <AssemblyName>TimeTrack</AssemblyName>
+    <Product>TimeTrack v2</Product>
+    
+    <!-- Application icon for the generated EXE -->
+    <ApplicationIcon>Resources\exeicon.ico</ApplicationIcon>
+
+    <!-- Version metadata -->
+    <Version>2.1</Version>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <InformationalVersion>2.1</InformationalVersion>
+    
+    <!-- Disable automatic generation of assembly info to avoid conflicts with Properties/AssemblyInfo.cs -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <!-- Release-specific publish packaging settings -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <!-- Exclude test project sources from this app project -->
   <ItemGroup>
-    <!-- Use the Core package that carries the native interop assets -->
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118.0" />
+    <Compile Remove="scripts\**" />
+    <Compile Remove="Tests\IntegrationRunner\**\*.cs" />
+    <EmbeddedResource Remove="scripts\**" />
+    <EmbeddedResource Remove="Tests\IntegrationRunner\**\*.*" />
+    <None Remove="scripts\**" />
+    <None Remove="Tests\IntegrationRunner\**\*.*" />
+    <Page Remove="scripts\**" />
+    <Page Remove="Tests\IntegrationRunner\**\*.*" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="time2.png" />
-    <Content Include="ExeIcon.ico" />
-    <None Include="App.config" />
+    <!-- Embedded resources -->
+    <Resource Include="Resources\time.xcf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\time.png" />
+  </ItemGroup>
+
+  <!-- Include application icon file in the project so it is packaged -->
+  <ItemGroup>
+    <None Include="Resources\exeicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- EF Core 8 with SQLite -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- SQLitePCLRaw.bundle_e_sqlite3 removed - let EF Core manage this dependency -->
   </ItemGroup>
 </Project>

@@ -8,7 +8,7 @@ namespace TimeTrack
 {
     public partial class OptionsWindow : Window
     {
-        private Dictionary<string, KeyboardShortcut> shortcuts;
+        private Dictionary<string, KeyboardShortcut> shortcuts = null!; // Suppress CS8618
 
         public OptionsWindow()
         {
@@ -25,15 +25,31 @@ namespace TimeTrack
         private void ChangeShortcut_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            string actionName = button?.Tag as string;
+            string? actionName = button?.Tag as string;
 
             if (actionName != null && shortcuts.ContainsKey(actionName))
             {
                 var dialog = new ShortcutInputDialog(shortcuts[actionName]);
                 if (dialog.ShowDialog() == true)
                 {
-                    shortcuts[actionName].Key = dialog.SelectedKey;
-                    shortcuts[actionName].Modifiers = dialog.SelectedModifiers;
+                    var selectedKey = dialog.SelectedKey;
+                    var selectedMods = dialog.SelectedModifiers;
+
+                    // Prevent setting Submit to Ctrl+Enter or Shift+Enter
+                    if (actionName == "Submit" &&
+                        (selectedKey == Key.Enter || selectedKey == Key.Return) &&
+                        (selectedMods.HasFlag(ModifierKeys.Control) || selectedMods.HasFlag(ModifierKeys.Shift)))
+                    {
+                        MessageBox.Show(
+                            "Submit hotkey cannot be set to Ctrl+Enter or Shift+Enter. Please choose a different combination.",
+                            "Invalid Shortcut",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        return;
+                    }
+
+                    shortcuts[actionName].Key = selectedKey;
+                    shortcuts[actionName].Modifiers = selectedMods;
                     ShortcutsGrid.Items.Refresh();
                 }
             }
@@ -72,6 +88,25 @@ namespace TimeTrack
         {
             DialogResult = false;
             Close();
+        }
+
+        private void Apply_Click(object sender, RoutedEventArgs e)
+        {
+            // Save all shortcuts
+            foreach (var kvp in shortcuts)
+            {
+                SettingsManager.UpdateShortcut(kvp.Key, kvp.Value.Key, kvp.Value.Modifiers);
+            }
+            SettingsManager.Save();
+            
+            // Notify the MainWindow to reload shortcuts
+            if (Owner is MainWindow mainWindow)
+            {
+                mainWindow.ApplyKeyboardShortcuts();
+            }
+            
+            MessageBox.Show("Settings have been applied.", "Apply Complete", 
+                            MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

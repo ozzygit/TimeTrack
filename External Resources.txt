@@ -3,8 +3,8 @@
  * Data Binding
  * https://www.wpf-tutorial.com/data-binding/introduction/
  * 
- * Implementing OnPropertyChanged
- * https://docs.microsoft.com/en-us/dotnet/desktop/wpf/data/how-to-implement-property-change-notification?view=netframeworkdesktop-4.8
+ * Implementing OnPropertyChanged (Updated for .NET 8)
+ * https://learn.microsoft.com/en-us/dotnet/desktop/wpf/data/how-to-implement-property-change-notification
  * 
  * CSVHelper
  * https://joshclose.github.io/CsvHelper/getting-started/ 
@@ -12,22 +12,25 @@
  * DataGrid Post-Editing Event
  * https://stackoverflow.com/questions/3938040/wpf-datagrid-row-editing-ended-event/49948858
  * 
- * Embedding DLL/referencess
+ * Embedding DLL/references
  * https://stackoverflow.com/questions/189549/embedding-dlls-in-a-compiled-executable
  * 
  * Handling/Validating Text Input
  * https://stackoverflow.com/questions/1268552/how-do-i-get-a-textbox-to-only-accept-numeric-input-in-wpf
  * 
- * iCommands, and how to use them:
- * https://gurukultree.com/articles/21/explaing-icommand-in-mvvm-wpf/
+ * ICommand and MVVM:
+ * https://learn.microsoft.com/en-us/dotnet/desktop/wpf/data/commanding-overview
  * 
  * Deleting records from datagrid:
  * https://social.msdn.microsoft.com/Forums/en-US/84fd9b20-33d8-428a-8e44-8df7992a9d4c/datagrid-delete-row?forum=wpf
  * 
- * SQLite in C#
- * https://zetcode.com/csharp/sqlite/
+ * SQLite in C# (.NET 8 with EF Core)
+ * https://learn.microsoft.com/en-us/ef/core/providers/sqlite/
+ * https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app
  *
- * Embedding dll into project
- * https://stackoverflow.com/questions/5381708/ilmerge-alternative-how-to-embed-application-s-dependent-dlls-inside-an-exe-fil/10600046#10600046
- * https://www.c-sharpcorner.com/uploadfile/40e97e/saving-an-embedded-file-in-C-Sharp/
+ * Entity Framework Core 8
+ * https://learn.microsoft.com/en-us/ef/core/
+ * 
+ * CommunityToolkit.Mvvm
+ * https://learn.microsoft.com/en-us/dotnet/communitytoolkit/mvvm/
  */
