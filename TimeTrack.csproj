@@ -19,9 +19,6 @@
     <AssemblyVersion>2.1.0.0</AssemblyVersion>
     <FileVersion>2.1.0.0</FileVersion>
     <InformationalVersion>2.1</InformationalVersion>
-    
-    <!-- Allow SDK to auto-generate assembly info; manual AssemblyInfo.cs will only contain WPF-specific ThemeInfo -->
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <!-- Release-specific publish packaging settings -->
