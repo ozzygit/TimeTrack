@@ -48,6 +48,9 @@ namespace TimeTrack
         public static readonly RoutedUICommand ToggleAllCommand =
             new("Toggle All Recorded", "ToggleAll", typeof(MainWindow));
 
+        public static readonly RoutedUICommand DeleteCommand =
+            new("Delete Selected", "Delete", typeof(MainWindow));
+
         public MainWindow()
         {
             InitializeComponent();
@@ -82,6 +85,7 @@ namespace TimeTrack
             CommandBindings.Add(new CommandBinding(HelpCommand, (s, e) => BtnProjectInfo_Click(s, e)));
             CommandBindings.Add(new CommandBinding(SubmitCommand, (s, e) => BtnSubmit(s, e), (s, e) => e.CanExecute = CanSubmit()));
             CommandBindings.Add(new CommandBinding(ToggleAllCommand, (s, e) => BtnToggleAllRecorded(s, e)));
+            CommandBindings.Add(new CommandBinding(DeleteCommand, (s, e) => BtnDelete(s, e), (s, e) => e.CanExecute = (_timeKeeper?.SelectedItem != null)));
 
             if (_timeKeeper != null)
             {
@@ -636,7 +640,8 @@ namespace TimeTrack
             AddBinding("PrevDay", PrevDayCommand);
             AddBinding("NextDay", NextDayCommand);
             AddBinding("Options", OptionsCommand);
-            AddBinding("About", HelpCommand);  // Add this line
+            AddBinding("About", HelpCommand);
+            AddBinding("Delete", DeleteCommand);
 
             if (shortcuts.TryGetValue("Submit", out var submitShortcut))
             {
@@ -780,6 +785,15 @@ namespace TimeTrack
             string timeString = $"{CmbEndHour.SelectedItem}:{CmbEndMinute.SelectedItem} {CmbEndPeriod.SelectedItem}";
             _timeKeeper.EndTimeField = timeString;
             PopupEndTime.IsOpen = false;
+        }
+
+        private void BtnDelete(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper?.SelectedItem == null)
+                return;
+
+            _timeKeeper.RemoveCommand.Execute(null);
+            ShowStatus("Entry deleted");
         }
     }
 }
