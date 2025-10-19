@@ -539,7 +539,12 @@
          ColumnWidth="Auto"
          RowHeaderWidth="0"
          MinColumnWidth="40"
-         IsReadOnly="True">
+         IsReadOnly="True"
+         EnableRowVirtualization="True"
+         EnableColumnVirtualization="True"
+         ScrollViewer.CanContentScroll="True"
+         VirtualizingPanel.IsVirtualizing="True"
+         VirtualizingPanel.VirtualizationMode="Recycling">
                                 <DataGrid.Columns>
                                     <DataGridCheckBoxColumn Header="" Width="30"
             Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"

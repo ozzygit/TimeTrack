@@ -19,6 +19,7 @@ namespace TimeTrack
     {
         private TimeKeeper? time_keeper;
         private Brush? BtnBrush;
+        private readonly System.Windows.Threading.DispatcherTimer _statusTimer = new System.Windows.Threading.DispatcherTimer();
 
         // Existing routed commands (remove hardcoded InputGestureCollection)
         public static readonly RoutedUICommand ExportCommand =
@@ -85,7 +86,17 @@ namespace TimeTrack
 
             // Refresh CanExecute when input fields change
             if (time_keeper != null)
-                time_keeper.PropertyChanged += TimeKeeper_PropertyChanged;
+            {
+                WeakEventManager<TimeKeeper, PropertyChangedEventArgs>.AddHandler(time_keeper, nameof(time_keeper.PropertyChanged), TimeKeeper_PropertyChanged);
+            }
+
+            // Reuse one status timer
+            _statusTimer.Tick += (s, e) =>
+            {
+                if (StatusText != null)
+                    StatusText.Text = "Ready";
+                _statusTimer.Stop();
+            };
         }
 
         private void UpdateMenuGestureTexts()
@@ -633,15 +644,11 @@ namespace TimeTrack
             }
             
             StatusText.Text = message;
-            
-            var timer = new System.Windows.Threading.DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(durationMs);
-            timer.Tick += (s, e) =>
-            {
-                StatusText.Text = "Ready";
-                timer.Stop();
-            };
-            timer.Start();
+
+            // Reuse timer instance; update interval and restart
+            _statusTimer.Interval = TimeSpan.FromMilliseconds(durationMs);
+            _statusTimer.Stop();
+            _statusTimer.Start();
         }
 
         private void InitializeTimePickerComboBoxes()
@@ -748,9 +755,28 @@ namespace TimeTrack
         public TimeKeeper()
         {
             time_records = new ObservableCollection<TimeEntry>();
+            time_records.CollectionChanged += TimeRecords_CollectionChanged;
             date = DateTime.Today.Date;
             current_date = date.Date.ToShortDateString();
             current_id_count = 0;
+        }
+
+        private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+            {
+                foreach (TimeEntry item in e.NewItems)
+                {
+                    item.TimeEntryChanged += OnTimeEntryChanged;
+                }
+            }
+            if (e.OldItems != null)
+            {
+                foreach (TimeEntry item in e.OldItems)
+                {
+                    item.TimeEntryChanged -= OnTimeEntryChanged;
+                }
+            }
         }
 
         // Accessor functions
