@@ -45,6 +45,10 @@ public class TimeTrackDbContext : DbContext
             // Composite primary key
             entity.HasKey(e => new { e.Date, e.Id });
             
+            // Useful indexes for common queries/sorts
+            entity.HasIndex(e => e.Date).HasDatabaseName("IX_time_entries_date");
+            entity.HasIndex(e => new { e.Date, e.StartTime, e.EndTime }).HasDatabaseName("IX_time_entries_date_start_end");
+            
             entity.Property(e => e.Date)
                 .HasColumnName("date")
                 .IsRequired();

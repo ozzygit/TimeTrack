@@ -26,7 +26,7 @@ if errorlevel 1 (
 set MIGRATION_NAME=%~1
 if "%MIGRATION_NAME%"=="" (
   for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set TS=%%i
-  set MIGRATION_NAME=UpdateSchema_!TS!
+  set MIGRATION_NAME=AddIndexes_!TS!
 )
 
 echo Using migration name: %MIGRATION_NAME%
