@@ -136,7 +136,8 @@ namespace TimeTrack
             if (e.PropertyName is nameof(TimeKeeperViewModel.StartTimeField)
                 or nameof(TimeKeeperViewModel.EndTimeField)
                 or nameof(TimeKeeperViewModel.CaseNumberField)
-                or nameof(TimeKeeperViewModel.NotesField))
+                or nameof(TimeKeeperViewModel.NotesField)
+                or nameof(TimeKeeperViewModel.SelectedItem))
             {
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -489,10 +490,25 @@ namespace TimeTrack
 
         private void DgTimeRecords_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_timeKeeper == null || DgTimeRecords?.SelectedItem == null)
+            if (_timeKeeper == null)
                 return;
 
-            _timeKeeper.UpdateSelectedTime();
+            // Only update if there are actual selection changes
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is TimeEntry selectedEntry)
+            {
+                System.Diagnostics.Debug.WriteLine($"Selection changed: Selected entry ID {selectedEntry.ID} at {selectedEntry.StartTime}");
+                _timeKeeper.SelectedItem = selectedEntry;
+                _timeKeeper.UpdateSelectedTime();
+            }
+            else if (e.RemovedItems.Count > 0 && e.AddedItems.Count == 0)
+            {
+                // Something was deselected and nothing was selected
+                if (DgTimeRecords?.SelectedItem == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Selection changed: Cleared selection");
+                    _timeKeeper.SelectedItem = null;
+                }
+            }
         }
 
         private void DgTimeRecords_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -790,8 +806,14 @@ namespace TimeTrack
         private void BtnDelete(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper?.SelectedItem == null)
+            {
+                System.Diagnostics.Debug.WriteLine("BtnDelete: No item selected");
                 return;
+            }
 
+            var itemToDelete = _timeKeeper.SelectedItem;
+            System.Diagnostics.Debug.WriteLine($"BtnDelete: Deleting entry ID {itemToDelete.ID} at {itemToDelete.StartTime}");
+            
             _timeKeeper.RemoveCommand.Execute(null);
             ShowStatus("Entry deleted");
         }

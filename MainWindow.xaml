@@ -435,6 +435,8 @@
         <!-- Notes Cell Text Style -->
         <Style x:Key="NotesCellTextStyle" TargetType="TextBlock">
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="MaxHeight" Value="20"/>
             <Setter Property="ToolTip" Value="{Binding Notes}"/>
         </Style>
     </Window.Resources>
@@ -460,7 +462,8 @@
                 <MenuItem x:Name="InsertMenuItem" Header="_Insert Record"
                           Command="{x:Static local:MainWindow.InsertCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Insert}"/>
-                <MenuItem x:Name="DeleteMenuItem" Header="_Delete Selected" Command="{Binding RemoveCommand}"
+                <MenuItem x:Name="DeleteMenuItem" Header="_Delete Selected"
+                          Command="{x:Static local:MainWindow.DeleteCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
                 <Separator/>
                 <MenuItem x:Name="ToggleAllMenuItem" Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"
@@ -500,13 +503,12 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid Margin="12">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MinWidth="420"/>
-                    <ColumnDefinition Width="4"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="200"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Left -->
-                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12">
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="12" Margin="0,0,8,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
@@ -560,12 +562,17 @@
          RowHeaderWidth="0"
          MinColumnWidth="40"
          IsReadOnly="True"
+         MaxHeight="600"
          EnableRowVirtualization="True"
          EnableColumnVirtualization="True"
          ScrollViewer.CanContentScroll="True"
          VirtualizingPanel.IsVirtualizing="True"
          VirtualizingPanel.VirtualizationMode="Recycling"
+         SelectionChanged="DgTimeRecords_SelectionChanged"
          PreviewMouseRightButtonDown="DgTimeRecords_PreviewMouseRightButtonDown">
+                                <DataGrid.InputBindings>
+                                    <KeyBinding Key="Delete" Command="{x:Static local:MainWindow.DeleteCommand}"/>
+                                </DataGrid.InputBindings>
                                 <DataGrid.Columns>
                                     <DataGridCheckBoxColumn Header="" Width="30"
             Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
@@ -595,7 +602,8 @@
                                                   CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         <Separator/>
                                         <MenuItem Header="Delete Selected"
-                                                  Command="{Binding PlacementTarget.DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                  Command="{x:Static local:MainWindow.DeleteCommand}"
+                                                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         <Separator/>
                                         <MenuItem Header="Toggle All Recorded"
                                                   Command="{x:Static local:MainWindow.ToggleAllCommand}"
@@ -607,19 +615,8 @@
                     </Grid>
                 </Border>
 
-                <!-- Splitter -->
-                <GridSplitter Grid.Column="1"
-                              Width="4"
-                              Background="#DDDDDD"
-                              HorizontalAlignment="Stretch"
-                              VerticalAlignment="Stretch"
-                              ResizeBehavior="PreviousAndNext"
-                              ResizeDirection="Columns"
-                              ShowsPreview="True"/>
-
                 <!-- Right -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}"
-                        MinWidth="140" MaxWidth="180">
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
