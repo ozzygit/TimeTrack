@@ -1,8 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
+using TimeTrack.Data;
 
-namespace TimeTrack
+namespace TimeTrack.Views.Dialogs
 {
     public partial class EditEntryWindow : Window
     {
@@ -60,8 +61,8 @@ namespace TimeTrack
                         return;
                 }
 
-                // Check for case number unless it's a lunch entry
-                if (string.IsNullOrWhiteSpace(te.CaseNumber))
+                // Check for ticket number unless it's a lunch entry
+                if (string.IsNullOrWhiteSpace(te.TicketNumber))
                 {
                     var isLunch = te.Notes?.Equals("Lunch", StringComparison.OrdinalIgnoreCase) ?? false;
 

@@ -1,4 +1,4 @@
-<Window x:Class="TimeTrack.OptionsWindow"
+<Window x:Class="TimeTrack.Views.Dialogs.OptionsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Options - TimeTrack" Width="800" Height="600" MinWidth="700" MinHeight="500"

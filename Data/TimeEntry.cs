@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Threading;
 using TimeTrack.Utilities;
 
-namespace TimeTrack
+namespace TimeTrack.Data
 {
     public delegate void TimeEntryChangedEventHandler(bool timeChanged);
 
@@ -37,7 +37,7 @@ namespace TimeTrack
                 ?? throw new InvalidOperationException("No SynchronizationContext available");
         }
 
-        public TimeEntry(DateTime date, int id, TimeOnly? startTime, TimeOnly? endTime, string? caseNumber, string? notes, bool recorded = false)
+        public TimeEntry(DateTime date, int id, TimeOnly? startTime, TimeOnly? endTime, string? ticketNumber, string? notes, bool recorded = false)
         {
             _synchronizationContext = SynchronizationContext.Current
                 ?? throw new InvalidOperationException("No SynchronizationContext available");
@@ -49,7 +49,7 @@ namespace TimeTrack
             EndTime = endTime;
             Notes = notes ?? string.Empty;
             Recorded = recorded;
-            CaseNumber = caseNumber ?? string.Empty;
+            TicketNumber = ticketNumber ?? string.Empty;
         }
 
         public DateTime Date => date;
@@ -85,7 +85,7 @@ namespace TimeTrack
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsValid))]
-        private string caseNumber = string.Empty;
+        private string ticketNumber = string.Empty;
 
         [ObservableProperty]
         private string notes = string.Empty;
@@ -97,7 +97,7 @@ namespace TimeTrack
         public string StartTimeAsString() => _startTime?.ToString(TimeFormat) ?? string.Empty;
         public string EndTimeAsString() => _endTime?.ToString(TimeFormat) ?? string.Empty;
 
-        public bool CaseIsEmpty() => string.IsNullOrWhiteSpace(CaseNumber);
+        public bool TicketIsEmpty() => string.IsNullOrWhiteSpace(TicketNumber);
 
         public TimeSpan? Duration
         {
@@ -117,7 +117,7 @@ namespace TimeTrack
             }
         }
 
-        public bool IsValid => !string.IsNullOrWhiteSpace(CaseNumber) && Duration.HasValue;
+        public bool IsValid => !string.IsNullOrWhiteSpace(TicketNumber) && Duration.HasValue;
 
         private readonly SynchronizationContext _synchronizationContext;
 

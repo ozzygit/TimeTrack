@@ -87,8 +87,8 @@ if (Test-Path $dbPath) {
     Write-Host "`n??  Database not found at: $dbPath" -ForegroundColor Yellow
 }
 
-# Check log file
-$logPath = "$env:LOCALAPPDATA\TimeTrack v2\time_track_log.txt"
+# Check log file (updated to AppData instead of LocalAppData)
+$logPath = "$env:APPDATA\TimeTrack v2\time_track_log.txt"
 if (Test-Path $logPath) {
     Write-Host "`nRecent log entries:" -ForegroundColor Cyan
     Get-Content $logPath -Tail 10

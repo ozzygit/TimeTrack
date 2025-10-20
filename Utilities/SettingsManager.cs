@@ -4,9 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using System.Xml.Linq;
-using TimeTrack.Utilities;
 
-namespace TimeTrack
+namespace TimeTrack.Utilities
 {
     public class KeyboardShortcut
     {

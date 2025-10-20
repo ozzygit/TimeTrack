@@ -1,9 +1,9 @@
-<Window x:Class="TimeTrack.EditEntryWindow"
+<Window x:Class="TimeTrack.Views.Dialogs.EditEntryWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TimeTrack"
+        xmlns:local="clr-namespace:TimeTrack.Data"
         mc:Ignorable="d"
         Title="Edit Entry - TimeTrack v2" Height="480" Width="500"
         MinHeight="450" MinWidth="450"
@@ -196,7 +196,7 @@
                         <!-- Ticket Number -->
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Ticket Number" Style="{StaticResource LabelStyle}"/>
                         <TextBox Grid.Row="1" Grid.Column="0"
-                                 Text="{Binding CaseNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 Text="{Binding TicketNumber, UpdateSourceTrigger=PropertyChanged}"
                                  ToolTip="Enter ticket or case number"/>
 
                         <!-- Recorded Checkbox -->

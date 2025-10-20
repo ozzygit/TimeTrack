@@ -526,7 +526,7 @@ public static class Database
         Id = entry.ID,
         StartTime = TimeOnlyToString(entry.StartTime),
         EndTime = TimeOnlyToString(entry.EndTime),
-        CaseNumber = entry.CaseNumber,
+        CaseNumber = entry.TicketNumber,
         Notes = entry.Notes,
         Recorded = entry.Recorded ? 1 : 0
     };
@@ -536,10 +536,10 @@ public static class Database
         var date = StringToDate(entity.Date);
         var startTime = StringToTimeOnly(entity.StartTime);
         var endTime = StringToTimeOnly(entity.EndTime);
-        var caseNumber = entity.CaseNumber ?? string.Empty;
+        var ticketNumber = entity.CaseNumber ?? string.Empty;
         var notes = entity.Notes ?? string.Empty;
         var recorded = entity.Recorded != 0;
 
-        return new TimeEntry(date, entity.Id, startTime, endTime, caseNumber, notes, recorded);
+        return new TimeEntry(date, entity.Id, startTime, endTime, ticketNumber, notes, recorded);
     }
 }

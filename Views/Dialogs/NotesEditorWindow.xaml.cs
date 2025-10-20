@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 
-namespace TimeTrack
+namespace TimeTrack.Views.Dialogs
 {
     public partial class NotesEditorWindow : Window
     {

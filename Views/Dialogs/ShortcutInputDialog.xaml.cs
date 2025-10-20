@@ -1,7 +1,8 @@
 using System.Windows;
 using System.Windows.Input;
+using TimeTrack.Utilities;
 
-namespace TimeTrack
+namespace TimeTrack.Views.Dialogs
 {
     public partial class ShortcutInputDialog : Window
     {

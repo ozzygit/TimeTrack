@@ -2,6 +2,7 @@
 using System.Windows;
 using TimeTrack.Data;
 using TimeTrack.Utilities;
+using TimeTrack.Views;
 
 namespace TimeTrack
 {

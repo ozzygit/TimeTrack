@@ -3,8 +3,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using TimeTrack.Utilities;
+using TimeTrack.Views;
 
-namespace TimeTrack
+namespace TimeTrack.Views.Dialogs
 {
     public partial class OptionsWindow : Window
     {
@@ -128,6 +130,7 @@ namespace TimeTrack
             if (Owner is MainWindow mainWindow)
             {
                 mainWindow.ApplyKeyboardShortcuts();
+                mainWindow.UpdateMenuGestureTexts();
             }
             
             MessageBox.Show("Settings have been applied.", "Apply Complete", 

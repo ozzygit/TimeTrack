@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Navigation;
 using TimeTrack.Data;
 
-namespace TimeTrack
+namespace TimeTrack.Views.Dialogs
 {
     public partial class AboutWindow : Window
     {

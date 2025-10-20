@@ -1,9 +1,10 @@
-﻿<Window x:Class="TimeTrack.MainWindow"
+﻿<Window x:Class="TimeTrack.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TimeTrack"
+        xmlns:data="clr-namespace:TimeTrack.Data"
+        xmlns:views="clr-namespace:TimeTrack.Views"
         xmlns:viewModels="clr-namespace:TimeTrack.ViewModels"
         xmlns:converters="clr-namespace:TimeTrack.Converters"
         mc:Ignorable="d"
@@ -13,7 +14,7 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
-        <local:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
+        <data:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
         <converters:AllNotEmptyConverter x:Key="AllNotEmptyConverter"/>
         <converters:ShortcutDisplayConverter x:Key="ShortcutDisplayConverter"/>
 
@@ -304,7 +305,6 @@
 
         <Style TargetType="DataGridRow">
             <EventSetter Event="MouseDoubleClick" Handler="DgRow_MouseDoubleClick"/>
-            <Setter Property="Background" Value="White"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Style.Triggers>
                 <!-- MouseOver on unselected rows only - must come BEFORE IsSelected -->
@@ -451,7 +451,7 @@
               Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
             <MenuItem Header="_File">
                 <MenuItem x:Name="ExportMenuItem" Header="_Export Selected"
-                          Command="{x:Static local:MainWindow.ExportCommand}"
+                          Command="{x:Static views:MainWindow.ExportCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Export}"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
@@ -460,10 +460,10 @@
                 <MenuItem x:Name="SubmitMenuItem" Header="_Submit Entry" Click="BtnSubmit"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
                 <MenuItem x:Name="InsertMenuItem" Header="_Insert Record"
-                          Command="{x:Static local:MainWindow.InsertCommand}"
+                          Command="{x:Static views:MainWindow.InsertCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Insert}"/>
                 <MenuItem x:Name="DeleteMenuItem" Header="_Delete Selected"
-                          Command="{x:Static local:MainWindow.DeleteCommand}"
+                          Command="{x:Static views:MainWindow.DeleteCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
                 <Separator/>
                 <MenuItem x:Name="ToggleAllMenuItem" Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"
@@ -471,23 +471,23 @@
             </MenuItem>
             <MenuItem Header="_Navigation">
                 <MenuItem x:Name="TodayMenuItem" Header="_Today"
-                          Command="{x:Static local:MainWindow.TodayCommand}"
+                          Command="{x:Static views:MainWindow.TodayCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Today}"/>
                 <MenuItem x:Name="PrevDayMenuItem" Header="_Previous Day"
-                          Command="{x:Static local:MainWindow.PrevDayCommand}"
+                          Command="{x:Static views:MainWindow.PrevDayCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=PrevDay}"/>
                 <MenuItem x:Name="NextDayMenuItem" Header="_Next Day"
-                          Command="{x:Static local:MainWindow.NextDayCommand}"
+                          Command="{x:Static views:MainWindow.NextDayCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=NextDay}"/>
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="OptionsMenuItem" Header="_Options"
-                          Command="{x:Static local:MainWindow.OptionsCommand}"
+                          Command="{x:Static views:MainWindow.OptionsCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Options}"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem x:Name="AboutMenuItem" Header="_About TimeTrack v2"
-                          Command="{x:Static local:MainWindow.HelpCommand}"
+                          Command="{x:Static views:MainWindow.HelpCommand}"
                           InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=About}"/>
             </MenuItem>
         </Menu>
@@ -571,7 +571,7 @@
          SelectionChanged="DgTimeRecords_SelectionChanged"
          PreviewMouseRightButtonDown="DgTimeRecords_PreviewMouseRightButtonDown">
                                 <DataGrid.InputBindings>
-                                    <KeyBinding Key="Delete" Command="{x:Static local:MainWindow.DeleteCommand}"/>
+                                    <KeyBinding Key="Delete" Command="{x:Static views:MainWindow.DeleteCommand}"/>
                                 </DataGrid.InputBindings>
                                 <DataGrid.Columns>
                                     <DataGridCheckBoxColumn Header="" Width="30"
@@ -583,7 +583,7 @@
                                     <DataGridTextColumn Header="End" Width="Auto"
             Binding="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
                                     <DataGridTextColumn Header="Ticket Number" Width="Auto"
-            Binding="{Binding CaseNumber}"/>
+            Binding="{Binding TicketNumber}"/>
                                     <DataGridTextColumn Header="Notes" Width="*"
             Binding="{Binding Notes}">
                                         <DataGridTextColumn.ElementStyle>
@@ -595,18 +595,18 @@
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Insert Record"
-                                                  Command="{x:Static local:MainWindow.InsertCommand}"
+                                                  Command="{x:Static views:MainWindow.InsertCommand}"
                                                   CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         <MenuItem Header="Export Selected"
-                                                  Command="{x:Static local:MainWindow.ExportCommand}"
+                                                  Command="{x:Static views:MainWindow.ExportCommand}"
                                                   CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         <Separator/>
                                         <MenuItem Header="Delete Selected"
-                                                  Command="{x:Static local:MainWindow.DeleteCommand}"
+                                                  Command="{x:Static views:MainWindow.DeleteCommand}"
                                                   CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                         <Separator/>
                                         <MenuItem Header="Toggle All Recorded"
-                                                  Command="{x:Static local:MainWindow.ToggleAllCommand}"
+                                                  Command="{x:Static views:MainWindow.ToggleAllCommand}"
                                                   CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     </ContextMenu>
                                 </DataGrid.ContextMenu>
@@ -653,8 +653,8 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Selected Time -->
-                            <Border Background="#F8F8F8" CornerRadius="4" Padding="12,8">
+                            <!-- Hours Worked -->
+                            <Border Background="#F8F8F8" CornerRadius="4" Padding="12,8" Margin="0,0,0,12">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -665,7 +665,7 @@
                                         <RowDefinition Height="auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Selected Time" 
+                                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Hours Worked" 
                                              FontSize="11" FontWeight="SemiBold"
                                              HorizontalAlignment="Center" Margin="0,0,0,6"/>
 
@@ -684,6 +684,26 @@
                                     </StackPanel>
                                 </Grid>
                             </Border>
+
+                            <!-- Billable Units -->
+                            <Border Background="#F8F8F8" CornerRadius="4" Padding="12,10">
+                                <StackPanel>
+                                    <TextBlock Text="Billable Units" 
+                                             FontSize="11" FontWeight="SemiBold"
+                                             HorizontalAlignment="Center" 
+                                             Foreground="{StaticResource TextBrush}"
+                                             Margin="0,0,0,4"/>
+                                    <TextBlock Text="{Binding BillableUnits}" 
+                                             FontSize="22" FontWeight="Bold" 
+                                             HorizontalAlignment="Center"
+                                             Foreground="{StaticResource TextBrush}"/>
+                                    <TextBlock Text="(6-minute blocks)" 
+                                             FontSize="9"
+                                             HorizontalAlignment="Center" 
+                                             Foreground="{StaticResource SubtleBrush}"
+                                             Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
 
                         <!--Input Fields Section-->
@@ -698,6 +718,7 @@
 
                                 <TextBox Name="FldStartTime" Grid.Column="0"
                                          Text="{Binding StartTimeField, UpdateSourceTrigger=PropertyChanged}"
+                                         GotFocus="InputField_GotFocus"
                                          LostFocus="TimeField_LostFocus"
                                          PreviewKeyDown="TimeField_PreviewKeyDown"
                                          TabIndex="0"/>
@@ -760,6 +781,7 @@
 
                                 <TextBox Name="FldEndTime" Grid.Column="0"
                                          Text="{Binding EndTimeField, UpdateSourceTrigger=PropertyChanged}"
+                                         GotFocus="InputField_GotFocus"
                                          LostFocus="TimeField_LostFocus"
                                          PreviewKeyDown="TimeField_PreviewKeyDown"
                                          TabIndex="1"
@@ -815,8 +837,9 @@
                             </Grid>
 
                             <TextBlock Text="Ticket Number" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Name="FldCaseNumber"
-                                     Text="{Binding CaseNumberField, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBox Name="FldTicketNumber"
+                                     Text="{Binding TicketNumberField, UpdateSourceTrigger=PropertyChanged}"
+                                     GotFocus="InputField_GotFocus"
                                      TabIndex="2" Margin="0,0,0,12"/>
 
                             <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
@@ -829,6 +852,7 @@
                                 <TextBox Name="FldNotes"
                                          Grid.Column="0"
                                          Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
+                                         GotFocus="InputField_GotFocus"
                                          TextWrapping="NoWrap"
                                          Height="130"
                                          AcceptsReturn="True"
@@ -856,17 +880,8 @@
                             <Button Name="BtnSub" Content="Submit Entry" Height="36"
                                   Style="{StaticResource PrimaryButton}"
                                   TabIndex="4" Margin="0,0,0,8"
-                                  Click="BtnSubmit" ClickMode="Release"
-                                  ToolTip="Add a new time entry to the current day (Enter)">
-                                <Button.IsEnabled>
-                                    <MultiBinding Converter="{StaticResource AllNotEmptyConverter}">
-                                        <Binding Path="StartTimeField" UpdateSourceTrigger="PropertyChanged"/>
-                                        <Binding Path="EndTimeField" UpdateSourceTrigger="PropertyChanged"/>
-                                        <Binding Path="CaseNumberField" UpdateSourceTrigger="PropertyChanged"/>
-                                        <Binding Path="NotesField" UpdateSourceTrigger="PropertyChanged"/>
-                                    </MultiBinding>
-                                </Button.IsEnabled>
-                            </Button>
+                                  Command="{x:Static views:MainWindow.SubmitCommand}"
+                                  ToolTip="Add a new time entry to the current day (Enter)"/>
 
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>

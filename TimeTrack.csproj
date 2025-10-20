@@ -15,10 +15,10 @@
     <ApplicationIcon>Resources\exeicon.ico</ApplicationIcon>
 
     <!-- Version metadata -->
-    <Version>2.2</Version>
-    <AssemblyVersion>2.2.0.0</AssemblyVersion>
-    <FileVersion>2.2.0.0</FileVersion>
-    <InformationalVersion>2.2</InformationalVersion>
+    <Version>2.3</Version>
+    <AssemblyVersion>2.3.0.0</AssemblyVersion>
+    <FileVersion>2.3.0.0</FileVersion>
+    <InformationalVersion>2.3</InformationalVersion>
   </PropertyGroup>
 
   <!-- Release-specific publish packaging settings -->
@@ -52,6 +52,71 @@
   <!-- Include application icon file in the project so it is packaged -->
   <ItemGroup>
     <None Include="Resources\exeicon.ico" />
+  </ItemGroup>
+
+  <!-- Documentation files organized in Solution Explorer -->
+  <ItemGroup>
+    <None Include="README.md">
+      <Link>Docs\README.md</Link>
+    </None>
+    <None Include="QUICK_REFERENCE.md">
+      <Link>Docs\QUICK_REFERENCE.md</Link>
+    </None>
+    <None Include="External Resources.txt">
+      <Link>Docs\External Resources.txt</Link>
+    </None>
+    <None Include="ASSEMBLY_FIX_SUMMARY.md">
+      <Link>Docs\Change History\ASSEMBLY_FIX_SUMMARY.md</Link>
+    </None>
+    <None Include="CLEANUP_SUMMARY.md">
+      <Link>Docs\Change History\CLEANUP_SUMMARY.md</Link>
+    </None>
+    <None Include="DATABASE_LOCATION_CHANGE.md">
+      <Link>Docs\Change History\DATABASE_LOCATION_CHANGE.md</Link>
+    </None>
+    <None Include="DOTNET8_CLEANUP_SUMMARY.md">
+      <Link>Docs\Change History\DOTNET8_CLEANUP_SUMMARY.md</Link>
+    </None>
+    <None Include="FIX_APPLIED_STARTUP_DIAGNOSTICS.md">
+      <Link>Docs\Change History\FIX_APPLIED_STARTUP_DIAGNOSTICS.md</Link>
+    </None>
+    <None Include="FIX_EQUAL_TIMES_ERROR.md">
+      <Link>Docs\Change History\FIX_EQUAL_TIMES_ERROR.md</Link>
+    </None>
+    <None Include="LEGACY_CODE_CLEANUP_AUDIT.md">
+      <Link>Docs\Change History\LEGACY_CODE_CLEANUP_AUDIT.md</Link>
+    </None>
+    <None Include="LOG_LOCATION_CHANGE_SUMMARY.md">
+      <Link>Docs\Change History\LOG_LOCATION_CHANGE_SUMMARY.md</Link>
+    </None>
+    <None Include="MODERNIZATION_SUMMARY.md">
+      <Link>Docs\Change History\MODERNIZATION_SUMMARY.md</Link>
+    </None>
+    <None Include="RENAME_CASE_TO_TICKET_SUMMARY.md">
+      <Link>Docs\Change History\RENAME_CASE_TO_TICKET_SUMMARY.md</Link>
+    </None>
+    <None Include="RUNNING_FROM_DIFFERENT_LOCATIONS.md">
+      <Link>Docs\RUNNING_FROM_DIFFERENT_LOCATIONS.md</Link>
+    </None>
+    <None Include="UNUSED_CODE_ANALYSIS.md">
+      <Link>Docs\Change History\UNUSED_CODE_ANALYSIS.md</Link>
+    </None>
+    <None Include=".github\upgrades\dotnet-upgrade-plan.md">
+      <Link>Docs\Upgrades\dotnet-upgrade-plan.md</Link>
+    </None>
+    <None Include=".github\upgrades\dotnet-upgrade-report.md">
+      <Link>Docs\Upgrades\dotnet-upgrade-report.md</Link>
+    </None>
+  </ItemGroup>
+
+  <!-- PowerShell Scripts organized in Solution Explorer -->
+  <ItemGroup>
+    <None Include="Publish-And-Test.ps1">
+      <Link>Scripts\Publish-And-Test.ps1</Link>
+    </None>
+    <None Include="Test-TimeTrackFromTemp.ps1">
+      <Link>Scripts\Test-TimeTrackFromTemp.ps1</Link>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

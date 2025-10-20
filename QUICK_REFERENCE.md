@@ -27,6 +27,10 @@ dotnet publish -c Release -r win-x64 --self-contained
 - Includes diagnostic paths and full exception details
 - Logs everything to debug output and log file
 
+? **Unified storage location**
+- Database and logs both in `%APPDATA%\TimeTrack v2\`
+- Consistent location for all application data
+
 ---
 
 ## Quick Commands
@@ -62,8 +66,8 @@ C:\Users\<username>\AppData\Roaming\TimeTrack v2\timetrack_v2.db
 
 **Logs:**
 ```
-%LOCALAPPDATA%\TimeTrack v2\time_track_log.txt
-C:\Users\<username>\AppData\Local\TimeTrack v2\time_track_log.txt
+%APPDATA%\TimeTrack v2\time_track_log.txt
+C:\Users\<username>\AppData\Roaming\TimeTrack v2\time_track_log.txt
 ```
 
 **This does NOT change when you move the executable!**
@@ -154,7 +158,7 @@ Get-EventLog -LogName Application -Source ".NET Runtime" -Newest 5
 
 3. **Check the log:**
    ```powershell
-   notepad "$env:LOCALAPPDATA\TimeTrack v2\time_track_log.txt"
+   notepad "$env:APPDATA\TimeTrack v2\time_track_log.txt"
    ```
 
 4. **Refer to detailed guide:**
