@@ -738,6 +738,19 @@ namespace TimeTrack
                 if (CmbStartPeriod != null)
                     CmbStartPeriod.SelectedItem = dt.Hour >= 12 ? "PM" : "AM";
             }
+            else
+            {
+                // Default to current local time when StartTimeField is empty
+                var now = DateTime.Now;
+                int hour = now.Hour > 12 ? now.Hour - 12 : (now.Hour == 0 ? 12 : now.Hour);
+                
+                if (CmbStartHour != null)
+                    CmbStartHour.SelectedItem = hour.ToString("00");
+                if (CmbStartMinute != null)
+                    CmbStartMinute.SelectedItem = now.Minute.ToString("00");
+                if (CmbStartPeriod != null)
+                    CmbStartPeriod.SelectedItem = now.Hour >= 12 ? "PM" : "AM";
+            }
 
             PopupStartTime.IsOpen = true;
         }
