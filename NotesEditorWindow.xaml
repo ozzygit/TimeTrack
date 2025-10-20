@@ -1,26 +1,208 @@
 <Window x:Class="TimeTrack.NotesEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Edit Notes" Height="380" Width="520"
-        WindowStartupLocation="CenterOwner">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Title="Edit Notes" Height="500" Width="600"
+        MinHeight="300" MinWidth="400"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F5F5"
+        ResizeMode="CanResize">
+    
+    <Window.Resources>
+        <!-- Modern Color Palette (matching MainWindow) -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
+        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#106EBE"/>
+        <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#005A9E"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E1E1E1"/>
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#323130"/>
+        <SolidColorBrush x:Key="SubtleBrush" Color="#605E5C"/>
 
-        <TextBox x:Name="NotesBox"
-                 Grid.Row="0"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto"
-                 AcceptsReturn="True"
-                 FontFamily="Consolas"
-                 FontSize="13"
-                 Text="{Binding NotesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <!-- Modern Button Style -->
+        <Style TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"
+                                            Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F3F3"/>
+                    <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#E8E8E8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-            <Button Width="90" Margin="0,0,8,0" IsDefault="True" Click="OnSave">Save</Button>
-            <Button Width="90" IsCancel="True">Cancel</Button>
-        </StackPanel>
-    </Grid>
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Modern TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#C4C4C4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.05" 
+                                    BlurRadius="8" ShadowDepth="2" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource CardStyle}" Margin="16">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Edit Notes" 
+                             FontSize="20" 
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource TextBrush}"
+                             Margin="0,0,0,4"/>
+                    <TextBlock Text="Enter detailed notes for this time entry" 
+                             FontSize="12"
+                             Foreground="{StaticResource SubtleBrush}"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" 
+                         x:Name="CharacterCount"
+                         Text="0 characters"
+                         FontSize="11"
+                         Foreground="{StaticResource SubtleBrush}"
+                         VerticalAlignment="Bottom"
+                         HorizontalAlignment="Right"/>
+            </Grid>
+
+            <!-- Notes TextBox -->
+            <TextBox x:Name="NotesBox"
+                     Grid.Row="1"
+                     Text="{Binding NotesText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     AcceptsReturn="True"
+                     SpellCheck.IsEnabled="True"
+                     TextChanged="NotesBox_TextChanged"/>
+
+            <!-- Helper Text -->
+            <TextBlock Grid.Row="2" 
+                     Margin="0,8,0,0"
+                     FontSize="11"
+                     Foreground="{StaticResource SubtleBrush}"
+                     TextWrapping="Wrap">
+                <Run Text="?? Tip: Press"/>
+                <Run FontWeight="SemiBold" Text="Ctrl+Enter"/>
+                <Run Text="to save and close, or"/>
+                <Run FontWeight="SemiBold" Text="Esc"/>
+                <Run Text="to cancel."/>
+            </TextBlock>
+
+            <!-- Buttons -->
+            <Grid Grid.Row="3" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" 
+                        Content="Clear All" 
+                        Click="OnClear"
+                        ToolTip="Clear all notes"
+                        Padding="12,8"/>
+
+                <Button Grid.Column="2" 
+                        Content="Save" 
+                        Style="{StaticResource PrimaryButton}"
+                        IsDefault="True" 
+                        Click="OnSave"
+                        Margin="0,0,8,0"
+                        ToolTip="Save changes (Ctrl+Enter)"/>
+
+                <Button Grid.Column="3" 
+                        Content="Cancel" 
+                        IsCancel="True"
+                        ToolTip="Discard changes (Esc)"/>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

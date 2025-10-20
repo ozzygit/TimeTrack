@@ -13,8 +13,10 @@ namespace TimeTrack
         {
             InitializeComponent();
             
-            // Set version
-            string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
+            // Set version from InformationalVersion attribute (user-friendly version)
+            var assembly = Assembly.GetExecutingAssembly();
+            var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            string version = informationalVersion ?? assembly.GetName().Version?.ToString() ?? "Unknown";
             VersionText.Text = $"Version: {version}";
             
             // Set database location

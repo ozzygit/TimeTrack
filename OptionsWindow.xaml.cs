@@ -22,6 +22,31 @@ namespace TimeTrack
             ShortcutsGrid.ItemsSource = shortcuts.Values.OrderBy(s => s.DisplayName).ToList();
         }
 
+        private void NavButton_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is RadioButton radioButton)
+            {
+                // Hide all panels
+                if (GeneralPanel != null) GeneralPanel.Visibility = Visibility.Collapsed;
+                if (KeyboardPanel != null) KeyboardPanel.Visibility = Visibility.Collapsed;
+                if (AppearancePanel != null) AppearancePanel.Visibility = Visibility.Collapsed;
+
+                // Show selected panel
+                if (radioButton == GeneralTab && GeneralPanel != null)
+                {
+                    GeneralPanel.Visibility = Visibility.Visible;
+                }
+                else if (radioButton == KeyboardTab && KeyboardPanel != null)
+                {
+                    KeyboardPanel.Visibility = Visibility.Visible;
+                }
+                else if (radioButton == AppearanceTab && AppearancePanel != null)
+                {
+                    AppearancePanel.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
         private void ChangeShortcut_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;

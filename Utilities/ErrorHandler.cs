@@ -9,7 +9,9 @@ namespace TimeTrack.Utilities
     {
         public static void Handle(string errorText, Exception e, [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = "")
         {
-            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TimeTrack v2");
+            // Changed from LocalApplicationData to ApplicationData (Roaming) to match database location
+            // This keeps all application data in one consistent location
+            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack v2");
             string logPath = Path.Combine(logDir, "time_track_log.txt");
             
             try 

@@ -5,46 +5,263 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTrack"
         mc:Ignorable="d"
-        Title="Edit Entry - TimeTrack v2" Height="260" Width="380"
+        Title="Edit Entry - TimeTrack v2" Height="480" Width="500"
+        MinHeight="450" MinWidth="450"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize">
+        Background="#F5F5F5"
+        ResizeMode="CanResize">
 
     <Window.Resources>
         <local:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
+        
+        <!-- Modern Color Palette (matching MainWindow) -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
+        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#106EBE"/>
+        <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#005A9E"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E1E1E1"/>
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#323130"/>
+        <SolidColorBrush x:Key="SubtleBrush" Color="#605E5C"/>
+
+        <!-- Modern Button Style -->
+        <Style TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"
+                                            Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F3F3"/>
+                    <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#E8E8E8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Label Style -->
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <!-- Modern TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#C4C4C4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.05" 
+                                    BlurRadius="8" ShadowDepth="2" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
-    <Grid Margin="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Border Style="{StaticResource CardStyle}" Margin="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" VerticalAlignment="Center">Start</TextBlock>
-        <TextBox   Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Width="160"
-                   Text="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock Text="Edit Time Entry" 
+                         FontSize="20" 
+                         FontWeight="SemiBold"
+                         Foreground="{StaticResource TextBrush}"
+                         Margin="0,0,0,4"/>
+                <TextBlock Text="Modify the details of this time entry" 
+                         FontSize="12"
+                         Foreground="{StaticResource SubtleBrush}"/>
+            </StackPanel>
 
-        <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" VerticalAlignment="Center">End</TextBlock>
-        <TextBox   Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" Width="160"
-                   Text="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
+            <!-- Scrollable Content Area -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
+                <StackPanel>
+                    <!-- Start Time and End Time in Two Columns -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" VerticalAlignment="Center">Ticket</TextBlock>
-        <TextBox   Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" Width="200"
-                   Text="{Binding CaseNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- Start Time -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Start Time" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Grid.Row="1" Grid.Column="0"
+                                 x:Name="StartTimeBox"
+                                 Text="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"
+                                 ToolTip="Enter start time (e.g., 9:00 AM)"/>
 
-        <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,8,8" VerticalAlignment="Top">Notes</TextBlock>
-        <TextBox   Grid.Row="3" Grid.Column="1" Margin="0,0,0,8" Height="80" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                   Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- End Time -->
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="End Time" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Grid.Row="1" Grid.Column="2"
+                                 x:Name="EndTimeBox"
+                                 Text="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"
+                                 ToolTip="Enter end time (e.g., 5:00 PM)"/>
+                    </Grid>
 
-        <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Width="80" Margin="0,6,8,0" IsDefault="True" Click="OnSaveClick">Save</Button>
-            <Button Width="80" Margin="0,6,0,0" IsCancel="True">Cancel</Button>
-        </StackPanel>
-    </Grid>
+                    <!-- Two Column Layout for Ticket and Recorded -->
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Ticket Number -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Ticket Number" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Grid.Row="1" Grid.Column="0"
+                                 Text="{Binding CaseNumber, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Enter ticket or case number"/>
+
+                        <!-- Recorded Checkbox -->
+                        <StackPanel Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" VerticalAlignment="Center">
+                            <CheckBox IsChecked="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
+                                      FontFamily="Segoe UI"
+                                      FontSize="13"
+                                      VerticalAlignment="Center">
+                                <TextBlock Text="Mark as Recorded" 
+                                         FontFamily="Segoe UI" 
+                                         FontSize="13"
+                                         Foreground="{StaticResource TextBrush}"/>
+                            </CheckBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Notes Section -->
+                    <StackPanel>
+                        <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
+                        <TextBox Margin="0,0,0,4"
+                                 MinHeight="80"
+                                 MaxHeight="120"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True" 
+                                 VerticalScrollBarVisibility="Auto"
+                                 SpellCheck.IsEnabled="True"
+                                 Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Enter detailed notes about this time entry"/>
+
+                        <!-- Helper Text -->
+                        <TextBlock Margin="0,0,0,0"
+                                 FontSize="11"
+                                 Foreground="{StaticResource SubtleBrush}"
+                                 TextWrapping="Wrap">
+                            <Run Text="?? Tip: Press"/>
+                            <Run FontWeight="SemiBold" Text="Ctrl+Enter"/>
+                            <Run Text="to save, or"/>
+                            <Run FontWeight="SemiBold" Text="Esc"/>
+                            <Run Text="to cancel."/>
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Buttons - Fixed at Bottom -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="1" 
+                        Content="Save" 
+                        Style="{StaticResource PrimaryButton}"
+                        IsDefault="True" 
+                        Click="OnSaveClick"
+                        Margin="0,0,8,0"
+                        ToolTip="Save changes (Ctrl+Enter)"/>
+
+                <Button Grid.Column="2" 
+                        Content="Cancel" 
+                        IsCancel="True"
+                        ToolTip="Discard changes (Esc)"/>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>
