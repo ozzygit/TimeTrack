@@ -13,11 +13,23 @@ namespace TimeTrack.Views.Dialogs
         {
             InitializeComponent();
             
-            // Set version from InformationalVersion attribute (user-friendly version)
             var assembly = Assembly.GetExecutingAssembly();
+            
+            // Set version from InformationalVersion attribute (user-friendly version)
             var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
             string version = informationalVersion ?? assembly.GetName().Version?.ToString() ?? "Unknown";
             VersionText.Text = $"Version: {version}";
+            
+            // Set description from AssemblyDescription attribute
+            var description = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description;
+            if (!string.IsNullOrEmpty(description))
+            {
+                DescriptionText.Text = description;
+            }
+            else
+            {
+                DescriptionText.Text = "Time tracking application for daily work entries";
+            }
             
             // Set database location
             UpdateDatabaseLocationDisplay();

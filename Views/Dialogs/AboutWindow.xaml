@@ -45,8 +45,9 @@
                    Margin="0,0,0,20"/>
         
         <!-- Description -->
-        <TextBlock Grid.Row="2" 
-                   Text="A simple time tracking application for daily work entries." 
+        <TextBlock Grid.Row="2"
+                   x:Name="DescriptionText"
+                   Text="Loading..." 
                    FontSize="13"
                    TextWrapping="Wrap"
                    HorizontalAlignment="Center"

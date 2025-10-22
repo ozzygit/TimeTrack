@@ -63,6 +63,7 @@ namespace TimeTrack.Data
                 if (SetProperty(ref _startTime, value))
                 {
                     OnPropertyChanged(nameof(Duration));
+                    OnPropertyChanged(nameof(BillableUnits));
                     OnPropertyChanged(nameof(IsValid));
                     OnTimeEntryChanged(true);
                 }
@@ -77,6 +78,7 @@ namespace TimeTrack.Data
                 if (SetProperty(ref _endTime, value))
                 {
                     OnPropertyChanged(nameof(Duration));
+                    OnPropertyChanged(nameof(BillableUnits));
                     OnPropertyChanged(nameof(IsValid));
                     OnTimeEntryChanged(true);
                 }
@@ -114,6 +116,33 @@ namespace TimeTrack.Data
                 if (end < start) end += TimeSpan.FromDays(1);
                 
                 return end - start;
+            }
+        }
+
+        /// <summary>
+        /// Calculate billable units in 6-minute blocks (0.1 hour increments).
+        /// Rounds up to nearest 6-minute block.
+        /// Returns formatted string like "0.1", "1.5", "2.0", etc., or empty string if duration is invalid.
+        /// </summary>
+        public string BillableUnits
+        {
+            get
+            {
+                var duration = Duration;
+                if (!duration.HasValue || duration.Value < TimeSpan.Zero)
+                    return string.Empty;
+
+                double totalMinutes = duration.Value.TotalMinutes;
+                
+                // If no time (0 minutes), no billable units
+                if (totalMinutes < 0.01)
+                    return "0.0";
+
+                // Round up to nearest 6-minute block
+                int blocks = (int)Math.Ceiling(totalMinutes / 6.0);
+                double units = blocks / 10.0;
+
+                return units.ToString("F1");
             }
         }
 

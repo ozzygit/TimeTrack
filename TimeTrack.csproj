@@ -12,7 +12,7 @@
     <Product>TimeTrack v2</Product>
     <Company>TimeTrack Project</Company>
     <Authors>Jared Kinnear, Richard Moore</Authors>
-    <Description>Time tracking application for daily work entries</Description>
+    <Description>MSP time tracking with instant billable units calculation</Description>
     <Copyright>Copyright © 2020-2025</Copyright>
     
     <!-- Application icon and manifest -->
@@ -24,6 +24,10 @@
     <AssemblyVersion>2.4.0.0</AssemblyVersion>
     <FileVersion>2.4.0.0</FileVersion>
     <InformationalVersion>2.4</InformationalVersion>
+    
+    <!-- Disable automatic Git version suffix -->
+    <SourceRevisionId></SourceRevisionId>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <!-- Release-specific publish packaging settings -->

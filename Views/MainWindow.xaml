@@ -582,6 +582,15 @@
             Binding="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
                                     <DataGridTextColumn Header="End" Width="Auto"
             Binding="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
+                                    <DataGridTextColumn Header="Units" Width="50"
+            Binding="{Binding BillableUnits}">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                <Setter Property="Margin" Value="0,0,8,0"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
                                     <DataGridTextColumn Header="Ticket Number" Width="Auto"
             Binding="{Binding TicketNumber}"/>
                                     <DataGridTextColumn Header="Notes" Width="*"
