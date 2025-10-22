@@ -10,15 +10,20 @@
     <!-- Display name for the built assembly -->
     <AssemblyName>TimeTrack</AssemblyName>
     <Product>TimeTrack v2</Product>
+    <Company>TimeTrack Project</Company>
+    <Authors>Jared Kinnear, Richard Moore</Authors>
+    <Description>Time tracking application for daily work entries</Description>
+    <Copyright>Copyright © 2020-2025</Copyright>
     
-    <!-- Application icon for the generated EXE -->
+    <!-- Application icon and manifest -->
     <ApplicationIcon>Resources\exeicon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>2.3</Version>
-    <AssemblyVersion>2.3.0.0</AssemblyVersion>
-    <FileVersion>2.3.0.0</FileVersion>
-    <InformationalVersion>2.3</InformationalVersion>
+    <Version>2.4</Version>
+    <AssemblyVersion>2.4.0.0</AssemblyVersion>
+    <FileVersion>2.4.0.0</FileVersion>
+    <InformationalVersion>2.4</InformationalVersion>
   </PropertyGroup>
 
   <!-- Release-specific publish packaging settings -->
@@ -27,6 +32,10 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    
+    <!-- Optimization -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <!-- Exclude test project sources from this app project -->

@@ -21,9 +21,4 @@ Statistics
 - The "Lunch" checkbox can be used to create a 1 hour time record which does not count towards the total time, or gaps.
 
 Exporting
-- The export button will copy the currently selected time record to the clipboard, in the format of:
-
-"x:xx AM - x:xx PM  
-Discription text here"
-
-![Screenshot](/Resources/Screenshot.png?raw=true)
+- The export button will copy the currently selected time record to the clipboard

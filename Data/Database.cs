@@ -193,9 +193,29 @@ public static class Database
 
     /// <summary>
     /// Migrate database from old LocalApplicationData location to new ApplicationData location.
+    /// DISABLED: This migration code can trigger Airlock blocking.
+    /// Users who need migration should use manual migration instructions.
     /// </summary>
     private static void MigrateFromOldLocationIfNeeded()
     {
+        // MIGRATION DISABLED TO AVOID AIRLOCK BLOCKING
+        // The act of checking LocalApplicationData can trigger security software
+        
+        // Skip if database already exists in new location
+        if (File.Exists(DatabasePath))
+        {
+            System.Diagnostics.Debug.WriteLine("Database already exists in new location, skipping migration.");
+            return;
+        }
+
+        System.Diagnostics.Debug.WriteLine("Automatic migration is disabled. Database will be created in new location.");
+        System.Diagnostics.Debug.WriteLine("If you have an existing database, please use manual migration:");
+        System.Diagnostics.Debug.WriteLine($"  Copy from: %LOCALAPPDATA%\\TimeTrack v2\\");
+        System.Diagnostics.Debug.WriteLine($"  Copy to: {GetAppFolder()}");
+        
+        // Do NOT access LocalApplicationData - it triggers Airlock
+        
+        /* ORIGINAL MIGRATION CODE - DISABLED
         try
         {
             // Skip if database already exists in new location
@@ -281,6 +301,7 @@ public static class Database
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
         }
+        */
     }
 
     public static int CurrentIdCount(DateTime date)
