@@ -20,18 +20,19 @@ public static class Database
 
     private static string GetAppFolder()
     {
+        // Check for explicit override via environment variable
         var overridePath = Environment.GetEnvironmentVariable("TIMETRACK_APPDATA");
         if (!string.IsNullOrWhiteSpace(overridePath))
-            return Path.Combine(overridePath, "TimeTrack v2");
+            return overridePath;
 
-        // Changed from LocalApplicationData to ApplicationData (Roaming) to avoid Airlock blocking
-        // This folder typically resides at: %APPDATA%\TimeTrack v2
+        // PORTABLE MODE: Store database in same folder as executable
+        // This matches the pre-.NET 8 behavior and avoids Airlock blocking
+        // Database will be created at: <exe-folder>\timetrack_v2.db
         // Benefits:
-        // - Not blocked by security software like Airlock
-        // - Works consistently across OneDrive profiles
-        // - Standard location for application data
-        // - Can still be overridden via TIMETRACK_APPDATA environment variable
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack v2");
+        // - No AppData/LocalAppData access (avoids Airlock)
+        // - Portable - can copy entire folder to another machine
+        // - Matches old .NET Framework version behavior
+        return AppDomain.CurrentDomain.BaseDirectory;
     }
 
     private static readonly string DatabaseFileName = "timetrack_v2.db";
@@ -169,9 +170,6 @@ public static class Database
         try
         {
             EnsureAppFolder();
-            
-            // Attempt to migrate from old location if database doesn't exist in new location
-            MigrateFromOldLocationIfNeeded();
 
             using var context = new TimeTrackDbContext(DatabasePath);
             context.Database.EnsureCreated();
@@ -189,119 +187,6 @@ public static class Database
             }
             throw;
         }
-    }
-
-    /// <summary>
-    /// Migrate database from old LocalApplicationData location to new ApplicationData location.
-    /// DISABLED: This migration code can trigger Airlock blocking.
-    /// Users who need migration should use manual migration instructions.
-    /// </summary>
-    private static void MigrateFromOldLocationIfNeeded()
-    {
-        // MIGRATION DISABLED TO AVOID AIRLOCK BLOCKING
-        // The act of checking LocalApplicationData can trigger security software
-        
-        // Skip if database already exists in new location
-        if (File.Exists(DatabasePath))
-        {
-            System.Diagnostics.Debug.WriteLine("Database already exists in new location, skipping migration.");
-            return;
-        }
-
-        System.Diagnostics.Debug.WriteLine("Automatic migration is disabled. Database will be created in new location.");
-        System.Diagnostics.Debug.WriteLine("If you have an existing database, please use manual migration:");
-        System.Diagnostics.Debug.WriteLine($"  Copy from: %LOCALAPPDATA%\\TimeTrack v2\\");
-        System.Diagnostics.Debug.WriteLine($"  Copy to: {GetAppFolder()}");
-        
-        // Do NOT access LocalApplicationData - it triggers Airlock
-        
-        /* ORIGINAL MIGRATION CODE - DISABLED
-        try
-        {
-            // Skip if database already exists in new location
-            if (File.Exists(DatabasePath))
-            {
-                System.Diagnostics.Debug.WriteLine("Database already exists in new location, skipping migration.");
-                return;
-            }
-
-            // Check for database in old location (LocalApplicationData)
-            var oldAppFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
-                "TimeTrack v2");
-            var oldDatabasePath = Path.Combine(oldAppFolder, DatabaseFileName);
-
-            if (!File.Exists(oldDatabasePath))
-            {
-                System.Diagnostics.Debug.WriteLine("No database found in old location, nothing to migrate.");
-                return;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Migrating database from old location: {oldDatabasePath}");
-            System.Diagnostics.Debug.WriteLine($"New location: {DatabasePath}");
-
-            // Ensure new folder exists
-            EnsureAppFolder();
-
-            // Copy database file
-            File.Copy(oldDatabasePath, DatabasePath, overwrite: false);
-            System.Diagnostics.Debug.WriteLine("Database file migrated successfully.");
-
-            // Copy backups folder if it exists
-            var oldBackupFolder = Path.Combine(oldAppFolder, "Backups");
-            if (Directory.Exists(oldBackupFolder))
-            {
-                EnsureBackupFolder();
-                var newBackupFolder = BackupFolder;
-
-                foreach (var backupFile in Directory.GetFiles(oldBackupFolder, "*.db"))
-                {
-                    var fileName = Path.GetFileName(backupFile);
-                    var newBackupPath = Path.Combine(newBackupFolder, fileName);
-                    File.Copy(backupFile, newBackupPath, overwrite: false);
-                }
-                System.Diagnostics.Debug.WriteLine("Backup files migrated successfully.");
-            }
-
-            // Copy any other files in the old folder
-            foreach (var file in Directory.GetFiles(oldAppFolder))
-            {
-                var fileName = Path.GetFileName(file);
-                if (fileName != DatabaseFileName && !fileName.StartsWith("timetrack_v2_backup_"))
-                {
-                    var newFilePath = Path.Combine(GetAppFolder(), fileName);
-                    File.Copy(file, newFilePath, overwrite: false);
-                    System.Diagnostics.Debug.WriteLine($"Migrated file: {fileName}");
-                }
-            }
-
-            MessageBox.Show(
-                $"Your TimeTrack database has been automatically migrated to a new location:\n\n" +
-                $"Old: {oldAppFolder}\n" +
-                $"New: {GetAppFolder()}\n\n" +
-                $"This change resolves compatibility issues with security software.\n" +
-                $"You can safely delete the old folder after verifying everything works correctly.",
-                "Database Migration Completed",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-
-            System.Diagnostics.Debug.WriteLine("Migration completed successfully.");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Database migration failed: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            
-            // Don't throw - allow app to continue even if migration fails
-            // User can manually migrate if needed
-            MessageBox.Show(
-                $"Automatic database migration encountered an issue:\n{ex.Message}\n\n" +
-                $"Please see DATABASE_LOCATION_CHANGE.md for manual migration instructions.",
-                "Migration Warning",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-        }
-        */
     }
 
     public static int CurrentIdCount(DateTime date)

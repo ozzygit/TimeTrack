@@ -9,9 +9,10 @@ namespace TimeTrack.Utilities
     {
         public static void Handle(string errorText, Exception e, [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = "")
         {
-            // Changed from LocalApplicationData to ApplicationData (Roaming) to match database location
-            // This keeps all application data in one consistent location
-            string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeTrack v2");
+            // PORTABLE MODE: Store logs in same folder as executable
+            // This matches the database location (portable mode) and avoids Airlock blocking
+            // Log file will be created at: <exe-folder>\time_track_log.txt
+            string logDir = AppDomain.CurrentDomain.BaseDirectory;
             string logPath = Path.Combine(logDir, "time_track_log.txt");
             
             try 
