@@ -162,7 +162,11 @@ namespace TimeTrack.Views
         private static bool MatchesShortcut(KeyEventArgs e, KeyboardShortcut? shortcut)
         {
             if (shortcut is null) return false;
-            return e.Key == shortcut.Key && Keyboard.Modifiers == shortcut.Modifiers;
+            
+            // When Alt is pressed, WPF reports e.Key as Key.System and the actual key is in e.SystemKey
+            Key actualKey = e.Key == Key.System ? e.SystemKey : e.Key;
+            
+            return actualKey == shortcut.Key && Keyboard.Modifiers == shortcut.Modifiers;
         }
 
         private void OnGlobalPreviewKeyDown(object sender, KeyEventArgs e)

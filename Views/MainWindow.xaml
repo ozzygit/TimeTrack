@@ -452,43 +452,43 @@
             <MenuItem Header="_File">
                 <MenuItem x:Name="ExportMenuItem" Header="_Export Selected"
                           Command="{x:Static views:MainWindow.ExportCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Export}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Export}"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem x:Name="SubmitMenuItem" Header="_Submit Entry" Click="BtnSubmit"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
                 <MenuItem x:Name="InsertMenuItem" Header="_Insert Record"
                           Command="{x:Static views:MainWindow.InsertCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Insert}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Insert}"/>
                 <MenuItem x:Name="DeleteMenuItem" Header="_Delete Selected"
                           Command="{x:Static views:MainWindow.DeleteCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
                 <Separator/>
                 <MenuItem x:Name="ToggleAllMenuItem" Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=ToggleAll}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=ToggleAll}"/>
             </MenuItem>
             <MenuItem Header="_Navigation">
                 <MenuItem x:Name="TodayMenuItem" Header="_Today"
                           Command="{x:Static views:MainWindow.TodayCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Today}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Today}"/>
                 <MenuItem x:Name="PrevDayMenuItem" Header="_Previous Day"
                           Command="{x:Static views:MainWindow.PrevDayCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=PrevDay}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=PrevDay}"/>
                 <MenuItem x:Name="NextDayMenuItem" Header="_Next Day"
                           Command="{x:Static views:MainWindow.NextDayCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=NextDay}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=NextDay}"/>
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="OptionsMenuItem" Header="_Options"
                           Command="{x:Static views:MainWindow.OptionsCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Options}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Options}"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem x:Name="AboutMenuItem" Header="_About TimeTrack v2"
                           Command="{x:Static views:MainWindow.HelpCommand}"
-                          InputGestureText="{Binding Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=About}"/>
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=About}"/>
             </MenuItem>
         </Menu>
 
@@ -886,11 +886,27 @@
                                     DataContext="{x:Null}"
                                     ToolTip="Automatically create a 1-hour lunch break entry"/>
 
-                            <Button Name="BtnSub" Content="Submit Entry" Height="36"
+                            <Button Name="BtnSub" Height="36"
                                   Style="{StaticResource PrimaryButton}"
                                   TabIndex="4" Margin="0,0,0,8"
-                                  Command="{x:Static views:MainWindow.SubmitCommand}"
-                                  ToolTip="Add a new time entry to the current day (Enter)"/>
+                                  Command="{x:Static views:MainWindow.SubmitCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Submit Entry" VerticalAlignment="Center"/>
+                                    <TextBlock VerticalAlignment="Center"
+                                             FontSize="11" 
+                                             FontWeight="Normal"
+                                             Margin="8,0,0,0" 
+                                             Opacity="0.8"
+                                             Text="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
+                                </StackPanel>
+                                <Button.ToolTip>
+                                    <TextBlock>
+                                        <Run Text="Add a new time entry to the current day ("/>
+                                        <Run Text="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
+                                        <Run Text=")"/>
+                                    </TextBlock>
+                                </Button.ToolTip>
+                            </Button>
 
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>

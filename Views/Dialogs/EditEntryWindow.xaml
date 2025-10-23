@@ -231,7 +231,7 @@
                                  FontSize="11"
                                  Foreground="{StaticResource SubtleBrush}"
                                  TextWrapping="Wrap">
-                            <Run Text="?? Tip: Press"/>
+                            <Run Text="Tip: Press"/>
                             <Run FontWeight="SemiBold" Text="Ctrl+Enter"/>
                             <Run Text="to save, or"/>
                             <Run FontWeight="SemiBold" Text="Esc"/>

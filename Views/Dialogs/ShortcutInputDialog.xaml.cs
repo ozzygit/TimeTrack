@@ -28,7 +28,10 @@ namespace TimeTrack.Views.Dialogs
                 e.Key == Key.LWin || e.Key == Key.RWin)
                 return;
 
-            SelectedKey = e.Key;
+            // When Alt is pressed, WPF reports e.Key as Key.System and the actual key is in e.SystemKey
+            Key actualKey = e.Key == Key.System ? e.SystemKey : e.Key;
+            
+            SelectedKey = actualKey;
             SelectedModifiers = Keyboard.Modifiers;
             UpdateDisplay();
 
