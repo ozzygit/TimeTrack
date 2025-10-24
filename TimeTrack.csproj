@@ -127,6 +127,12 @@
     <None Include=".github\upgrades\dotnet-upgrade-report.md">
       <Link>Docs\Upgrades\dotnet-upgrade-report.md</Link>
     </None>
+    <None Include="Documentation\FUTURE_CHANGES.md">
+      <Link>Docs\FUTURE_CHANGES.md</Link>
+    </None>
+    <None Include="Documentation\FEATURE_RECOMMENDATIONS.md">
+      <Link>Docs\FEATURE_RECOMMENDATIONS.md</Link>
+    </None>
   </ItemGroup>
 
   <!-- PowerShell Scripts organized in Solution Explorer -->
