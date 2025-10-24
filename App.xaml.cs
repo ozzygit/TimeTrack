@@ -53,18 +53,30 @@ namespace TimeTrack
                 {
                     try
                     {
-                        // Open the .NET 8 Desktop Runtime download page
-                        Process.Start(new ProcessStartInfo
+                        // Direct link to Windows x64 Desktop Runtime installer
+                        var downloadUrl = "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe";
+                        
+                        var startInfo = new ProcessStartInfo
                         {
-                            FileName = "https://dotnet.microsoft.com/download/dotnet/8.0/runtime",
+                            FileName = downloadUrl,
                             UseShellExecute = true
-                        });
+                        };
+                        
+                        Process.Start(startInfo);
+                        
+                        MessageBox.Show(
+                            "Your browser will open to download the .NET 8 Desktop Runtime.\n\n" +
+                            "After installation, please restart TimeTrack v2.",
+                            "Download Started",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show(
                             $"Failed to open download page: {ex.Message}\n\n" +
-                            "Please visit: https://dotnet.microsoft.com/download/dotnet/8.0/runtime",
+                            "Please manually visit:\n" +
+                            "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe",
                             "Error",
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);

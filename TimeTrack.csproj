@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     
     <!-- Display name for the built assembly -->
-    <AssemblyName>TimeTrack</AssemblyName>
+    <AssemblyName>TimeTrackv2</AssemblyName>
     <Product>TimeTrack v2</Product>
     <Company>TimeTrack Project</Company>
     <Authors>Jared Kinnear, Richard Moore</Authors>
@@ -28,12 +28,17 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
+  <!-- Tell .NET where to find DLLs in subdirectories -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="additionalProbingPaths" Value="lib" />
+  </ItemGroup>
+
   <!-- Release-specific publish packaging settings -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     
-    <!-- Framework-dependent, multi-file publish (no temp extraction) -->
-    <SelfContained>false</SelfContained>
+    <!-- Self-contained, multi-file publish (no temp extraction, no runtime required) -->
+    <SelfContained>true</SelfContained>
     <PublishSingleFile>false</PublishSingleFile>
     
     <!-- Optional: only include English satellite resources to reduce file count -->
@@ -145,4 +150,31 @@
     </PackageReference>
     <!-- SQLitePCLRaw.bundle_e_sqlite3 removed - let EF Core manage this dependency -->
   </ItemGroup>
+
+  <!-- Organize published files into subfolders
+       NOTE: Do NOT run this for self-contained publishes because it moves .NET runtime files
+       that must remain beside the exe. -->
+  <Target Name="OrganizePublishedFiles" AfterTargets="Publish" Condition="'$(SelfContained)' != 'true'">
+    <PropertyGroup>
+      <PublishDir>$(PublishDir)</PublishDir>
+      <LibFolder>$(PublishDir)lib\</LibFolder>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <!-- Move all DLLs except main app DLL to lib folder -->
+      <DllsToMove Include="$(PublishDir)*.dll" Exclude="$(PublishDir)$(AssemblyName).dll" />
+    </ItemGroup>
+    
+    <MakeDir Directories="$(LibFolder)" />
+    <Move SourceFiles="@(DllsToMove)" DestinationFolder="$(LibFolder)" />
+  </Target>
+
+  <!-- Remove diagnostic tools from publish output -->
+  <Target Name="RemoveDiagnosticTools" AfterTargets="OrganizePublishedFiles" Condition="'$(SelfContained)' != 'true'">
+    <ItemGroup>
+      <DiagnosticFiles Include="$(PublishDir)createdump.exe" />
+    </ItemGroup>
+    <Delete Files="@(DiagnosticFiles)" />
+  </Target>
+
 </Project>
