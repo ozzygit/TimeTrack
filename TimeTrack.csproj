@@ -31,9 +31,13 @@
   <!-- Release-specific publish packaging settings -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    
+    <!-- Framework-dependent, multi-file publish (no temp extraction) -->
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    
+    <!-- Optional: only include English satellite resources to reduce file count -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     
     <!-- Optimization -->
     <DebugType>none</DebugType>
