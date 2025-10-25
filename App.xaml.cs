@@ -13,6 +13,7 @@ namespace TimeTrack
     /// </summary>
     public partial class App : Application
     {
+        private GlobalHotkeyService? _globalHotkeys;
         public App()
         {
             DispatcherUnhandledException += (s, e) =>
@@ -134,6 +135,10 @@ namespace TimeTrack
             {
                 var mainWindow = new MainWindow();
                 mainWindow.Show();
+
+                // Initialize global hotkey for export + paste
+                _globalHotkeys = new GlobalHotkeyService(mainWindow);
+                _globalHotkeys.Initialize();
             }
             catch (Exception ex)
             {

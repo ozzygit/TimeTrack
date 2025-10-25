@@ -342,14 +342,17 @@ namespace TimeTrack.Views
                 return;
             }
 
-            string dateTime = selected.Date.ToString("yyyy-MM-dd") + " " + selected.StartTime.ToString();
+            // Activity Date in dd/MM/yyyy HH:mm:ss
+            var start = selected.StartTime.Value;
+            var activity = new DateTime(selected.Date.Year, selected.Date.Month, selected.Date.Day, start.Hour, start.Minute, start.Second);
+            string activityDate = activity.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
 
             TimeSpan timespanWorked = (TimeSpan)(selected.EndTime - selected.StartTime);
             int hoursWorked = timespanWorked.Hours;
             double minutesWorked = timespanWorked.Minutes;
             double timeWorked = hoursWorked + (Math.Ceiling((minutesWorked / 60) * 10) / 10);
 
-            string text = $"{dateTime},{timeWorked},{selected.Notes ?? string.Empty}";
+            string text = $"{activityDate},{timeWorked},{selected.Notes ?? string.Empty}";
             Clipboard.SetData(DataFormats.UnicodeText, text);
             selected.Recorded = true;
             Database.Update(_timeKeeper.Entries);
@@ -687,7 +690,7 @@ namespace TimeTrack.Views
             }
         }
 
-        private void ShowStatus(string message, int durationMs = 3000)
+        public void ShowStatus(string message, int durationMs = 3000)
         {
             if (StatusText == null)
             {
