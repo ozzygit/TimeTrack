@@ -339,6 +339,9 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+# Windsurf/VS Code editor config (local only)
+.vscode/
+
 # TimeTrack runtime files (database, settings, logs)
 timetrack_v2.db
 timetrack_v2.db-shm
