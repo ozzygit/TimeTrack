@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug TimeTrack",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/TimeTrack.csproj",
+            "preLaunchTask": "build"
+        }
+    ]
+}

@@ -62,6 +62,25 @@ public static class Database
             Directory.CreateDirectory(BackupFolder);
     }
 
+    private static void EnsureDraftsTable(TimeTrackDbContext context)
+    {
+        try
+        {
+            context.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS drafts (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_number TEXT,
+                    notes         TEXT,
+                    start_time    TEXT,
+                    parked_at     TEXT NOT NULL
+                );");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to ensure drafts table: {ex.Message}");
+        }
+    }
+
     private static void ApplySqlitePragmas(TimeTrackDbContext context)
     {
         try
@@ -173,6 +192,7 @@ public static class Database
 
             using var context = new TimeTrackDbContext(DatabasePath);
             context.Database.EnsureCreated();
+            EnsureDraftsTable(context);
             ApplySqlitePragmas(context);
         }
         catch (Exception ex)
@@ -412,6 +432,70 @@ public static class Database
                 return;
             }
         }
+    }
+
+    public static ObservableCollection<DraftEntry> RetrieveDrafts()
+    {
+        var result = new ObservableCollection<DraftEntry>();
+        try
+        {
+            using var context = new TimeTrackDbContext(DatabasePath);
+            var entities = context.Drafts.OrderBy(d => d.ParkedAt).ToList();
+            foreach (var e in entities)
+                result.Add(EntityToDraft(e));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to retrieve drafts: {ex.Message}");
+        }
+        return result;
+    }
+
+    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime)
+    {
+        try
+        {
+            using var context = new TimeTrackDbContext(DatabasePath);
+            var entity = new DraftEntity
+            {
+                TicketNumber = ticketNumber,
+                Notes = notes,
+                StartTime = startTime,
+                ParkedAt = DateTime.Now.ToString("o")
+            };
+            context.Drafts.Add(entity);
+            context.SaveChanges();
+            return EntityToDraft(entity);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save draft: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static void DeleteDraft(int id)
+    {
+        try
+        {
+            using var context = new TimeTrackDbContext(DatabasePath);
+            var entity = context.Drafts.FirstOrDefault(d => d.Id == id);
+            if (entity != null)
+            {
+                context.Drafts.Remove(entity);
+                context.SaveChanges();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to delete draft {id}: {ex.Message}");
+        }
+    }
+
+    private static DraftEntry EntityToDraft(DraftEntity e)
+    {
+        var parkedAt = DateTime.TryParse(e.ParkedAt, out var dt) ? dt : DateTime.Now;
+        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, parkedAt);
     }
 
     private static string DateToString(DateTime date) => date.ToString(DateFormat);
