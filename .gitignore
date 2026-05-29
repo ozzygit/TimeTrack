@@ -338,3 +338,11 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# TimeTrack runtime files (database, settings, logs)
+timetrack_v2.db
+timetrack_v2.db-shm
+timetrack_v2.db-wal
+timetrack_settings.xml
+time_track_log.txt
+Backups/

@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     
     <!-- Display name for the built assembly -->
-    <AssemblyName>TimeTrackv2</AssemblyName>
+    <AssemblyName>TimeTrack</AssemblyName>
     <Product>TimeTrack v2</Product>
     <Company>TimeTrack Project</Company>
     <Authors>Jared Kinnear, Richard Moore</Authors>
@@ -20,29 +20,20 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>2.6.0</Version>
-    <AssemblyVersion>2.6.0.0</AssemblyVersion>
+    <Version>2.5.0</Version>
+    <AssemblyVersion>2.5.0.0</AssemblyVersion>
     
     <!-- Disable automatic Git version suffix -->
     <SourceRevisionId></SourceRevisionId>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
-  <!-- Tell .NET where to find DLLs in subdirectories -->
-  <ItemGroup>
-    <RuntimeHostConfigurationOption Include="additionalProbingPaths" Value="lib" />
-  </ItemGroup>
-
   <!-- Release-specific publish packaging settings -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    
-    <!-- Self-contained, multi-file publish (no temp extraction, no runtime required) -->
     <SelfContained>true</SelfContained>
-    <PublishSingleFile>false</PublishSingleFile>
-    
-    <!-- Optional: only include English satellite resources to reduce file count -->
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     
     <!-- Optimization -->
     <DebugType>none</DebugType>
@@ -127,12 +118,6 @@
     <None Include=".github\upgrades\dotnet-upgrade-report.md">
       <Link>Docs\Upgrades\dotnet-upgrade-report.md</Link>
     </None>
-    <None Include="Documentation\FUTURE_CHANGES.md">
-      <Link>Docs\FUTURE_CHANGES.md</Link>
-    </None>
-    <None Include="Documentation\FEATURE_RECOMMENDATIONS.md">
-      <Link>Docs\FEATURE_RECOMMENDATIONS.md</Link>
-    </None>
   </ItemGroup>
 
   <!-- PowerShell Scripts organized in Solution Explorer -->
@@ -156,31 +141,4 @@
     </PackageReference>
     <!-- SQLitePCLRaw.bundle_e_sqlite3 removed - let EF Core manage this dependency -->
   </ItemGroup>
-
-  <!-- Organize published files into subfolders
-       NOTE: Do NOT run this for self-contained publishes because it moves .NET runtime files
-       that must remain beside the exe. -->
-  <Target Name="OrganizePublishedFiles" AfterTargets="Publish" Condition="'$(SelfContained)' != 'true'">
-    <PropertyGroup>
-      <PublishDir>$(PublishDir)</PublishDir>
-      <LibFolder>$(PublishDir)lib\</LibFolder>
-    </PropertyGroup>
-    
-    <ItemGroup>
-      <!-- Move all DLLs except main app DLL to lib folder -->
-      <DllsToMove Include="$(PublishDir)*.dll" Exclude="$(PublishDir)$(AssemblyName).dll" />
-    </ItemGroup>
-    
-    <MakeDir Directories="$(LibFolder)" />
-    <Move SourceFiles="@(DllsToMove)" DestinationFolder="$(LibFolder)" />
-  </Target>
-
-  <!-- Remove diagnostic tools from publish output -->
-  <Target Name="RemoveDiagnosticTools" AfterTargets="OrganizePublishedFiles" Condition="'$(SelfContained)' != 'true'">
-    <ItemGroup>
-      <DiagnosticFiles Include="$(PublishDir)createdump.exe" />
-    </ItemGroup>
-    <Delete Files="@(DiagnosticFiles)" />
-  </Target>
-
 </Project>
