@@ -26,6 +26,7 @@ public class TimeTrackDbContext : DbContext
     }
 
     public DbSet<TimeEntryEntity> TimeEntries { get; set; } = null!;
+    public DbSet<DraftEntity> Drafts { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -73,6 +74,17 @@ public class TimeTrackDbContext : DbContext
             entity.Property(e => e.Recorded)
                 .HasColumnName("recorded")
                 .IsRequired();
+        });
+
+        modelBuilder.Entity<DraftEntity>(entity =>
+        {
+            entity.ToTable("drafts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(e => e.TicketNumber).HasColumnName("ticket_number").HasMaxLength(255);
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.StartTime).HasColumnName("start_time");
+            entity.Property(e => e.ParkedAt).HasColumnName("parked_at").IsRequired();
         });
 
         base.OnModelCreating(modelBuilder);

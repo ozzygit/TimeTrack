@@ -17,6 +17,7 @@ namespace TimeTrack.ViewModels
         private string _currentDate;
         private int _currentIdCount;
         private ObservableCollection<TimeEntry> _timeRecords;
+        private ObservableCollection<DraftEntry> _parkedDrafts;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -32,6 +33,7 @@ namespace TimeTrack.ViewModels
         {
             _timeRecords = new ObservableCollection<TimeEntry>();
             _timeRecords.CollectionChanged += TimeRecords_CollectionChanged;
+            _parkedDrafts = Database.RetrieveDrafts();
             _date = DateTime.Today.Date;
             _currentDate = _date.Date.ToShortDateString();
             _currentIdCount = 0;
@@ -162,6 +164,46 @@ namespace TimeTrack.ViewModels
                 OnPropertyChanged();
                 UpdateSelectedTime();
             }
+        }
+
+        public ObservableCollection<DraftEntry> ParkedDrafts
+        {
+            get => _parkedDrafts;
+            set { _parkedDrafts = value; OnPropertyChanged(); }
+        }
+
+        public bool HasParkedDrafts => _parkedDrafts.Count > 0;
+
+        // Park / Resume / Discard
+
+        public DraftEntry? ParkCurrentEntry(string startTime)
+        {
+            var draft = Database.SaveDraft(_ticketNo, _notes, startTime);
+            if (draft != null)
+            {
+                _parkedDrafts.Add(draft);
+                OnPropertyChanged(nameof(HasParkedDrafts));
+            }
+            return draft;
+        }
+
+        public void ResumeDraft(DraftEntry draft)
+        {
+            Database.DeleteDraft(draft.Id);
+            _parkedDrafts.Remove(draft);
+            OnPropertyChanged(nameof(HasParkedDrafts));
+
+            TicketNumberField = draft.TicketNumber;
+            NotesField = draft.Notes;
+            SetStartTimeField();
+            EndTimeField = string.Empty;
+        }
+
+        public void DiscardDraft(DraftEntry draft)
+        {
+            Database.DeleteDraft(draft.Id);
+            _parkedDrafts.Remove(draft);
+            OnPropertyChanged(nameof(HasParkedDrafts));
         }
 
         // Methods
