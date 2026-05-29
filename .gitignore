@@ -342,6 +342,10 @@ healthchecksdb
 # Windsurf/VS Code editor config (local only)
 .vscode/
 
+# Migrations folder - only .cs EF migration files should be tracked
+Migrations/*.dll
+Migrations/**/*.dll
+
 # TimeTrack runtime files (database, settings, logs)
 timetrack_v2.db
 timetrack_v2.db-shm
