@@ -19,6 +19,7 @@ namespace TimeTrack.ViewModels
         private ObservableCollection<TimeEntry> _timeRecords;
         private ObservableCollection<DraftEntry> _openEntries;
         private DraftEntry? _focusedEntry;
+        private bool _isMainTabFocused = true;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -41,19 +42,10 @@ namespace TimeTrack.ViewModels
             var drafts = Database.RetrieveDrafts();
             _openEntries = drafts.Count > 0 ? drafts : new ObservableCollection<DraftEntry>();
 
-            if (_openEntries.Count == 0)
-            {
-                var blank = Database.SaveDraft(string.Empty, string.Empty,
-                    DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture), isActive: true);
-                if (blank != null) _openEntries.Add(blank);
-            }
-
-            _focusedEntry = _openEntries.FirstOrDefault(d => d.IsActive) ?? _openEntries.FirstOrDefault();
+            _focusedEntry = _openEntries.FirstOrDefault(d => d.IsActive);
+            _isMainTabFocused = (_focusedEntry == null);
             if (_focusedEntry != null)
-            {
-                _focusedEntry.IsActive = true;
                 LoadFocusedEntryIntoFields();
-            }
         }
 
         private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -111,7 +103,8 @@ namespace TimeTrack.ViewModels
             { 
                 _startTime = value; 
                 OnPropertyChanged();
-                UpdateSelectedTime(); // Update selected time when start time changes
+                OnPropertyChanged(nameof(EntryDurationDisplay));
+                UpdateSelectedTime();
             }
         }
 
@@ -122,7 +115,8 @@ namespace TimeTrack.ViewModels
             { 
                 _endTime = value; 
                 OnPropertyChanged();
-                UpdateSelectedTime(); // Update selected time when end time changes
+                OnPropertyChanged(nameof(EntryDurationDisplay));
+                UpdateSelectedTime();
             }
         }
 
@@ -197,6 +191,29 @@ namespace TimeTrack.ViewModels
 
         public bool HasOpenEntries => _openEntries.Count > 0;
 
+        public bool IsMainTabFocused
+        {
+            get => _isMainTabFocused;
+            private set { _isMainTabFocused = value; OnPropertyChanged(); }
+        }
+
+        public string EntryDurationDisplay
+        {
+            get
+            {
+                var start = StartTimeFieldAsTime();
+                var end = EndTimeFieldAsTime();
+                if (!start.HasValue || !end.HasValue) return string.Empty;
+                var duration = end.Value - start.Value;
+                if (duration <= TimeSpan.Zero) return string.Empty;
+                int units = (int)Math.Ceiling(duration.TotalMinutes / 6.0);
+                string timeStr = duration.Hours > 0
+                    ? $"{duration.Hours}h {duration.Minutes:D2}m"
+                    : $"{duration.Minutes}m";
+                return $"{timeStr}  ·  {units} units";
+            }
+        }
+
         // Open entries / tab management
 
         public void NewEntry()
@@ -209,6 +226,19 @@ namespace TimeTrack.ViewModels
             SetFocusEntry(draft);
         }
 
+        public void FocusMainTab()
+        {
+            SaveFocusedEntryToDb();
+            foreach (var d in _openEntries)
+                d.IsActive = false;
+            if (_focusedEntry != null)
+                Database.UpdateDraft(_focusedEntry);
+            _focusedEntry = null;
+            _isMainTabFocused = true;
+            OnPropertyChanged(nameof(FocusedEntry));
+            OnPropertyChanged(nameof(IsMainTabFocused));
+        }
+
         public void SetFocusEntry(DraftEntry entry)
         {
             SaveFocusedEntryToDb();
@@ -217,7 +247,9 @@ namespace TimeTrack.ViewModels
             entry.IsActive = true;
             Database.UpdateDraft(entry);
             _focusedEntry = entry;
+            _isMainTabFocused = false;
             OnPropertyChanged(nameof(FocusedEntry));
+            OnPropertyChanged(nameof(IsMainTabFocused));
             LoadFocusedEntryIntoFields();
         }
 
@@ -233,10 +265,10 @@ namespace TimeTrack.ViewModels
 
             if (_openEntries.Count == 0)
             {
-                string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
-                var blank = Database.SaveDraft(string.Empty, string.Empty, startTime, isActive: true);
-                if (blank != null) _openEntries.Add(blank);
-                _focusedEntry = blank;
+                _focusedEntry = null;
+                _isMainTabFocused = true;
+                OnPropertyChanged(nameof(IsMainTabFocused));
+                return;
             }
             else
             {

@@ -140,7 +140,8 @@ namespace TimeTrack.Views
                 or nameof(TimeKeeperViewModel.TicketNumberField)
                 or nameof(TimeKeeperViewModel.NotesField)
                 or nameof(TimeKeeperViewModel.SelectedItem)
-                or nameof(TimeKeeperViewModel.FocusedEntry))
+                or nameof(TimeKeeperViewModel.FocusedEntry)
+                or nameof(TimeKeeperViewModel.IsMainTabFocused))
             {
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -833,6 +834,12 @@ namespace TimeTrack.Views
             
             _timeKeeper.RemoveCommand.Execute(null);
             ShowStatus("Entry deleted");
+        }
+
+        private void BtnMainTab(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            _timeKeeper.FocusMainTab();
         }
 
         private void BtnNewEntry(object sender, RoutedEventArgs e)
