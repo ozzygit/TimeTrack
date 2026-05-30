@@ -659,7 +659,6 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Date nav + inline stats -->
@@ -793,25 +792,6 @@
                     </DataGrid>
                 </Border>
 
-                <!-- Action buttons -->
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="12,0,12,12">
-                    <Button Content="Export Selected" Height="32" Margin="0,0,8,0"
-                          TabIndex="5" Click="BtnExport" ClickMode="Release"
-                          ToolTip="Copy selected entry to clipboard and mark as recorded (Ctrl+E)"/>
-                    <Button Content="Toggle All" Height="32" Margin="0,0,8,0"
-                          TabIndex="7" Click="BtnToggleAllRecorded" ClickMode="Release" Padding="6,6"
-                          ToolTip="Toggle the recorded status for all entries"/>
-                    <Button Content="Insert" Height="32" Margin="0,0,8,0"
-                          TabIndex="8" Click="BtnInsert" ClickMode="Release"
-                          ToolTip="Insert a blank entry above the selected row (Ctrl+I)"/>
-                    <Button Content="Delete" Height="32" Margin="0,0,8,0"
-                          Command="{x:Static views:MainWindow.DeleteCommand}"
-                          ToolTip="Delete selected entry (Del)"/>
-                    <Button Content="+ New Entry" Height="32"
-                          Style="{StaticResource PrimaryButton}"
-                          Click="BtnNewEntry"
-                          ToolTip="Open a new entry tab"/>
-                </StackPanel>
             </Grid>
 
             <!-- ENTRY TAB PANEL -->
