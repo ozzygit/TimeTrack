@@ -568,6 +568,45 @@
             </MenuItem>
         </Menu>
 
+        <!-- Tab Bar -->
+        <Border DockPanel.Dock="Top" Background="White"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="12,5,12,5">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled"
+                          PanningMode="HorizontalOnly">
+                <StackPanel Orientation="Horizontal">
+                    <ItemsControl ItemsSource="{Binding OpenEntries}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,2,0">
+                                    <Button Style="{StaticResource TabButtonStyle}"
+                                            Tag="{Binding}" Click="BtnFocusTab"
+                                            ToolTip="{Binding TicketDisplay}">
+                                        <TextBlock Text="{Binding TabDisplay}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxWidth="140"/>
+                                    </Button>
+                                    <Button Style="{StaticResource TabCloseButtonStyle}"
+                                            Tag="{Binding}" Click="BtnCloseTab"
+                                            ToolTip="Close this entry">✕</Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Width="28" Height="28" Content="+" FontSize="14"
+                            FontWeight="Bold" Padding="0" Margin="6,0,0,0"
+                            Click="BtnNewEntry"
+                            ToolTip="Start a new open entry"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
         <!--Status Bar - MOVED OUTSIDE ScrollViewer-->
         <StatusBar DockPanel.Dock="Bottom" Height="25">
             <StatusBarItem>
@@ -706,51 +745,11 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Tab Strip -->
-                        <Border Grid.Row="0" Margin="0,0,0,10" Background="#F5F5F5"
-                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                CornerRadius="4" Padding="4,4,4,4">
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                          VerticalScrollBarVisibility="Disabled"
-                                          PanningMode="HorizontalOnly">
-                                <StackPanel Orientation="Horizontal">
-                                    <ItemsControl ItemsSource="{Binding OpenEntries}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,2,0">
-                                                    <Button Style="{StaticResource TabButtonStyle}"
-                                                            Tag="{Binding}" Click="BtnFocusTab"
-                                                            ToolTip="{Binding TicketDisplay}">
-                                                        <TextBlock Text="{Binding TabDisplay}"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   MaxWidth="100"/>
-                                                    </Button>
-                                                    <Button Style="{StaticResource TabCloseButtonStyle}"
-                                                            Tag="{Binding}" Click="BtnCloseTab"
-                                                            ToolTip="Close this entry">✕</Button>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <Button Width="28" Height="28" Content="+" FontSize="14"
-                                            FontWeight="Bold" Padding="0" Margin="3,0,0,0"
-                                            Click="BtnNewEntry"
-                                            ToolTip="Start a new open entry"/>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Border>
-
                         <!--Statistics Section-->
-                        <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                        <StackPanel Grid.Row="0" Margin="0,0,0,20">
                             <!-- Total Hours & Gaps -->
                             <Grid Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>
@@ -832,7 +831,7 @@
                         </StackPanel>
 
                         <!--Input Fields Section-->
-                        <StackPanel Grid.Row="2" Margin="0,0,0,16">
+                        <StackPanel Grid.Row="1" Margin="0,0,0,16">
                             <TextBlock Text="Start Time" Style="{StaticResource LabelStyle}"/>
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
@@ -996,7 +995,7 @@
                         </StackPanel>
 
                         <!--Actions Section-->
-                        <StackPanel Grid.Row="3" VerticalAlignment="Bottom">
+                        <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
                             <CheckBox Name="ChkLunch" Content="Lunch Break" Margin="0,0,0,12"
                                     Checked="ChkLunch_Checked" Unchecked="ChkLunch_Unchecked" 
                                     DataContext="{x:Null}"
