@@ -52,8 +52,6 @@ namespace TimeTrack.Views
         public static readonly RoutedUICommand DeleteCommand =
             new("Delete Selected", "Delete", typeof(MainWindow));
 
-        public static readonly RoutedUICommand ParkCommand =
-            new("Park Entry", "Park", typeof(MainWindow));
 
         public MainWindow()
         {
@@ -90,7 +88,6 @@ namespace TimeTrack.Views
             CommandBindings.Add(new CommandBinding(SubmitCommand, (s, e) => BtnSubmit(s, e), (s, e) => e.CanExecute = CanSubmit()));
             CommandBindings.Add(new CommandBinding(ToggleAllCommand, (s, e) => BtnToggleAllRecorded(s, e)));
             CommandBindings.Add(new CommandBinding(DeleteCommand, (s, e) => BtnDelete(s, e), (s, e) => e.CanExecute = (_timeKeeper?.SelectedItem != null)));
-            CommandBindings.Add(new CommandBinding(ParkCommand, (s, e) => BtnPark(s, e), (s, e) => e.CanExecute = CanPark()));
 
             if (_timeKeeper != null)
             {
@@ -143,7 +140,7 @@ namespace TimeTrack.Views
                 or nameof(TimeKeeperViewModel.TicketNumberField)
                 or nameof(TimeKeeperViewModel.NotesField)
                 or nameof(TimeKeeperViewModel.SelectedItem)
-                or nameof(TimeKeeperViewModel.ParkedDrafts))
+                or nameof(TimeKeeperViewModel.FocusedEntry))
             {
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -282,19 +279,21 @@ namespace TimeTrack.Views
 
             if (_timeKeeper.SubmitEntry())
             {
-                _timeKeeper.ClearFieldsAndSetStartTime();
-                
+                var submitted = _timeKeeper.FocusedEntry;
+                if (submitted != null)
+                    _timeKeeper.CloseEntry(submitted);
+
                 if (ChkLunch != null)
                     ChkLunch.IsChecked = false;
-                
-                if (DgTimeRecords != null)
+
+                if (DgTimeRecords != null && _timeKeeper.Entries.Count > 0)
                 {
                     DgTimeRecords.SelectedIndex = _timeKeeper.Entries.Count - 1;
                     DgTimeRecords.ScrollIntoView(_timeKeeper.Entries.Last());
                 }
-                
+
                 FldEndTime?.Focus();
-                
+
                 Database.Update(_timeKeeper.Entries);
                 ShowStatus("Entry submitted successfully");
             }
@@ -836,59 +835,28 @@ namespace TimeTrack.Views
             ShowStatus("Entry deleted");
         }
 
-        private bool CanPark()
-        {
-            if (_timeKeeper == null) return false;
-            return !string.IsNullOrWhiteSpace(_timeKeeper.StartTimeField)
-                || !string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField)
-                || !string.IsNullOrWhiteSpace(_timeKeeper.NotesField);
-        }
-
-        private void BtnPark(object sender, RoutedEventArgs e)
+        private void BtnNewEntry(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null) return;
-
-            string startTime = _timeKeeper.StartTimeField;
-
-            var draft = _timeKeeper.ParkCurrentEntry(startTime);
-            if (draft == null)
-            {
-                ShowStatus("Failed to park entry", 4000);
-                return;
-            }
-
-            _timeKeeper.ClearFieldsAndSetStartTime();
-            if (ChkLunch != null) ChkLunch.IsChecked = false;
-            FldStartTime?.Focus();
-            ShowStatus($"Entry parked — ticket: {draft.TicketDisplay}");
+            _timeKeeper.NewEntry();
+            FldTicketNumber?.Focus();
+            ShowStatus("New entry started");
         }
 
-        private void BtnResumeDraft(object sender, RoutedEventArgs e)
+        private void BtnFocusTab(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null) return;
             if (sender is not FrameworkElement { Tag: TimeTrack.Data.DraftEntry draft }) return;
-
-            _timeKeeper.ResumeDraft(draft);
-            FldNotes?.Focus();
-            ShowStatus($"Resumed: {draft.TicketDisplay}");
+            if (_timeKeeper.FocusedEntry == draft) return;
+            _timeKeeper.SetFocusEntry(draft);
+            FldTicketNumber?.Focus();
         }
 
-        private void BtnDiscardDraft(object sender, RoutedEventArgs e)
+        private void BtnCloseTab(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null) return;
             if (sender is not FrameworkElement { Tag: TimeTrack.Data.DraftEntry draft }) return;
-
-            var result = System.Windows.MessageBox.Show(
-                $"Discard parked entry for '{draft.TicketDisplay}'?\nThis cannot be undone.",
-                "Discard Draft",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Warning);
-
-            if (result == System.Windows.MessageBoxResult.Yes)
-            {
-                _timeKeeper.DiscardDraft(draft);
-                ShowStatus("Parked entry discarded");
-            }
+            _timeKeeper.CloseEntry(draft);
         }
     }
 }

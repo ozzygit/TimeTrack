@@ -439,6 +439,82 @@
             <Setter Property="MaxHeight" Value="20"/>
             <Setter Property="ToolTip" Value="{Binding Notes}"/>
         </Style>
+
+        <!-- Tab strip: label button (left portion of each tab) -->
+        <Style x:Key="TabButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MaxWidth" Value="120"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="#EBEBEB"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4,0,0,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D8D8D8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Tab strip: close button (right portion of each tab) -->
+        <Style x:Key="TabCloseButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="#EBEBEB"/>
+            <Setter Property="Foreground" Value="{StaticResource SubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="0,1,1,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="0,4,4,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D32F2F"/>
+                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="BorderBrush" Value="#D32F2F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <!-- Keyboard bindings are configured dynamically in MainWindow.xaml.cs via ApplyKeyboardShortcuts() -->
@@ -504,8 +580,7 @@
             <Grid Margin="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="200"/>
-                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="240"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Left -->
@@ -626,16 +701,56 @@
                 </Border>
 
                 <!-- Right -->
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,8,0">
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
+                        <!-- Tab Strip -->
+                        <Border Grid.Row="0" Margin="0,0,0,10" Background="#F5F5F5"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="4,4,4,4">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled"
+                                          PanningMode="HorizontalOnly">
+                                <StackPanel Orientation="Horizontal">
+                                    <ItemsControl ItemsSource="{Binding OpenEntries}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,2,0">
+                                                    <Button Style="{StaticResource TabButtonStyle}"
+                                                            Tag="{Binding}" Click="BtnFocusTab"
+                                                            ToolTip="{Binding TicketDisplay}">
+                                                        <TextBlock Text="{Binding TabDisplay}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   MaxWidth="100"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource TabCloseButtonStyle}"
+                                                            Tag="{Binding}" Click="BtnCloseTab"
+                                                            ToolTip="Close this entry">✕</Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <Button Width="28" Height="28" Content="+" FontSize="14"
+                                            FontWeight="Bold" Padding="0" Margin="3,0,0,0"
+                                            Click="BtnNewEntry"
+                                            ToolTip="Start a new open entry"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+
                         <!--Statistics Section-->
-                        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                        <StackPanel Grid.Row="1" Margin="0,0,0,20">
                             <!-- Total Hours & Gaps -->
                             <Grid Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>
@@ -717,7 +832,7 @@
                         </StackPanel>
 
                         <!--Input Fields Section-->
-                        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                        <StackPanel Grid.Row="2" Margin="0,0,0,16">
                             <TextBlock Text="Start Time" Style="{StaticResource LabelStyle}"/>
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions>
@@ -881,22 +996,11 @@
                         </StackPanel>
 
                         <!--Actions Section-->
-                        <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                        <StackPanel Grid.Row="3" VerticalAlignment="Bottom">
                             <CheckBox Name="ChkLunch" Content="Lunch Break" Margin="0,0,0,12"
                                     Checked="ChkLunch_Checked" Unchecked="ChkLunch_Unchecked" 
                                     DataContext="{x:Null}"
                                     ToolTip="Automatically create a 1-hour lunch break entry"/>
-
-                            <!-- Park Button -->
-                            <Button Name="BtnParkEntry" Height="36"
-                                  Margin="0,0,0,8"
-                                  Command="{x:Static views:MainWindow.ParkCommand}"
-                                  ToolTip="Park this entry and start a new one. Resume it later from the Parked panel.">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="⏸" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                    <TextBlock Text="Park Entry" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
 
                             <Button Name="BtnSub" Height="36"
                                   Style="{StaticResource PrimaryButton}"
@@ -940,113 +1044,6 @@
                                   TabIndex="5" Click="BtnExport" ClickMode="Release"
                                   ToolTip="Copy selected entry to clipboard and mark as recorded (Ctrl+E)"/>
                         </StackPanel>
-                    </Grid>
-                </Border>
-                <!-- Parked Drafts Panel -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="12">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Header -->
-                        <StackPanel Grid.Row="0" Margin="0,0,0,12">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                <TextBlock Text="⏸" FontSize="16" VerticalAlignment="Center" Margin="0,0,6,0"
-                                           Foreground="{StaticResource SubtleBrush}"/>
-                                <TextBlock Text="Parked" FontSize="14" FontWeight="SemiBold"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <TextBlock Text="Park an entry to work on something else and come back later."
-                                       FontSize="11" Foreground="{StaticResource SubtleBrush}"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
-
-                        <!-- Draft list -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding ParkedDrafts}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="#F8F8F8" BorderBrush="{StaticResource BorderBrush}"
-                                                BorderThickness="1" CornerRadius="6"
-                                                Margin="0,0,0,8" Padding="10,8">
-                                            <StackPanel>
-                                                <!-- Ticket number -->
-                                                <TextBlock Text="{Binding TicketDisplay}"
-                                                           FontWeight="SemiBold" FontSize="13"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           ToolTip="{Binding TicketNumber}"
-                                                           Margin="0,0,0,3"/>
-                                                <!-- Notes preview -->
-                                                <TextBlock Text="{Binding NotesPreview}"
-                                                           FontSize="11"
-                                                           Foreground="{StaticResource SubtleBrush}"
-                                                           TextWrapping="Wrap"
-                                                           Margin="0,0,0,3"
-                                                           ToolTip="{Binding Notes}"/>
-                                                <!-- Parked time -->
-                                                <TextBlock FontSize="10" Foreground="{StaticResource SubtleBrush}"
-                                                           Margin="0,0,0,8">
-                                                    <Run Text="Parked at "/>
-                                                    <Run Text="{Binding ParkedAtDisplay, Mode=OneWay}"/>
-                                                </TextBlock>
-                                                <!-- Action buttons -->
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="4"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <Button Grid.Column="0" Height="28"
-                                                            Style="{StaticResource PrimaryButton}"
-                                                            FontSize="12" Padding="4,0"
-                                                            Tag="{Binding}"
-                                                            Click="BtnResumeDraft"
-                                                            ToolTip="Resume this parked entry">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="▶" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                            <TextBlock Text="Resume" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <Button Grid.Column="2" Width="28" Height="28"
-                                                            FontSize="13" Padding="0"
-                                                            Tag="{Binding}"
-                                                            Click="BtnDiscardDraft"
-                                                            ToolTip="Discard this parked entry"
-                                                            Foreground="#D32F2F">
-                                                        <TextBlock Text="✕" FontSize="12"/>
-                                                    </Button>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                                <!-- Empty state -->
-                                <ItemsControl.Style>
-                                    <Style TargetType="ItemsControl">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasParkedDrafts}" Value="False">
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate>
-                                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                        Margin="0,24,0,0">
-                                                                <TextBlock Text="⏸" FontSize="28" HorizontalAlignment="Center"
-                                                                           Foreground="#D0D0D0" Margin="0,0,0,8"/>
-                                                                <TextBlock Text="No parked entries"
-                                                                           FontSize="12" Foreground="{StaticResource SubtleBrush}"
-                                                                           HorizontalAlignment="Center"/>
-                                                            </StackPanel>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ItemsControl.Style>
-                            </ItemsControl>
-                        </ScrollViewer>
                     </Grid>
                 </Border>
             </Grid>

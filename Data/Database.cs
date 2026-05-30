@@ -68,12 +68,17 @@ public static class Database
         {
             context.Database.ExecuteSqlRaw(@"
                 CREATE TABLE IF NOT EXISTS drafts (
-                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
                     ticket_number TEXT,
                     notes         TEXT,
                     start_time    TEXT,
-                    parked_at     TEXT NOT NULL
+                    parked_at     TEXT NOT NULL,
+                    is_active     INTEGER NOT NULL DEFAULT 0
                 );");
+
+            // Migrate existing tables that pre-date the is_active column
+            try { context.Database.ExecuteSqlRaw("ALTER TABLE drafts ADD COLUMN is_active INTEGER NOT NULL DEFAULT 0;"); }
+            catch { /* column already exists — safe to ignore */ }
         }
         catch (Exception ex)
         {
@@ -451,7 +456,7 @@ public static class Database
         return result;
     }
 
-    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime)
+    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime, bool isActive = false)
     {
         try
         {
@@ -461,7 +466,8 @@ public static class Database
                 TicketNumber = ticketNumber,
                 Notes = notes,
                 StartTime = startTime,
-                ParkedAt = DateTime.Now.ToString("o")
+                ParkedAt = DateTime.Now.ToString("o"),
+                IsActive = isActive ? 1 : 0
             };
             context.Drafts.Add(entity);
             context.SaveChanges();
@@ -471,6 +477,25 @@ public static class Database
         {
             System.Diagnostics.Debug.WriteLine($"Failed to save draft: {ex.Message}");
             return null;
+        }
+    }
+
+    public static void UpdateDraft(DraftEntry draft)
+    {
+        try
+        {
+            using var context = new TimeTrackDbContext(DatabasePath);
+            var entity = context.Drafts.FirstOrDefault(d => d.Id == draft.Id);
+            if (entity == null) return;
+            entity.TicketNumber = draft.TicketNumber;
+            entity.Notes = draft.Notes;
+            entity.StartTime = draft.StartTime;
+            entity.IsActive = draft.IsActive ? 1 : 0;
+            context.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to update draft {draft.Id}: {ex.Message}");
         }
     }
 
@@ -494,8 +519,8 @@ public static class Database
 
     private static DraftEntry EntityToDraft(DraftEntity e)
     {
-        var parkedAt = DateTime.TryParse(e.ParkedAt, out var dt) ? dt : DateTime.Now;
-        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, parkedAt);
+        var createdAt = DateTime.TryParse(e.ParkedAt, out var dt) ? dt : DateTime.Now;
+        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, createdAt, e.IsActive != 0);
     }
 
     private static string DateToString(DateTime date) => date.ToString(DateFormat);

@@ -17,7 +17,8 @@ namespace TimeTrack.ViewModels
         private string _currentDate;
         private int _currentIdCount;
         private ObservableCollection<TimeEntry> _timeRecords;
-        private ObservableCollection<DraftEntry> _parkedDrafts;
+        private ObservableCollection<DraftEntry> _openEntries;
+        private DraftEntry? _focusedEntry;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -33,10 +34,26 @@ namespace TimeTrack.ViewModels
         {
             _timeRecords = new ObservableCollection<TimeEntry>();
             _timeRecords.CollectionChanged += TimeRecords_CollectionChanged;
-            _parkedDrafts = Database.RetrieveDrafts();
             _date = DateTime.Today.Date;
             _currentDate = _date.Date.ToShortDateString();
             _currentIdCount = 0;
+
+            var drafts = Database.RetrieveDrafts();
+            _openEntries = drafts.Count > 0 ? drafts : new ObservableCollection<DraftEntry>();
+
+            if (_openEntries.Count == 0)
+            {
+                var blank = Database.SaveDraft(string.Empty, string.Empty,
+                    DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture), isActive: true);
+                if (blank != null) _openEntries.Add(blank);
+            }
+
+            _focusedEntry = _openEntries.FirstOrDefault(d => d.IsActive) ?? _openEntries.FirstOrDefault();
+            if (_focusedEntry != null)
+            {
+                _focusedEntry.IsActive = true;
+                LoadFocusedEntryIntoFields();
+            }
         }
 
         private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -166,44 +183,99 @@ namespace TimeTrack.ViewModels
             }
         }
 
-        public ObservableCollection<DraftEntry> ParkedDrafts
+        public ObservableCollection<DraftEntry> OpenEntries
         {
-            get => _parkedDrafts;
-            set { _parkedDrafts = value; OnPropertyChanged(); }
+            get => _openEntries;
+            set { _openEntries = value; OnPropertyChanged(); }
         }
 
-        public bool HasParkedDrafts => _parkedDrafts.Count > 0;
-
-        // Park / Resume / Discard
-
-        public DraftEntry? ParkCurrentEntry(string startTime)
+        public DraftEntry? FocusedEntry
         {
-            var draft = Database.SaveDraft(_ticketNo, _notes, startTime);
-            if (draft != null)
+            get => _focusedEntry;
+            private set { _focusedEntry = value; OnPropertyChanged(); }
+        }
+
+        public bool HasOpenEntries => _openEntries.Count > 0;
+
+        // Open entries / tab management
+
+        public void NewEntry()
+        {
+            SaveFocusedEntryToDb();
+            string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            var draft = Database.SaveDraft(string.Empty, string.Empty, startTime, isActive: false);
+            if (draft == null) return;
+            _openEntries.Add(draft);
+            SetFocusEntry(draft);
+        }
+
+        public void SetFocusEntry(DraftEntry entry)
+        {
+            SaveFocusedEntryToDb();
+            foreach (var d in _openEntries)
+                d.IsActive = false;
+            entry.IsActive = true;
+            Database.UpdateDraft(entry);
+            _focusedEntry = entry;
+            OnPropertyChanged(nameof(FocusedEntry));
+            LoadFocusedEntryIntoFields();
+        }
+
+        public void CloseEntry(DraftEntry entry)
+        {
+            bool wasFocused = (_focusedEntry == entry);
+            Database.DeleteDraft(entry.Id);
+            int index = _openEntries.IndexOf(entry);
+            _openEntries.Remove(entry);
+            OnPropertyChanged(nameof(HasOpenEntries));
+
+            if (!wasFocused) return;
+
+            if (_openEntries.Count == 0)
             {
-                _parkedDrafts.Add(draft);
-                OnPropertyChanged(nameof(HasParkedDrafts));
+                string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+                var blank = Database.SaveDraft(string.Empty, string.Empty, startTime, isActive: true);
+                if (blank != null) _openEntries.Add(blank);
+                _focusedEntry = blank;
             }
-            return draft;
+            else
+            {
+                int newIndex = Math.Min(index, _openEntries.Count - 1);
+                var next = _openEntries[newIndex];
+                next.IsActive = true;
+                Database.UpdateDraft(next);
+                _focusedEntry = next;
+            }
+
+            OnPropertyChanged(nameof(FocusedEntry));
+            LoadFocusedEntryIntoFields();
         }
 
-        public void ResumeDraft(DraftEntry draft)
+        private void SaveFocusedEntryToDb()
         {
-            Database.DeleteDraft(draft.Id);
-            _parkedDrafts.Remove(draft);
-            OnPropertyChanged(nameof(HasParkedDrafts));
+            if (_focusedEntry == null) return;
+            _focusedEntry.TicketNumber = _ticketNo;
+            _focusedEntry.Notes = _notes;
+            _focusedEntry.StartTime = _startTime;
+            Database.UpdateDraft(_focusedEntry);
+        }
 
-            TicketNumberField = draft.TicketNumber;
-            NotesField = draft.Notes;
-            SetStartTimeField();
+        private void LoadFocusedEntryIntoFields()
+        {
+            if (_focusedEntry == null)
+            {
+                TicketNumberField = string.Empty;
+                NotesField = string.Empty;
+                SetStartTimeField();
+                EndTimeField = string.Empty;
+                return;
+            }
+            TicketNumberField = _focusedEntry.TicketNumber;
+            NotesField = _focusedEntry.Notes;
+            StartTimeField = string.IsNullOrWhiteSpace(_focusedEntry.StartTime)
+                ? DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture)
+                : _focusedEntry.StartTime;
             EndTimeField = string.Empty;
-        }
-
-        public void DiscardDraft(DraftEntry draft)
-        {
-            Database.DeleteDraft(draft.Id);
-            _parkedDrafts.Remove(draft);
-            OnPropertyChanged(nameof(HasParkedDrafts));
         }
 
         // Methods

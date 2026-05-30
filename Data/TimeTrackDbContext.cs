@@ -85,6 +85,7 @@ public class TimeTrackDbContext : DbContext
             entity.Property(e => e.Notes).HasColumnName("notes");
             entity.Property(e => e.StartTime).HasColumnName("start_time");
             entity.Property(e => e.ParkedAt).HasColumnName("parked_at").IsRequired();
+            entity.Property(e => e.IsActive).HasColumnName("is_active").IsRequired();
         });
 
         base.OnModelCreating(modelBuilder);
