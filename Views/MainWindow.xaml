@@ -952,13 +952,13 @@
                                          Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
                                          GotFocus="InputField_GotFocus"
                                          TextWrapping="Wrap"
-                                         Height="90"
+                                         Height="180"
                                          AcceptsReturn="True"
                                          VerticalScrollBarVisibility="Auto"
                                          TabIndex="3"/>
                             </StackPanel>
                             <Button Name="BtnNotesPopOut" Grid.Column="2"
-                                    Width="28" Height="90" VerticalAlignment="Bottom"
+                                    Width="28" Height="180" VerticalAlignment="Bottom"
                                     Content="↗" FontSize="12" Padding="0"
                                     Click="BtnNotesPopOut_Click"
                                     ToolTip="Pop out notes editor"/>
