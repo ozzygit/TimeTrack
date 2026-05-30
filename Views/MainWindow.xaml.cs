@@ -845,6 +845,24 @@ namespace TimeTrack.Views
         private void BtnNewEntry(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null) return;
+            if (_timeKeeper.FocusedEntry != null && string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField))
+            {
+                System.Windows.MessageBox.Show(
+                    "Please enter a ticket number before opening a new entry.",
+                    "Ticket Number Required",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+            if (_timeKeeper.FocusedEntry != null && string.IsNullOrWhiteSpace(_timeKeeper.EndTimeField))
+            {
+                System.Windows.MessageBox.Show(
+                    "Please set a finish time before opening a new entry.",
+                    "Finish Time Required",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+                return;
+            }
             _timeKeeper.NewEntry();
             FldTicketNumber?.Focus();
             ShowStatus("New entry started");
