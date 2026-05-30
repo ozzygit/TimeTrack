@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     
+    <!-- Properties/AssemblyInfo.cs provides these manually; suppress SDK auto-generation -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
     <!-- Display name for the built assembly -->
     <AssemblyName>TimeTrack</AssemblyName>
     <Product>TimeTrack v2</Product>

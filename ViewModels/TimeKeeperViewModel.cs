@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.Input;
 using TimeTrack.Data;
 using TimeTrack.Utilities;
@@ -20,6 +21,7 @@ namespace TimeTrack.ViewModels
         private ObservableCollection<DraftEntry> _openEntries;
         private DraftEntry? _focusedEntry;
         private bool _isMainTabFocused = true;
+        private readonly DispatcherTimer _autoSaveTimer;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -46,6 +48,10 @@ namespace TimeTrack.ViewModels
             _isMainTabFocused = (_focusedEntry == null);
             if (_focusedEntry != null)
                 LoadFocusedEntryIntoFields();
+
+            _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+            _autoSaveTimer.Tick += (_, _) => SaveFocusedEntryToDb();
+            _autoSaveTimer.Start();
         }
 
         private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -126,13 +132,23 @@ namespace TimeTrack.ViewModels
         public string TicketNumberField
         {
             get => _ticketNo;
-            set { _ticketNo = value; OnPropertyChanged(); }
+            set
+            {
+                _ticketNo = value;
+                OnPropertyChanged();
+                if (_focusedEntry != null) _focusedEntry.TicketNumber = value;
+            }
         }
 
         public string NotesField
         {
             get => _notes;
-            set { _notes = value; OnPropertyChanged(); }
+            set
+            {
+                _notes = value;
+                OnPropertyChanged();
+                if (_focusedEntry != null) _focusedEntry.Notes = value;
+            }
         }
 
         public double HoursTotal
