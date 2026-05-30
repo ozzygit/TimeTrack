@@ -812,6 +812,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <!-- Fields row: horizontal layout -->
@@ -822,10 +823,7 @@
                                 <ColumnDefinition Width="155"/>
                                 <ColumnDefinition Width="12"/>
                                 <ColumnDefinition Width="180"/>
-                                <ColumnDefinition Width="12"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="2"/>
-                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
 
                             <!-- Start Time -->
@@ -939,29 +937,35 @@
                                          TabIndex="2"/>
                             </StackPanel>
 
-                            <!-- Notes -->
-                            <StackPanel Grid.Column="6">
+                        </Grid>
+
+                        <!-- Notes row: full width -->
+                        <Grid Grid.Row="1" Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2"/>
+                                <ColumnDefinition Width="28"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
                                 <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
                                 <TextBox Name="FldNotes"
                                          Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
                                          GotFocus="InputField_GotFocus"
                                          TextWrapping="Wrap"
-                                         Height="60"
+                                         Height="90"
                                          AcceptsReturn="True"
                                          VerticalScrollBarVisibility="Auto"
                                          TabIndex="3"/>
                             </StackPanel>
-
-                            <!-- Notes pop-out -->
-                            <Button Name="BtnNotesPopOut" Grid.Column="8"
-                                    Width="28" Height="60" VerticalAlignment="Bottom"
+                            <Button Name="BtnNotesPopOut" Grid.Column="2"
+                                    Width="28" Height="90" VerticalAlignment="Bottom"
                                     Content="↗" FontSize="12" Padding="0"
                                     Click="BtnNotesPopOut_Click"
                                     ToolTip="Pop out notes editor"/>
                         </Grid>
 
                         <!-- Bottom row: duration · lunch · submit -->
-                        <Grid Grid.Row="1" Margin="0,14,0,0">
+                        <Grid Grid.Row="2" Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
