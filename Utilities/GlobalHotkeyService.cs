@@ -83,7 +83,7 @@ namespace TimeTrack.Utilities
             if (_window is not TimeTrack.Views.MainWindow mw) return;
             var vm = mw.DataContext as TimeTrack.ViewModels.TimeKeeperViewModel;
             var entries = vm?.Entries;
-            if (entries == null || entries.Count == 0) return;
+            if (vm == null || entries == null || entries.Count == 0) return;
 
             // Show initial status
             mw.ShowStatus("Global export hotkey triggered - finding entry...");

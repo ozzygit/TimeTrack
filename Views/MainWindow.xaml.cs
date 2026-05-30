@@ -17,8 +17,8 @@ namespace TimeTrack.Views
 {
     public partial class MainWindow : Window
     {
-        private TimeKeeperViewModel? _timeKeeper;
-        private Brush? _btnBrush;
+        private readonly TimeKeeperViewModel? _timeKeeper;
+        private readonly Brush? _btnBrush;
         private readonly System.Windows.Threading.DispatcherTimer _statusTimer = new();
 
         // Routed commands
@@ -109,7 +109,7 @@ namespace TimeTrack.Views
         {
             try
             {
-                void SetText(MenuItem? mi, string action)
+                static void SetText(MenuItem? mi, string action)
                 {
                     var sc = SettingsManager.GetShortcut(action);
                     if (mi != null)
