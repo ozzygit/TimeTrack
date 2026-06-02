@@ -62,16 +62,19 @@ namespace TimeTrack.Views.Dialogs
                     var selectedKey = dialog.SelectedKey;
                     var selectedMods = dialog.SelectedModifiers;
 
-                    // Prevent setting Submit to Ctrl+Enter or Shift+Enter
+                    // Bare Enter/Return (no modifier) cannot be Submit — it conflicts with
+                    // newline insertion in the Notes field. Ctrl+Enter is the standard alternative.
                     if (actionName == "Submit" &&
                         (selectedKey == Key.Enter || selectedKey == Key.Return) &&
-                        (selectedMods.HasFlag(ModifierKeys.Control) || selectedMods.HasFlag(ModifierKeys.Shift)))
+                        selectedMods == ModifierKeys.None)
                     {
                         MessageBox.Show(
-                            "Submit hotkey cannot be set to Ctrl+Enter or Shift+Enter. Please choose a different combination.",
+                            "Enter (without a modifier) cannot be used as the Submit shortcut " +
+                            "because it conflicts with typing new lines in the Notes field.\n\n" +
+                            "Try Ctrl+Enter instead.",
                             "Invalid Shortcut",
                             MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                            MessageBoxImage.Warning);
                         return;
                     }
 

@@ -176,9 +176,21 @@ namespace TimeTrack.Views
         {
             bool isEnter = e.Key == Key.Enter || e.Key == Key.Return;
 
-            // Let multi-line TextBoxes handle Enter natively (e.g. Notes field inserts newlines)
+            // Let multi-line TextBoxes handle Enter natively (e.g. Notes field inserts newlines),
+            // unless the pressed combo matches the configured Submit shortcut — in that case
+            // fall through so the submit logic below can fire.
             if (isEnter && Keyboard.FocusedElement is TextBox { AcceptsReturn: true })
-                return;
+            {
+                var submitSc = SettingsManager.GetShortcut("Submit");
+                bool matchesSubmit = submitSc != null && submitSc.Key != Key.None &&
+                    (e.Key == submitSc.Key ||
+                     (submitSc.Key == Key.Enter && e.Key == Key.Return) ||
+                     (submitSc.Key == Key.Return && e.Key == Key.Enter)) &&
+                    Keyboard.Modifiers == submitSc.Modifiers;
+
+                if (!matchesSubmit)
+                    return;
+            }
 
             // Block Enter/Return globally until Notes has data
             if (isEnter &&

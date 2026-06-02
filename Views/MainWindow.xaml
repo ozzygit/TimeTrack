@@ -772,7 +772,44 @@
                             </DataGridTextColumn>
                         </DataGrid.Columns>
                         <DataGrid.ContextMenu>
-                            <ContextMenu>
+                            <ContextMenu Background="White" BorderBrush="#E1E1E1"
+                                         BorderThickness="1" Padding="0,4"
+                                         FontFamily="Segoe UI" FontSize="13">
+                                <ContextMenu.Resources>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Foreground" Value="#323130"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="MenuItem">
+                                                    <Border x:Name="Bd" Background="Transparent"
+                                                            Padding="14,6">
+                                                        <ContentPresenter ContentSource="Header"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsHighlighted" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="#E5F3FB"/>
+                                                            <Setter Property="Foreground" Value="#0078D4"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsEnabled" Value="False">
+                                                            <Setter Property="Foreground" Value="#A19F9D"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                    <Style TargetType="Separator">
+                                        <Setter Property="Margin" Value="10,3"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Separator">
+                                                    <Rectangle Height="1" Fill="#E1E1E1"/>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ContextMenu.Resources>
                                 <MenuItem Header="Insert Record"
                                           Command="{x:Static views:MainWindow.InsertCommand}"
                                           CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>

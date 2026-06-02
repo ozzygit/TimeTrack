@@ -53,7 +53,7 @@ namespace TimeTrack.Utilities
             _shortcuts = new Dictionary<string, KeyboardShortcut>
             {
                 { "Export", new KeyboardShortcut { ActionName = "Export", DisplayName = "Export Selected", Key = Key.E, Modifiers = ModifierKeys.Control } },
-                { "Submit", new KeyboardShortcut { ActionName = "Submit", DisplayName = "Submit Entry", Key = Key.Enter, Modifiers = ModifierKeys.None } },
+                { "Submit", new KeyboardShortcut { ActionName = "Submit", DisplayName = "Submit Entry", Key = Key.Enter, Modifiers = ModifierKeys.Control } },
                 { "Insert", new KeyboardShortcut { ActionName = "Insert", DisplayName = "Insert Record", Key = Key.I, Modifiers = ModifierKeys.Control } },
                 { "Delete", new KeyboardShortcut { ActionName = "Delete", DisplayName = "Delete Selected", Key = Key.Delete, Modifiers = ModifierKeys.None } },
                 { "Today", new KeyboardShortcut { ActionName = "Today", DisplayName = "Go to Today", Key = Key.T, Modifiers = ModifierKeys.Control } },
