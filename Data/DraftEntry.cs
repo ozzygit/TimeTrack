@@ -34,6 +34,7 @@ namespace TimeTrack.Data
         private string notes = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TabDisplay))]
         private string startTime = string.Empty;
 
         [ObservableProperty]
@@ -46,11 +47,24 @@ namespace TimeTrack.Data
         {
             get
             {
+                string timeHint = string.Empty;
+                if (!string.IsNullOrWhiteSpace(StartTime))
+                {
+                    int spaceIdx = StartTime.IndexOf(' ');
+                    timeHint = " · " + (spaceIdx > 0 ? StartTime[..spaceIdx] : StartTime);
+                }
+
                 if (!string.IsNullOrWhiteSpace(TicketNumber))
-                    return TicketNumber.Length > 16 ? TicketNumber[..16] + "…" : TicketNumber;
+                {
+                    string t = TicketNumber.Length > 16 ? TicketNumber[..16] + "…" : TicketNumber;
+                    return t + timeHint;
+                }
                 if (!string.IsNullOrWhiteSpace(Notes))
-                    return Notes.Length > 16 ? Notes[..16] + "…" : Notes;
-                return "New Entry";
+                {
+                    string n = Notes.Length > 16 ? Notes[..16] + "…" : Notes;
+                    return n + timeHint;
+                }
+                return "New Entry" + timeHint;
             }
         }
 

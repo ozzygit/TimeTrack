@@ -33,7 +33,12 @@ namespace TimeTrack.Utilities
             if (value.Length >= 2 && Regex.IsMatch(value, @"^\d{2}((?:\D|$)|\d{2})"))
             {
                 int hour = Convert.ToInt32(value.Substring(0, 2));
-                return hour >= 13 && hour <= 23;
+                if (hour >= 13 && hour <= 23)
+                    return true;
+                // 4-digit no-separator input with a leading zero (e.g. 0600, 0700) is
+                // unambiguously 24-hour (military) format — no AM/PM needed.
+                if (hour <= 9 && Regex.IsMatch(value, @"^\d{4}$"))
+                    return true;
             }
             return false;
         }
@@ -111,7 +116,9 @@ namespace TimeTrack.Utilities
             if (!DateTime.TryParseExact(value, timeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
                 return null;
 
-            if (!hasPeriod && !is24Hour)
+            // Only clamp ambiguous bare-hour inputs (e.g. "7" → 7 PM).
+            // When the user explicitly supplies minutes (e.g. "06:00", "01:01") trust their value.
+            if (!hasPeriod && !is24Hour && !hasMinutes)
                 parsed = ClampToWorkHours(parsed);
 
             return parsed.TimeOfDay;

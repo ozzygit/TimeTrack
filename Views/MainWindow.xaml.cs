@@ -80,9 +80,9 @@ namespace TimeTrack.Views
             // Bind command handlers
             CommandBindings.Add(new CommandBinding(ExportCommand, (s, e) => BtnExport(s, e)));
             CommandBindings.Add(new CommandBinding(InsertCommand, (s, e) => BtnInsert(s, e)));
-            CommandBindings.Add(new CommandBinding(TodayCommand, (s, e) => BtnGotoToday(s, e)));
-            CommandBindings.Add(new CommandBinding(PrevDayCommand, (s, e) => BtnGoBack(s, e)));
-            CommandBindings.Add(new CommandBinding(NextDayCommand, (s, e) => BtnGoForward(s, e)));
+            CommandBindings.Add(new CommandBinding(TodayCommand, (s, e) => BtnGotoToday(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
+            CommandBindings.Add(new CommandBinding(PrevDayCommand, (s, e) => BtnGoBack(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
+            CommandBindings.Add(new CommandBinding(NextDayCommand, (s, e) => BtnGoForward(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
             CommandBindings.Add(new CommandBinding(OptionsCommand, (s, e) => MenuOptions_Click(s, e)));
             CommandBindings.Add(new CommandBinding(HelpCommand, (s, e) => BtnProjectInfo_Click(s, e)));
             CommandBindings.Add(new CommandBinding(SubmitCommand, (s, e) => BtnSubmit(s, e), (s, e) => e.CanExecute = CanSubmit()));
@@ -164,7 +164,7 @@ namespace TimeTrack.Views
 
         private static bool MatchesShortcut(KeyEventArgs e, KeyboardShortcut? shortcut)
         {
-            if (shortcut is null) return false;
+            if (shortcut is null || shortcut.Key == Key.None) return false;
             
             // When Alt is pressed, WPF reports e.Key as Key.System and the actual key is in e.SystemKey
             Key actualKey = e.Key == Key.System ? e.SystemKey : e.Key;
@@ -174,29 +174,38 @@ namespace TimeTrack.Views
 
         private void OnGlobalPreviewKeyDown(object sender, KeyEventArgs e)
         {
+            bool isEnter = e.Key == Key.Enter || e.Key == Key.Return;
+
+            // Let multi-line TextBoxes handle Enter natively (e.g. Notes field inserts newlines)
+            if (isEnter && Keyboard.FocusedElement is TextBox { AcceptsReturn: true })
+                return;
+
             // Block Enter/Return globally until Notes has data
-            if ((e.Key == Key.Enter || e.Key == Key.Return) && 
+            if (isEnter &&
                 (_timeKeeper == null || string.IsNullOrWhiteSpace(_timeKeeper.NotesField)))
             {
                 e.Handled = true;
                 return;
             }
 
-            // Dynamic Prev/Next day from settings
-            var prev = SettingsManager.GetShortcut("PrevDay");
-            if (MatchesShortcut(e, prev))
+            // Dynamic Prev/Next day from settings - only applicable on the main tab
+            if (_timeKeeper?.IsMainTabFocused == true)
             {
-                BtnGoBack(this, new RoutedEventArgs());
-                e.Handled = true;
-                return;
-            }
+                var prev = SettingsManager.GetShortcut("PrevDay");
+                if (MatchesShortcut(e, prev))
+                {
+                    BtnGoBack(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    return;
+                }
 
-            var next = SettingsManager.GetShortcut("NextDay");
-            if (MatchesShortcut(e, next))
-            {
-                BtnGoForward(this, new RoutedEventArgs());
-                e.Handled = true;
-                return;
+                var next = SettingsManager.GetShortcut("NextDay");
+                if (MatchesShortcut(e, next))
+                {
+                    BtnGoForward(this, new RoutedEventArgs());
+                    e.Handled = true;
+                    return;
+                }
             }
 
             var options = SettingsManager.GetShortcut("Options");
@@ -528,26 +537,14 @@ namespace TimeTrack.Views
             
             if (row != null && DgTimeRecords != null)
             {
-                // Explicitly set multiple selection properties to ensure it sticks
                 row.IsSelected = true;
-                row.Focus();
-                
-                // Update both DataGrid selection properties
                 DgTimeRecords.SelectedItem = row.Item;
                 DgTimeRecords.CurrentItem = row.Item;
                 DgTimeRecords.SelectedIndex = DgTimeRecords.Items.IndexOf(row.Item);
                 
-                // Update the ViewModel's selected item as well
                 if (_timeKeeper != null && row.Item is TimeEntry entry)
-                {
                     _timeKeeper.SelectedItem = entry;
-                }
                 
-                // Force immediate visual refresh
-                DgTimeRecords.UpdateLayout();
-                row.UpdateLayout();
-                
-                // Mark the event as handled so it doesn't bubble up
                 e.Handled = true;
             }
         }
@@ -657,7 +654,7 @@ namespace TimeTrack.Views
 
             void AddBinding(String key, RoutedUICommand command)
             {
-                if (shortcuts.TryGetValue(key, out var shortcut))
+                if (shortcuts.TryGetValue(key, out var shortcut) && shortcut.Key != Key.None)
                 {
                     InputBindings.Add(new KeyBinding(command, shortcut.Key, shortcut.Modifiers));
                 }
@@ -672,7 +669,7 @@ namespace TimeTrack.Views
             AddBinding("About", HelpCommand);
             AddBinding("Delete", DeleteCommand);
 
-            if (shortcuts.TryGetValue("Submit", out var submitShortcut))
+            if (shortcuts.TryGetValue("Submit", out var submitShortcut) && submitShortcut.Key != Key.None)
             {
                 InputBindings.Add(new KeyBinding(SubmitCommand, submitShortcut.Key, submitShortcut.Modifiers));
                 if (submitShortcut.Key == Key.Enter || submitShortcut.Key == Key.Return)
@@ -682,11 +679,11 @@ namespace TimeTrack.Views
                 }
             }
 
-            if (shortcuts.TryGetValue("ToggleAll", out var toggleShortcut))
+            if (shortcuts.TryGetValue("ToggleAll", out var toggleShortcut) && toggleShortcut.Key != Key.None)
             {
                 InputBindings.Add(new KeyBinding(ToggleAllCommand, toggleShortcut.Key, toggleShortcut.Modifiers));
             }
-            else if (shortcuts.TryGetValue("MarkAll", out var markAllShortcut))
+            else if (shortcuts.TryGetValue("MarkAll", out var markAllShortcut) && markAllShortcut.Key != Key.None)
             {
                 InputBindings.Add(new KeyBinding(ToggleAllCommand, markAllShortcut.Key, markAllShortcut.Modifiers));
             }

@@ -40,6 +40,12 @@ namespace TimeTrack.Views.Dialogs
 
         private void UpdateDisplay()
         {
+            if (SelectedKey == Key.None)
+            {
+                ShortcutTextBlock.Text = "None (shortcut cleared)";
+                return;
+            }
+
             string display = "";
             if (SelectedModifiers.HasFlag(ModifierKeys.Control))
                 display += "Ctrl+";
@@ -52,6 +58,13 @@ namespace TimeTrack.Views.Dialogs
 
             display += SelectedKey.ToString();
             ShortcutTextBlock.Text = display;
+        }
+
+        private void Clear_Click(object sender, RoutedEventArgs e)
+        {
+            SelectedKey = Key.None;
+            SelectedModifiers = ModifierKeys.None;
+            UpdateDisplay();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)

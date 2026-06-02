@@ -110,6 +110,7 @@ namespace TimeTrack.ViewModels
                 _startTime = value; 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(EntryDurationDisplay));
+                if (_focusedEntry != null) _focusedEntry.StartTime = value;
                 UpdateSelectedTime();
             }
         }
@@ -491,6 +492,7 @@ namespace TimeTrack.ViewModels
 
         public void SetStartTimeField()
         {
+            if (!_isMainTabFocused) return;
             StartTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
         }
 

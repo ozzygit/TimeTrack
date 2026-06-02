@@ -18,6 +18,9 @@ namespace TimeTrack.Utilities
         {
             get
             {
+                if (Key == Key.None)
+                    return "None";
+
                 string result = string.Empty;
                 if (Modifiers.HasFlag(ModifierKeys.Control))
                     result += "Ctrl+";

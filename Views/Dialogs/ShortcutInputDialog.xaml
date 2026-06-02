@@ -22,6 +22,8 @@
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Clear" Click="Clear_Click" Padding="16,6" Width="80" Height="32" Margin="0,0,8,0"
+                    ToolTip="Remove this keyboard shortcut"/>
             <Button Content="OK" Click="OK_Click" IsDefault="True" Padding="16,6" Margin="0,0,8,0" Width="80" Height="32"/>
             <Button Content="Cancel" Click="Cancel_Click" IsCancel="True" Padding="16,6" Width="80" Height="32"/>
         </StackPanel>
