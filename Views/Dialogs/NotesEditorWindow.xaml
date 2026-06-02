@@ -4,26 +4,17 @@
         Title="Edit Notes" Height="500" Width="600"
         MinHeight="300" MinWidth="400"
         WindowStartupLocation="CenterOwner"
-        Background="#F5F5F5"
+        Background="{DynamicResource WindowBackground}"
         ResizeMode="CanResize">
     
     <Window.Resources>
-        <!-- Modern Color Palette (matching MainWindow) -->
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
-        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#106EBE"/>
-        <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#005A9E"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#E1E1E1"/>
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextBrush" Color="#323130"/>
-        <SolidColorBrush x:Key="SubtleBrush" Color="#605E5C"/>
-
         <!-- Modern Button Style -->
         <Style TargetType="Button">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="16,8"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -44,26 +35,26 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F3F3F3"/>
-                    <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                    <Setter Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource ButtonHoverBorderBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#E8E8E8"/>
+                    <Setter Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Primary Button Style -->
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                    <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                    <Setter Property="Background" Value="{DynamicResource PrimaryPressedBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -73,9 +64,10 @@
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Padding" Value="4,3"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -91,10 +83,10 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#C4C4C4"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource TextBoxHoverBorderBrush}"/>
                 </Trigger>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
                     <Setter Property="BorderThickness" Value="2"/>
                 </Trigger>
             </Style.Triggers>
@@ -102,8 +94,8 @@
 
         <!-- Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="20"/>
@@ -136,18 +128,18 @@
                     <TextBlock Text="Edit Notes" 
                              FontSize="20" 
                              FontWeight="SemiBold"
-                             Foreground="{StaticResource TextBrush}"
+                             Foreground="{DynamicResource TextBrush}"
                              Margin="0,0,0,4"/>
                     <TextBlock Text="Enter detailed notes for this time entry" 
                              FontSize="12"
-                             Foreground="{StaticResource SubtleBrush}"/>
+                             Foreground="{DynamicResource SubtleBrush}"/>
                 </StackPanel>
 
                 <TextBlock Grid.Column="1" 
                          x:Name="CharacterCount"
                          Text="0 characters"
                          FontSize="11"
-                         Foreground="{StaticResource SubtleBrush}"
+                         Foreground="{DynamicResource SubtleBrush}"
                          VerticalAlignment="Bottom"
                          HorizontalAlignment="Right"/>
             </Grid>
@@ -166,7 +158,7 @@
             <TextBlock Grid.Row="2" 
                      Margin="0,8,0,0"
                      FontSize="11"
-                     Foreground="{StaticResource SubtleBrush}"
+                     Foreground="{DynamicResource SubtleBrush}"
                      TextWrapping="Wrap">
                 <Run Text="Tip: Press"/>
                 <Run FontWeight="SemiBold" Text="Ctrl+Enter"/>

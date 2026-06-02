@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Change Keyboard Shortcut" Width="400"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="#F5F5F5" SizeToContent="Height">
+        Background="{DynamicResource WindowBackground}" SizeToContent="Height">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -15,7 +15,7 @@
         <TextBlock Grid.Row="0" Text="Press the key combination you want to use:" 
                   FontSize="13" Margin="0,0,0,16"/>
 
-        <Border Grid.Row="1" Background="White" BorderBrush="#E1E1E1" BorderThickness="1" 
+        <Border Grid.Row="1" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" 
                CornerRadius="4" Padding="12,16" MinHeight="60" Margin="0,0,0,16">
             <TextBlock x:Name="ShortcutTextBlock" Text="Press a key..." FontSize="16" 
                       FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>

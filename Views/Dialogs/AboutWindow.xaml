@@ -6,12 +6,12 @@
         Width="500"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="#F5F5F5">
+        Background="{DynamicResource WindowBackground}">
     
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         </Style>
     </Window.Resources>
     
@@ -78,7 +78,7 @@
         <TextBlock Grid.Row="4"
                    Text="&#169; 2020 - 2025" 
                    FontSize="11" 
-                   Foreground="#605E5C"
+                   Foreground="{DynamicResource SubtleBrush}"
                    HorizontalAlignment="Center"
                    Margin="0,0,0,8"/>
         
@@ -120,7 +120,7 @@
         <StackPanel Grid.Row="7" Margin="0,0,0,15">
             <TextBlock Text="Database Location:" 
                        FontSize="11" 
-                       Foreground="#605E5C"
+                       Foreground="{DynamicResource SubtleBrush}"
                        Margin="0,0,0,5"/>
             <TextBlock TextWrapping="Wrap">
                 <Hyperlink x:Name="DatabaseLocationLink" 
@@ -147,7 +147,7 @@
                 <Style TargetType="Button">
                     <Setter Property="FontFamily" Value="Segoe UI"/>
                     <Setter Property="FontSize" Value="13"/>
-                    <Setter Property="Background" Value="#0078D4"/>
+                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="BorderThickness" Value="0"/>
                     <Setter Property="Cursor" Value="Hand"/>
@@ -165,10 +165,10 @@
                     </Setter>
                     <Style.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#106EBE"/>
+                            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#005A9E"/>
+                            <Setter Property="Background" Value="{DynamicResource PrimaryPressedBrush}"/>
                         </Trigger>
                     </Style.Triggers>
                 </Style>

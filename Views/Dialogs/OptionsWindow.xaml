@@ -3,23 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Options - TimeTrack" Width="800" Height="600" MinWidth="700" MinHeight="500"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
-        Background="#F5F5F5">
+        Background="{DynamicResource WindowBackground}">
 
     <Window.Resources>
-        <!-- Color Palette -->
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
-        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#106EBE"/>
-        <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#005A9E"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#E1E1E1"/>
-        <SolidColorBrush x:Key="TextBrush" Color="#323130"/>
-        <SolidColorBrush x:Key="SubtleBrush" Color="#605E5C"/>
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#FFFFFF"/>
 
         <!-- Navigation Button Style -->
         <Style x:Key="NavButtonStyle" TargetType="RadioButton">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="16,12"/>
@@ -37,12 +29,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#F3F3F3"/>
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource NavButtonHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#E5F1FB"/>
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource NavButtonSelectedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -55,9 +47,9 @@
         <Style TargetType="Button">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -77,26 +69,26 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F3F3F3"/>
-                    <Setter Property="BorderBrush" Value="#D1D1D1"/>
+                    <Setter Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource ButtonHoverBorderBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#E8E8E8"/>
+                    <Setter Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Primary Button Style -->
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                    <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                    <Setter Property="Background" Value="{DynamicResource PrimaryPressedBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -106,7 +98,7 @@
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="20"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
 
@@ -114,7 +106,7 @@
         <Style x:Key="SectionDescriptionStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{StaticResource SubtleBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
             <Setter Property="Margin" Value="0,0,0,16"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
@@ -127,10 +119,10 @@
         </Grid.ColumnDefinitions>
 
         <!-- Left Navigation Panel -->
-        <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
             <StackPanel Margin="0,16,0,0">
                 <TextBlock Text="Settings" FontSize="16" FontWeight="SemiBold" 
-                          Foreground="{StaticResource TextBrush}" Margin="16,0,16,12"/>
+                          Foreground="{DynamicResource TextBrush}" Margin="16,0,16,12"/>
                 
                 <RadioButton x:Name="GeneralTab" Content="General" 
                             Style="{StaticResource NavButtonStyle}" 
@@ -163,7 +155,7 @@
                         <TextBlock Text="Configure general application settings and preferences." 
                                   Style="{StaticResource SectionDescriptionStyle}"/>
                         
-                        <Border Background="White" BorderBrush="{StaticResource BorderBrush}" 
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
                                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="Application Behavior" FontWeight="SemiBold" 
@@ -187,7 +179,7 @@
                         <TextBlock Text="Customize keyboard shortcuts for quick actions throughout the application." 
                                   Style="{StaticResource SectionDescriptionStyle}"/>
                         
-                        <Border Background="White" BorderBrush="{StaticResource BorderBrush}" 
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
                                BorderThickness="1" CornerRadius="8" Padding="16">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -228,15 +220,37 @@
                         <TextBlock Text="Customize the look and feel of the application." 
                                   Style="{StaticResource SectionDescriptionStyle}"/>
                         
-                        <Border Background="White" BorderBrush="{StaticResource BorderBrush}" 
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
                                BorderThickness="1" CornerRadius="8" Padding="16">
                             <StackPanel>
-                                <TextBlock Text="Theme Options" FontWeight="SemiBold" 
-                                          FontSize="14" Margin="0,0,0,12"/>
-                                
-                                <TextBlock Text="Theme features coming soon..." 
-                                          Foreground="{StaticResource SubtleBrush}"
-                                          FontStyle="Italic"/>
+                                <TextBlock Text="Theme" FontWeight="SemiBold" 
+                                          FontSize="14" Margin="0,0,0,4"/>
+                                <TextBlock Text="Choose how TimeTrack looks. System Default follows your Windows colour preference."
+                                          Foreground="{DynamicResource SubtleBrush}" FontSize="12"
+                                          TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                                <RadioButton x:Name="ThemeSystemDefault"
+                                             Content="System Default (coming soon)"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource SubtleBrush}"
+                                             IsEnabled="False"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeLight"
+                                             Content="Light Mode"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource TextBrush}"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeDark"
+                                             Content="Dark Mode (coming soon)"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource SubtleBrush}"
+                                             IsEnabled="False"
+                                             Checked="ThemeRadio_Checked"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -244,7 +258,7 @@
             </ScrollViewer>
 
             <!-- Bottom Action Buttons -->
-            <Border Grid.Row="1" Background="White" BorderBrush="{StaticResource BorderBrush}" 
+            <Border Grid.Row="1" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
                    BorderThickness="0,1,0,0" Padding="24,16">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="OK" Click="OK_Click" IsDefault="True" 

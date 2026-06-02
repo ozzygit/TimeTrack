@@ -45,6 +45,9 @@ namespace TimeTrack
                 System.Diagnostics.Debug.WriteLine($"User Profile: {Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}");
                 System.Diagnostics.Debug.WriteLine($"AppData (Roaming): {Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}");
                 
+                // Apply saved theme before any windows open
+                ThemeManager.ApplySavedTheme();
+
                 // Initialize database
                 Database.CreateDatabase();
                 Database.BackupDatabaseIfNeeded();

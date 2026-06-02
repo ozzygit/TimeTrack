@@ -7,6 +7,13 @@ using System.Xml.Linq;
 
 namespace TimeTrack.Utilities
 {
+    public enum ThemeMode
+    {
+        SystemDefault,
+        Light,
+        Dark
+    }
+
     public class KeyboardShortcut
     {
         public string ActionName { get; set; } = string.Empty;
@@ -41,6 +48,7 @@ namespace TimeTrack.Utilities
     {
         private static readonly string SettingsPath = "timetrack_settings.xml";
         private static Dictionary<string, KeyboardShortcut> _shortcuts = new();
+        public static ThemeMode Theme { get; set; } = ThemeMode.SystemDefault;
 
         static SettingsManager()
         {
@@ -89,6 +97,9 @@ namespace TimeTrack.Utilities
             try
             {
                 var root = new XElement("Settings",
+                    new XElement("Appearance",
+                        new XAttribute("Theme", Theme.ToString())
+                    ),
                     new XElement("Shortcuts",
                         _shortcuts.Values.Select(s =>
                             new XElement("Shortcut",
@@ -118,6 +129,10 @@ namespace TimeTrack.Utilities
             {
                 var doc = XDocument.Load(SettingsPath);
                 var shortcutElements = doc.Root?.Element("Shortcuts")?.Elements("Shortcut");
+
+                var themeStr = doc.Root?.Element("Appearance")?.Attribute("Theme")?.Value;
+                if (themeStr != null && Enum.TryParse<ThemeMode>(themeStr, out var savedTheme))
+                    Theme = savedTheme;
 
                 if (shortcutElements != null)
                 {

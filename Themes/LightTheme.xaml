@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Window / surface backgrounds -->
+    <SolidColorBrush x:Key="WindowBackground"          Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="BackgroundBrush"           Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ContextMenuBackground"     Color="#FFFFFF"/>
+
+    <!-- Accent / primary -->
+    <SolidColorBrush x:Key="PrimaryBrush"              Color="#0078D4"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush"         Color="#106EBE"/>
+    <SolidColorBrush x:Key="PrimaryPressedBrush"       Color="#005A9E"/>
+    <SolidColorBrush x:Key="AccentBrush"               Color="#0078D4"/>
+
+    <!-- Borders -->
+    <SolidColorBrush x:Key="BorderBrush"               Color="#E1E1E1"/>
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextBrush"                 Color="#323130"/>
+    <SolidColorBrush x:Key="SubtleBrush"               Color="#605E5C"/>
+
+    <!-- Button states -->
+    <SolidColorBrush x:Key="ButtonHoverBrush"          Color="#F3F3F3"/>
+    <SolidColorBrush x:Key="ButtonPressedBrush"        Color="#E8E8E8"/>
+    <SolidColorBrush x:Key="ButtonHoverBorderBrush"    Color="#D1D1D1"/>
+
+    <!-- TextBox states -->
+    <SolidColorBrush x:Key="TextBoxHoverBorderBrush"   Color="#C4C4C4"/>
+
+    <!-- DataGrid -->
+    <SolidColorBrush x:Key="DataGridRowHoverBrush"     Color="#F0F6FC"/>
+    <SolidColorBrush x:Key="DataGridRowSelectedBrush"  Color="#CCE4F7"/>
+    <SolidColorBrush x:Key="DataGridGridLineBrush"     Color="#F3F3F3"/>
+    <SolidColorBrush x:Key="DataGridAltRowBrush"       Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="DataGridHeaderBackground"  Color="#F8F8F8"/>
+
+    <!-- Tabs -->
+    <SolidColorBrush x:Key="TabInactiveBrush"          Color="#EBEBEB"/>
+    <SolidColorBrush x:Key="TabHoverBrush"             Color="#D8D8D8"/>
+
+    <!-- CheckBox states -->
+    <SolidColorBrush x:Key="CheckBoxCheckedBrush"      Color="#E5F1FB"/>
+    <SolidColorBrush x:Key="CheckBoxHoverBrush"        Color="#F0F6FC"/>
+    <SolidColorBrush x:Key="CheckBoxHoverCheckedBrush" Color="#D0E7F9"/>
+
+    <!-- Context menu -->
+    <SolidColorBrush x:Key="ContextMenuItemHoverBrush" Color="#E5F3FB"/>
+
+    <!-- Options nav sidebar -->
+    <SolidColorBrush x:Key="NavButtonHoverBrush"       Color="#F3F3F3"/>
+    <SolidColorBrush x:Key="NavButtonSelectedBrush"    Color="#E5F1FB"/>
+
+</ResourceDictionary>

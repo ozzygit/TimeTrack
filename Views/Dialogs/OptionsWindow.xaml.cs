@@ -16,6 +16,29 @@ namespace TimeTrack.Views.Dialogs
         {
             InitializeComponent();
             LoadShortcuts();
+            LoadTheme();
+        }
+
+        private void LoadTheme()
+        {
+            switch (SettingsManager.Theme)
+            {
+                case ThemeMode.Dark:          ThemeDark.IsChecked          = true; break;
+                case ThemeMode.Light:         ThemeLight.IsChecked         = true; break;
+                default:                      ThemeSystemDefault.IsChecked = true; break;
+            }
+        }
+
+        private ThemeMode SelectedTheme()
+        {
+            if (ThemeDark.IsChecked          == true) return ThemeMode.Dark;
+            if (ThemeLight.IsChecked         == true) return ThemeMode.Light;
+            return ThemeMode.SystemDefault;
+        }
+
+        private void ThemeRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            ThemeManager.Apply(SelectedTheme());
         }
 
         private void LoadShortcuts()
@@ -108,6 +131,7 @@ namespace TimeTrack.Views.Dialogs
             {
                 SettingsManager.UpdateShortcut(kvp.Key, kvp.Value.Key, kvp.Value.Modifiers);
             }
+            SettingsManager.Theme = SelectedTheme();
             SettingsManager.Save();
             
             DialogResult = true;
@@ -127,6 +151,7 @@ namespace TimeTrack.Views.Dialogs
             {
                 SettingsManager.UpdateShortcut(kvp.Key, kvp.Value.Key, kvp.Value.Modifiers);
             }
+            SettingsManager.Theme = SelectedTheme();
             SettingsManager.Save();
             
             // Notify the MainWindow to reload shortcuts
