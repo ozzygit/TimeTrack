@@ -216,7 +216,8 @@
                     <!-- Notes Section -->
                     <StackPanel>
                         <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Margin="0,0,0,4"
+                        <TextBox x:Name="NotesBox"
+                                 Margin="0,0,0,4"
                                  MinHeight="80"
                                  MaxHeight="120"
                                  TextWrapping="Wrap"
@@ -224,7 +225,14 @@
                                  VerticalScrollBarVisibility="Auto"
                                  SpellCheck.IsEnabled="True"
                                  Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                 TextChanged="NotesBox_TextChanged"
                                  ToolTip="Enter detailed notes about this time entry"/>
+                        <TextBlock x:Name="NotesCharacterCount"
+                                   Text="0 characters"
+                                   FontSize="11"
+                                   Foreground="{StaticResource SubtleBrush}"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,0,0,6"/>
 
                         <!-- Helper Text -->
                         <TextBlock Margin="0,0,0,0"
