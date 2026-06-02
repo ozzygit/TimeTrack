@@ -741,6 +741,7 @@
                              ScrollViewer.CanContentScroll="True"
                              VirtualizingPanel.IsVirtualizing="True"
                              VirtualizingPanel.VirtualizationMode="Recycling"
+                             HorizontalScrollBarVisibility="Disabled"
                              SelectionChanged="DgTimeRecords_SelectionChanged"
                              PreviewMouseRightButtonDown="DgTimeRecords_PreviewMouseRightButtonDown">
                         <DataGrid.InputBindings>
@@ -751,11 +752,11 @@
                                 Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
                                 ElementStyle="{StaticResource DataGridCheckBoxStyle}"
                                 EditingElementStyle="{StaticResource DataGridCheckBoxStyle}"/>
-                            <DataGridTextColumn Header="Start" Width="Auto"
+                            <DataGridTextColumn Header="Start" Width="82"
                                 Binding="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
-                            <DataGridTextColumn Header="End" Width="Auto"
+                            <DataGridTextColumn Header="End" Width="82"
                                 Binding="{Binding EndTime, Converter={StaticResource TimeEntryUIConverter}}"/>
-                            <DataGridTextColumn Header="Units" Width="50" Binding="{Binding BillableUnits}">
+                            <DataGridTextColumn Header="Units" Width="52" Binding="{Binding BillableUnits}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -763,7 +764,7 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Ticket Number" Width="Auto"
+                            <DataGridTextColumn Header="Ticket Number" Width="140"
                                 Binding="{Binding TicketNumber}"/>
                             <DataGridTextColumn Header="Notes" Width="*" Binding="{Binding Notes}">
                                 <DataGridTextColumn.ElementStyle>
@@ -775,6 +776,21 @@
                             <ContextMenu Background="White" BorderBrush="#E1E1E1"
                                          BorderThickness="1" Padding="0,4"
                                          FontFamily="Segoe UI" FontSize="13">
+                                <ContextMenu.Template>
+                                    <ControlTemplate TargetType="ContextMenu">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                Padding="{TemplateBinding Padding}"
+                                                SnapsToDevicePixels="True">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#000000" Opacity="0.12"
+                                                                  BlurRadius="8" ShadowDepth="2" Direction="270"/>
+                                            </Border.Effect>
+                                            <ItemsPresenter SnapsToDevicePixels="True"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ContextMenu.Template>
                                 <ContextMenu.Resources>
                                     <Style TargetType="MenuItem">
                                         <Setter Property="Foreground" Value="#323130"/>
@@ -991,8 +1007,14 @@
                                          TextWrapping="Wrap"
                                          Height="180"
                                          AcceptsReturn="True"
+                                         SpellCheck.IsEnabled="True"
                                          VerticalScrollBarVisibility="Auto"
                                          TabIndex="3"/>
+                                <TextBlock Text="{Binding NotesCharacterCount}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource SubtleBrush}"
+                                           HorizontalAlignment="Right"
+                                           Margin="0,3,0,0"/>
                             </StackPanel>
                             <Button Name="BtnNotesPopOut" Grid.Column="2"
                                     Width="28" Height="180" VerticalAlignment="Bottom"

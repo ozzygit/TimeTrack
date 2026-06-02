@@ -148,7 +148,17 @@ namespace TimeTrack.ViewModels
             {
                 _notes = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(NotesCharacterCount));
                 if (_focusedEntry != null) _focusedEntry.Notes = value;
+            }
+        }
+
+        public string NotesCharacterCount
+        {
+            get
+            {
+                int count = _notes?.Length ?? 0;
+                return count == 1 ? "1 character" : $"{count} characters";
             }
         }
 

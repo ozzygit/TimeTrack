@@ -30,7 +30,6 @@ namespace TimeTrack.Data
         private string ticketNumber = string.Empty;
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TabDisplay))]
         private string notes = string.Empty;
 
         [ObservableProperty]
@@ -58,11 +57,6 @@ namespace TimeTrack.Data
                 {
                     string t = TicketNumber.Length > 16 ? TicketNumber[..16] + "…" : TicketNumber;
                     return t + timeHint;
-                }
-                if (!string.IsNullOrWhiteSpace(Notes))
-                {
-                    string n = Notes.Length > 16 ? Notes[..16] + "…" : Notes;
-                    return n + timeHint;
                 }
                 return "New Entry" + timeHint;
             }

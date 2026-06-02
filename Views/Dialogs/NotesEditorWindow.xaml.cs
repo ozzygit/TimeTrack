@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using TimeTrack.Utilities;
 
 namespace TimeTrack.Views.Dialogs
 {
@@ -25,8 +26,18 @@ namespace TimeTrack.Views.Dialogs
 
         private void NotesEditorWindow_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // Ctrl+Enter to save
-            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control)
+            bool isEnter = e.Key == Key.Enter || e.Key == Key.Return;
+            if (!isEnter) return;
+
+            var submit = SettingsManager.GetShortcut("Submit");
+            Key submitKey = (submit != null && submit.Key != Key.None) ? submit.Key : Key.Enter;
+            ModifierKeys submitMods = (submit != null && submit.Key != Key.None) ? submit.Modifiers : ModifierKeys.Control;
+
+            bool keyMatch = e.Key == submitKey ||
+                (submitKey == Key.Enter && e.Key == Key.Return) ||
+                (submitKey == Key.Return && e.Key == Key.Enter);
+
+            if (keyMatch && Keyboard.Modifiers == submitMods)
             {
                 OnSave(sender, e);
                 e.Handled = true;
