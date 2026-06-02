@@ -39,7 +39,7 @@ namespace TimeTrack
             try
             {
                 // Display diagnostic information in debug mode
-                System.Diagnostics.Debug.WriteLine("=== TimeTrack v2 Startup Diagnostics ===");
+                System.Diagnostics.Debug.WriteLine("=== TimeTrack v3 Startup Diagnostics ===");
                 System.Diagnostics.Debug.WriteLine($"Executable Location: {AppDomain.CurrentDomain.BaseDirectory}");
                 System.Diagnostics.Debug.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
                 System.Diagnostics.Debug.WriteLine($"User Profile: {Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}");
@@ -59,7 +59,7 @@ namespace TimeTrack
             {
                 // More detailed error message for startup failures
                 string diagnosticInfo = 
-                    $"TimeTrack v2 failed to start.\n\n" +
+                    $"TimeTrack v3 failed to start.\n\n" +
                     $"Error: {ex.Message}\n\n" +
                     $"Diagnostic Information:\n" +
                     $"- Executable: {AppDomain.CurrentDomain.BaseDirectory}\n" +
@@ -73,7 +73,7 @@ namespace TimeTrack
                 
                 MessageBox.Show(
                     diagnosticInfo,
-                    "TimeTrack v2 - Startup Error",
+                    "TimeTrack v3 - Startup Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 
@@ -95,7 +95,7 @@ namespace TimeTrack
                     $"Failed to create the main window.\n\n" +
                     $"Error: {ex.Message}\n\n" +
                     $"The application will now exit.",
-                    "TimeTrack v2 - Window Creation Error",
+                    "TimeTrack v3 - Window Creation Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 

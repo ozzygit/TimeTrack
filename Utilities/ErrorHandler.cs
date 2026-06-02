@@ -38,7 +38,7 @@ namespace TimeTrack.Utilities
 
             void ShowError()
             {
-                string caption = "TimeTrack v2 - Error";
+                string caption = "TimeTrack v3 - Error";
                 string msg = $"{errorText}\n\nFunction: {caller}\nLine: {lineNumber}\n\nException:\n{e}\n\nLog: {logPath}";
                 MessageBox.Show(msg, caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
             }

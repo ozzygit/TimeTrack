@@ -1,7 +1,7 @@
 <Window x:Class="TimeTrack.Views.Dialogs.AboutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="About TimeTrack v2" 
+        Title="About TimeTrack v3" 
         Height="380" 
         Width="500"
         WindowStartupLocation="CenterOwner"
@@ -30,7 +30,7 @@
         
         <!-- Title -->
         <TextBlock Grid.Row="0" 
-                   Text="TimeTrack v2" 
+                   Text="TimeTrack v3" 
                    FontSize="24" 
                    FontWeight="SemiBold"
                    HorizontalAlignment="Center"
@@ -65,7 +65,7 @@
                 </Hyperlink>
             </TextBlock>
             <TextBlock HorizontalAlignment="Center" Margin="0,0,0,5">
-                <Run Text="v2 maintained by " FontSize="12"/>
+                <Run Text="v3 maintained by " FontSize="12"/>
                 <Hyperlink NavigateUri="https://github.com/ozzygit/TimeTrack" 
                            RequestNavigate="Hyperlink_RequestNavigate"
                            FontSize="12">
@@ -76,7 +76,7 @@
         
         <!-- Copyright -->
         <TextBlock Grid.Row="4"
-                   Text="&#169; 2020 - 2025" 
+                   Text="&#169; 2020 - 2026" 
                    FontSize="11" 
                    Foreground="{DynamicResource SubtleBrush}"
                    HorizontalAlignment="Center"

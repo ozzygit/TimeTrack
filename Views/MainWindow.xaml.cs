@@ -356,14 +356,14 @@ namespace TimeTrack.Views
 
             if (selected.StartTime == null || selected.EndTime == null)
             {
-                MessageBox.Show("Record must have a valid start and end time", "TimeTrack v2 - Error",
+                MessageBox.Show("Record must have a valid start and end time", "TimeTrack v3 - Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (selected.EndTime < selected.StartTime)
             {
-                MessageBox.Show("Cannot export a negative time duration", "TimeTrack v2 - Error",
+                MessageBox.Show("Cannot export a negative time duration", "TimeTrack v3 - Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }

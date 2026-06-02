@@ -9,19 +9,19 @@
     
     <!-- Display name for the built assembly -->
     <AssemblyName>TimeTrack</AssemblyName>
-    <Product>TimeTrack v2</Product>
+    <Product>TimeTrack v3</Product>
     <Company>TimeTrack Project</Company>
     <Authors>Jared Kinnear, Richard Moore</Authors>
     <Description>MSP time tracking with instant billable units calculation</Description>
-    <Copyright>Copyright © 2020-2025</Copyright>
+    <Copyright>Copyright © 2020-2026</Copyright>
     
     <!-- Application icon and manifest -->
     <ApplicationIcon>Resources\exeicon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>2.6.0</Version>
-    <AssemblyVersion>2.6.0.0</AssemblyVersion>
+    <Version>3.0.0</Version>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
     
     <!-- Disable automatic Git version suffix -->
     <SourceRevisionId></SourceRevisionId>
