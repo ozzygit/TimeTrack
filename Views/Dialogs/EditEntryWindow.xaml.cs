@@ -47,6 +47,13 @@ namespace TimeTrack.Views.Dialogs
             NotesCharacterCount.Text = count == 1 ? "1 character" : $"{count} characters";
         }
 
+        private void BtnNotesPopOut_Click(object sender, RoutedEventArgs e)
+        {
+            var notesEditor = new NotesEditorWindow(NotesBox.Text) { Owner = this };
+            if (notesEditor.ShowDialog() == true)
+                NotesBox.Text = notesEditor.NotesText ?? string.Empty;
+        }
+
         private void OnSaveClick(object sender, RoutedEventArgs e)
         {
             // Validation

@@ -216,17 +216,30 @@
                     <!-- Notes Section -->
                     <StackPanel>
                         <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
-                        <TextBox x:Name="NotesBox"
-                                 Margin="0,0,0,4"
-                                 MinHeight="80"
-                                 MaxHeight="120"
-                                 TextWrapping="Wrap"
-                                 AcceptsReturn="True" 
-                                 VerticalScrollBarVisibility="Auto"
-                                 SpellCheck.IsEnabled="True"
-                                 Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
-                                 TextChanged="NotesBox_TextChanged"
-                                 ToolTip="Enter detailed notes about this time entry"/>
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="28"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="NotesBox"
+                                     Grid.Column="0"
+                                     MinHeight="80"
+                                     MaxHeight="120"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True" 
+                                     VerticalScrollBarVisibility="Auto"
+                                     SpellCheck.IsEnabled="True"
+                                     Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                     TextChanged="NotesBox_TextChanged"
+                                     ToolTip="Enter detailed notes about this time entry"/>
+                            <Button Grid.Column="2"
+                                    VerticalAlignment="Stretch"
+                                    Content="↗" FontSize="12" Padding="0"
+                                    MinWidth="0"
+                                    Click="BtnNotesPopOut_Click"
+                                    ToolTip="Open full notes editor"/>
+                        </Grid>
                         <TextBlock x:Name="NotesCharacterCount"
                                    Text="0 characters"
                                    FontSize="11"
