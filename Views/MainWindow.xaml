@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:TimeTrack.Converters"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:TimeKeeperViewModel, IsDesignTimeCreatable=False}"
-        Title="TimeTrack v2" Height="950" Width="990" MinWidth="800" MaxWidth="1300" MinHeight="750"
+        Title="TimeTrack v2" Height="675" Width="800" MinWidth="700" MinHeight="375"
         Icon="/Resources/time.png" Background="#F5F5F5"
         WindowStartupLocation="CenterScreen">
 
