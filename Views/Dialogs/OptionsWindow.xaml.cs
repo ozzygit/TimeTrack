@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using TimeTrack.Utilities;
-using TimeTrack.Views;
 
 namespace TimeTrack.Views.Dialogs
 {
@@ -145,27 +144,6 @@ namespace TimeTrack.Views.Dialogs
         {
             DialogResult = false;
             Close();
-        }
-
-        private void Apply_Click(object sender, RoutedEventArgs e)
-        {
-            // Save all shortcuts
-            foreach (var kvp in shortcuts)
-            {
-                SettingsManager.UpdateShortcut(kvp.Key, kvp.Value.Key, kvp.Value.Modifiers);
-            }
-            SettingsManager.Theme = SelectedTheme();
-            SettingsManager.Save();
-            
-            // Notify the MainWindow to reload shortcuts
-            if (Owner is MainWindow mainWindow)
-            {
-                mainWindow.ApplyKeyboardShortcuts();
-                mainWindow.UpdateMenuGestureTexts();
-            }
-            
-            MessageBox.Show("Settings have been applied.", "Apply Complete", 
-                            MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

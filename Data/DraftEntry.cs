@@ -1,4 +1,3 @@
-using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace TimeTrack.Data
@@ -10,12 +9,10 @@ namespace TimeTrack.Data
     public partial class DraftEntry : ObservableObject
     {
         private readonly int _id;
-        private readonly DateTime _createdAt;
 
-        public DraftEntry(int id, string ticketNumber, string notes, string startTime, string endTime, DateTime createdAt, bool isActive = false)
+        public DraftEntry(int id, string ticketNumber, string notes, string startTime, string endTime, bool isActive = false)
         {
             _id = id;
-            _createdAt = createdAt;
             TicketNumber = ticketNumber;
             Notes = notes;
             StartTime = startTime;
@@ -24,7 +21,6 @@ namespace TimeTrack.Data
         }
 
         public int Id => _id;
-        public DateTime CreatedAt => _createdAt;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TabDisplay))]
@@ -69,10 +65,6 @@ namespace TimeTrack.Data
         public string TicketDisplay =>
             string.IsNullOrWhiteSpace(TicketNumber) ? "(no ticket)" : TicketNumber;
 
-        public string NotesPreview =>
-            string.IsNullOrWhiteSpace(Notes)
-                ? "(no notes)"
-                : Notes.Length > 40 ? Notes[..40] + "…" : Notes;
     }
 
     /// <summary>

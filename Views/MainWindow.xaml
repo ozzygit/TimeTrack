@@ -15,7 +15,6 @@
 
     <Window.Resources>
         <data:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
-        <converters:AllNotEmptyConverter x:Key="AllNotEmptyConverter"/>
         <converters:ShortcutDisplayConverter x:Key="ShortcutDisplayConverter"/>
 
 

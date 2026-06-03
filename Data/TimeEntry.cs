@@ -64,7 +64,6 @@ namespace TimeTrack.Data
                 {
                     OnPropertyChanged(nameof(Duration));
                     OnPropertyChanged(nameof(BillableUnits));
-                    OnPropertyChanged(nameof(IsValid));
                     OnTimeEntryChanged(true);
                 }
             }
@@ -79,14 +78,12 @@ namespace TimeTrack.Data
                 {
                     OnPropertyChanged(nameof(Duration));
                     OnPropertyChanged(nameof(BillableUnits));
-                    OnPropertyChanged(nameof(IsValid));
                     OnTimeEntryChanged(true);
                 }
             }
         }
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(IsValid))]
         private string ticketNumber = string.Empty;
 
         [ObservableProperty]
@@ -94,12 +91,6 @@ namespace TimeTrack.Data
 
         [ObservableProperty]
         private bool recorded;
-
-        private const string TimeFormat = "t";
-        public string StartTimeAsString() => _startTime?.ToString(TimeFormat) ?? string.Empty;
-        public string EndTimeAsString() => _endTime?.ToString(TimeFormat) ?? string.Empty;
-
-        public bool TicketIsEmpty() => string.IsNullOrWhiteSpace(TicketNumber);
 
         public TimeSpan? Duration
         {
@@ -145,8 +136,6 @@ namespace TimeTrack.Data
                 return units.ToString("F1");
             }
         }
-
-        public bool IsValid => !string.IsNullOrWhiteSpace(TicketNumber) && Duration.HasValue;
 
         private readonly SynchronizationContext _synchronizationContext;
 

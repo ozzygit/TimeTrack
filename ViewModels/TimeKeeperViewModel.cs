@@ -217,8 +217,6 @@ namespace TimeTrack.ViewModels
             private set { _focusedEntry = value; OnPropertyChanged(); }
         }
 
-        public bool HasOpenEntries => _openEntries.Count > 0;
-
         public bool IsMainTabFocused
         {
             get => _isMainTabFocused;
@@ -287,7 +285,6 @@ namespace TimeTrack.ViewModels
             Database.DeleteDraft(entry.Id);
             int index = _openEntries.IndexOf(entry);
             _openEntries.Remove(entry);
-            OnPropertyChanged(nameof(HasOpenEntries));
 
             if (!wasFocused) return;
 

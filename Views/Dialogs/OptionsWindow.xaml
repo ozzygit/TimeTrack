@@ -161,14 +161,17 @@
                                 <TextBlock Text="Application Behavior" FontWeight="SemiBold" 
                                           FontSize="14" Margin="0,0,0,12"/>
                                 
-                                <CheckBox x:Name="ChkStartWithWindows" Content="Start with Windows" 
-                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"/>
+                                <CheckBox x:Name="ChkStartWithWindows" Content="Start with Windows (coming soon)" 
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         IsEnabled="False" Foreground="{DynamicResource SubtleBrush}"/>
                                 
-                                <CheckBox x:Name="ChkMinimizeToTray" Content="Minimize to system tray" 
-                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"/>
+                                <CheckBox x:Name="ChkMinimizeToTray" Content="Minimize to system tray (coming soon)" 
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         IsEnabled="False" Foreground="{DynamicResource SubtleBrush}"/>
                                 
-                                <CheckBox x:Name="ChkConfirmDelete" Content="Confirm before deleting entries" 
-                                         FontFamily="Segoe UI" FontSize="13" IsChecked="True"/>
+                                <CheckBox x:Name="ChkConfirmDelete" Content="Confirm before deleting entries (coming soon)" 
+                                         FontFamily="Segoe UI" FontSize="13" IsChecked="True"
+                                         IsEnabled="False" Foreground="{DynamicResource SubtleBrush}"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

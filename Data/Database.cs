@@ -526,8 +526,7 @@ public static class Database
 
     private static DraftEntry EntityToDraft(DraftEntity e)
     {
-        var createdAt = DateTime.TryParse(e.ParkedAt, out var dt) ? dt : DateTime.Now;
-        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, e.EndTime ?? string.Empty, createdAt, e.IsActive != 0);
+        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, e.EndTime ?? string.Empty, e.IsActive != 0);
     }
 
     private static string DateToString(DateTime date) => date.ToString(DateFormat);
