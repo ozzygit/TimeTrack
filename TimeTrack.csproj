@@ -20,8 +20,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>3.0.0</Version>
-    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <Version>3.0.2</Version>
+    <AssemblyVersion>3.0.0.2</AssemblyVersion>
     
     <!-- Disable automatic Git version suffix -->
     <SourceRevisionId></SourceRevisionId>
@@ -54,9 +54,6 @@
 
   <ItemGroup>
     <!-- Embedded resources -->
-    <Resource Include="Resources\time.xcf">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Resources\time.png" />
   </ItemGroup>
 
