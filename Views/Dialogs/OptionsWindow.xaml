@@ -180,34 +180,38 @@
                                   Style="{StaticResource SectionDescriptionStyle}"/>
                         
                         <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
-                               BorderThickness="1" CornerRadius="8" Padding="16">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                
-                                <DataGrid x:Name="ShortcutsGrid" Grid.Row="1" AutoGenerateColumns="False" 
-                                         CanUserAddRows="False" CanUserDeleteRows="False"
-                                         GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F3F3F3"
-                                         RowBackground="White" AlternatingRowBackground="#FAFAFA"
-                                         HeadersVisibility="Column" SelectionMode="Single"
-                                         BorderThickness="0" Background="Transparent"
-                                         RowHeight="40">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Action" Binding="{Binding DisplayName}" Width="*" IsReadOnly="True"/>
-                                        <DataGridTextColumn Header="Shortcut" Binding="{Binding DisplayText}" Width="200" IsReadOnly="True"/>
-                                        <DataGridTemplateColumn Header="" Width="100">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <Button Content="Change..." Click="ChangeShortcut_Click" Tag="{Binding ActionName}" 
-                                                           HorizontalAlignment="Center" Padding="8,2" Height="26"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Grid>
+                               BorderThickness="1" CornerRadius="8" Padding="8,4">
+                            <ItemsControl x:Name="ShortcutsList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="8,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" Text="{Binding DisplayName}"
+                                                           VerticalAlignment="Center" FontFamily="Segoe UI" FontSize="13"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+
+                                                <Border Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                        Background="{DynamicResource NavButtonHoverBrush}"
+                                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                                        CornerRadius="4" Padding="10,3" MinWidth="90">
+                                                    <TextBlock Text="{Binding DisplayText}" TextAlignment="Center"
+                                                               FontFamily="Segoe UI" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextBrush}"/>
+                                                </Border>
+
+                                                <Button Grid.Column="2" Content="Change..." Click="ChangeShortcut_Click"
+                                                        Tag="{Binding ActionName}" Padding="10,3" Height="28"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </Border>
                         
                         <Button Content="Reset to Defaults" Click="ResetDefaults_Click" 

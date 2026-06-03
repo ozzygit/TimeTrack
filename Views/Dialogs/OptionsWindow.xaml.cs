@@ -45,7 +45,7 @@ namespace TimeTrack.Views.Dialogs
         {
             shortcuts = SettingsManager.GetAllShortcuts();
             // Submit is a fixed shortcut (Ctrl+Enter) and is intentionally not user-configurable.
-            ShortcutsGrid.ItemsSource = shortcuts.Values
+            ShortcutsList.ItemsSource = shortcuts.Values
                 .Where(s => s.ActionName != "Submit")
                 .OrderBy(s => s.DisplayName)
                 .ToList();
@@ -106,7 +106,7 @@ namespace TimeTrack.Views.Dialogs
 
                     shortcuts[actionName].Key = selectedKey;
                     shortcuts[actionName].Modifiers = selectedMods;
-                    ShortcutsGrid.Items.Refresh();
+                    ShortcutsList.Items.Refresh();
                 }
             }
         }
