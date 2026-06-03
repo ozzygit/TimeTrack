@@ -123,6 +123,7 @@ namespace TimeTrack.ViewModels
                 _endTime = value; 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(EntryDurationDisplay));
+                if (_focusedEntry != null) _focusedEntry.EndTime = value;
                 UpdateSelectedTime();
             }
         }
@@ -247,7 +248,7 @@ namespace TimeTrack.ViewModels
         {
             SaveFocusedEntryToDb();
             string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
-            var draft = Database.SaveDraft(string.Empty, string.Empty, startTime, isActive: false);
+            var draft = Database.SaveDraft(string.Empty, string.Empty, startTime, string.Empty, isActive: false);
             if (draft == null) return;
             _openEntries.Add(draft);
             SetFocusEntry(draft);
@@ -316,6 +317,7 @@ namespace TimeTrack.ViewModels
             _focusedEntry.TicketNumber = _ticketNo;
             _focusedEntry.Notes = _notes;
             _focusedEntry.StartTime = _startTime;
+            _focusedEntry.EndTime = _endTime;
             Database.UpdateDraft(_focusedEntry);
         }
 
@@ -334,7 +336,7 @@ namespace TimeTrack.ViewModels
             StartTimeField = string.IsNullOrWhiteSpace(_focusedEntry.StartTime)
                 ? DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture)
                 : _focusedEntry.StartTime;
-            EndTimeField = string.Empty;
+            EndTimeField = _focusedEntry.EndTime ?? string.Empty;
         }
 
         // Methods
@@ -412,26 +414,41 @@ namespace TimeTrack.ViewModels
         public void UpdateTimeTotals()
         {
             TimeSpan time = TimeSpan.Zero;
-            TimeSpan gap = TimeSpan.Zero;
+            int totalUnits = 0;
 
+            // Billable hours/units: only entries that have a ticket number.
             foreach (var entry in Entries)
             {
-                if (entry.StartTime != null && entry.EndTime != null)
+                if (!string.IsNullOrWhiteSpace(entry.TicketNumber) && entry.Duration.HasValue)
                 {
-                    if (!string.IsNullOrWhiteSpace(entry.TicketNumber))
-                        time += (TimeSpan)(entry.EndTime - entry.StartTime);
-                    else
-                    {
-                        if (entry.Notes != null && entry.Notes.Equals("lunch", StringComparison.OrdinalIgnoreCase))
-                            continue;
-                        else
-                            gap += (TimeSpan)(entry.EndTime - entry.StartTime);
-                    }
+                    var d = entry.Duration.Value;
+                    time += d;
+                    totalUnits += Math.Max(0, (int)Math.Ceiling(d.TotalMinutes / 6.0));
                 }
             }
 
+            // Gaps: unaccounted minutes between consecutive entries across the day.
+            // Any entry with a valid start/end (including lunch) counts as covered time.
+            TimeSpan gap = TimeSpan.Zero;
+            TimeOnly? lastEnd = null;
+            var ordered = Entries
+                .Where(e => e.StartTime.HasValue && e.EndTime.HasValue)
+                .OrderBy(e => e.StartTime!.Value)
+                .ToList();
+
+            foreach (var entry in ordered)
+            {
+                var start = entry.StartTime!.Value;
+                var end = entry.EndTime!.Value;
+                if (lastEnd.HasValue && start > lastEnd.Value)
+                    gap += start - lastEnd.Value;
+                if (!lastEnd.HasValue || end > lastEnd.Value)
+                    lastEnd = end;
+            }
+
             HoursTotal = Math.Round(time.TotalHours, 2, MidpointRounding.AwayFromZero);
-            GapsTotal = gap.TotalMinutes;
+            GapsTotal = Math.Round(gap.TotalMinutes);
+            BillableUnits = (totalUnits / 10.0).ToString("F1");
         }
 
         public void UpdateSelectedTime()
@@ -447,7 +464,6 @@ namespace TimeTrack.ViewModels
                     duration = (TimeSpan)timeSpan;
                     SelectedHours = duration.Value.Hours.ToString();
                     SelectedMins = duration.Value.Minutes.ToString();
-                    CalculateBillableUnits(duration.Value);
                     return;
                 }
             }
@@ -466,38 +482,12 @@ namespace TimeTrack.ViewModels
                 
                 SelectedHours = duration.Value.Hours.ToString();
                 SelectedMins = duration.Value.Minutes.ToString();
-                CalculateBillableUnits(duration.Value);
                 return;
             }
 
             // Default: Show dashes when no time can be calculated
             SelectedHours = "-";
             SelectedMins = "-";
-            BillableUnits = "-";
-        }
-
-        private void CalculateBillableUnits(TimeSpan duration)
-        {
-            // Calculate billable units in 6-minute blocks, rounding UP
-            // Since time is only tracked in whole minutes, 0 minutes means 0-59 seconds
-            // Minimum billable unit is 0.1 (6 minutes) for any work done
-            // 0-6 minutes = 0.1, 7-12 minutes = 0.2, 13-18 minutes = 0.3, etc.
-            double totalMinutes = duration.TotalMinutes;
-            
-            if (totalMinutes < 0)
-            {
-                // Negative duration (shouldn't happen, but safety check)
-                BillableUnits = "0.0";
-                return;
-            }
-            
-            // Round up to nearest 6-minute block
-            // Even 0 minutes (0-59 seconds) gets billed as minimum 0.1
-            int blocks = Math.Max(1, (int)Math.Ceiling(totalMinutes / 6.0));
-            double units = blocks / 10.0;
-            
-            // Format with 1 decimal place
-            BillableUnits = units.ToString("F1");
         }
 
         public void SetStartTimeField()

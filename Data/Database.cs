@@ -72,12 +72,17 @@ public static class Database
                     ticket_number TEXT,
                     notes         TEXT,
                     start_time    TEXT,
+                    end_time      TEXT,
                     parked_at     TEXT NOT NULL,
                     is_active     INTEGER NOT NULL DEFAULT 0
                 );");
 
             // Migrate existing tables that pre-date the is_active column
             try { context.Database.ExecuteSqlRaw("ALTER TABLE drafts ADD COLUMN is_active INTEGER NOT NULL DEFAULT 0;"); }
+            catch { /* column already exists — safe to ignore */ }
+
+            // Migrate existing tables that pre-date the end_time column
+            try { context.Database.ExecuteSqlRaw("ALTER TABLE drafts ADD COLUMN end_time TEXT;"); }
             catch { /* column already exists — safe to ignore */ }
         }
         catch (Exception ex)
@@ -456,7 +461,7 @@ public static class Database
         return result;
     }
 
-    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime, bool isActive = false)
+    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime, string endTime = "", bool isActive = false)
     {
         try
         {
@@ -466,6 +471,7 @@ public static class Database
                 TicketNumber = ticketNumber,
                 Notes = notes,
                 StartTime = startTime,
+                EndTime = endTime,
                 ParkedAt = DateTime.Now.ToString("o"),
                 IsActive = isActive ? 1 : 0
             };
@@ -490,6 +496,7 @@ public static class Database
             entity.TicketNumber = draft.TicketNumber;
             entity.Notes = draft.Notes;
             entity.StartTime = draft.StartTime;
+            entity.EndTime = draft.EndTime;
             entity.IsActive = draft.IsActive ? 1 : 0;
             context.SaveChanges();
         }
@@ -520,7 +527,7 @@ public static class Database
     private static DraftEntry EntityToDraft(DraftEntity e)
     {
         var createdAt = DateTime.TryParse(e.ParkedAt, out var dt) ? dt : DateTime.Now;
-        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, createdAt, e.IsActive != 0);
+        return new DraftEntry(e.Id, e.TicketNumber ?? string.Empty, e.Notes ?? string.Empty, e.StartTime ?? string.Empty, e.EndTime ?? string.Empty, createdAt, e.IsActive != 0);
     }
 
     private static string DateToString(DateTime date) => date.ToString(DateFormat);

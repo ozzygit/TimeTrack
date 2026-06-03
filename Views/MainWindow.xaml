@@ -536,8 +536,8 @@
                           Command="{x:Static views:MainWindow.DeleteCommand}"
                           InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
                 <Separator/>
-                <MenuItem x:Name="ToggleAllMenuItem" Header="_Toggle All Recorded" Click="BtnToggleAllRecorded"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=ToggleAll}"/>
+                <MenuItem x:Name="SelectAllMenuItem" Header="_Select All" Click="BtnSelectAll"
+                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=SelectAll}"/>
             </MenuItem>
             <MenuItem Header="_Navigation">
                 <MenuItem x:Name="TodayMenuItem" Header="_Today"
@@ -739,12 +739,20 @@
                              PreviewMouseRightButtonDown="DgTimeRecords_PreviewMouseRightButtonDown">
                         <DataGrid.InputBindings>
                             <KeyBinding Key="Delete" Command="{x:Static views:MainWindow.DeleteCommand}"/>
+                            <KeyBinding Key="A" Modifiers="Control" Command="{x:Static views:MainWindow.SelectAllCommand}"/>
                         </DataGrid.InputBindings>
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="" Width="30"
+                            <DataGridCheckBoxColumn Width="30"
                                 Binding="{Binding Recorded, UpdateSourceTrigger=PropertyChanged}"
                                 ElementStyle="{StaticResource DataGridCheckBoxStyle}"
-                                EditingElementStyle="{StaticResource DataGridCheckBoxStyle}"/>
+                                EditingElementStyle="{StaticResource DataGridCheckBoxStyle}">
+                                <DataGridCheckBoxColumn.Header>
+                                    <CheckBox x:Name="ChkSelectAllHeader" IsThreeState="True"
+                                              Click="ChkSelectAllHeader_Click"
+                                              ToolTip="Select all (Ctrl+A)"
+                                              HorizontalAlignment="Center"/>
+                                </DataGridCheckBoxColumn.Header>
+                            </DataGridCheckBoxColumn>
                             <DataGridTextColumn Header="Start" Width="82"
                                 Binding="{Binding StartTime, Converter={StaticResource TimeEntryUIConverter}}"/>
                             <DataGridTextColumn Header="End" Width="82"
@@ -830,8 +838,8 @@
                                           Command="{x:Static views:MainWindow.DeleteCommand}"
                                           CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 <Separator/>
-                                <MenuItem Header="Toggle All Recorded"
-                                          Command="{x:Static views:MainWindow.ToggleAllCommand}"
+                                <MenuItem Header="Select All"
+                                          Command="{x:Static views:MainWindow.SelectAllCommand}"
                                           CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                             </ContextMenu>
                         </DataGrid.ContextMenu>

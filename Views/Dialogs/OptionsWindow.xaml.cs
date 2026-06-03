@@ -44,7 +44,11 @@ namespace TimeTrack.Views.Dialogs
         private void LoadShortcuts()
         {
             shortcuts = SettingsManager.GetAllShortcuts();
-            ShortcutsGrid.ItemsSource = shortcuts.Values.OrderBy(s => s.DisplayName).ToList();
+            // Submit is a fixed shortcut (Ctrl+Enter) and is intentionally not user-configurable.
+            ShortcutsGrid.ItemsSource = shortcuts.Values
+                .Where(s => s.ActionName != "Submit")
+                .OrderBy(s => s.DisplayName)
+                .ToList();
         }
 
         private void NavButton_Checked(object sender, RoutedEventArgs e)
@@ -85,16 +89,15 @@ namespace TimeTrack.Views.Dialogs
                     var selectedKey = dialog.SelectedKey;
                     var selectedMods = dialog.SelectedModifiers;
 
-                    // Bare Enter/Return (no modifier) cannot be Submit — it conflicts with
-                    // newline insertion in the Notes field. Ctrl+Enter is the standard alternative.
-                    if (actionName == "Submit" &&
-                        (selectedKey == Key.Enter || selectedKey == Key.Return) &&
+                    // Bare Enter/Return (no modifier) cannot be assigned to any shortcut —
+                    // it conflicts with newline insertion in the Notes field and general typing.
+                    if ((selectedKey == Key.Enter || selectedKey == Key.Return) &&
                         selectedMods == ModifierKeys.None)
                     {
                         MessageBox.Show(
-                            "Enter (without a modifier) cannot be used as the Submit shortcut " +
+                            "Enter (without a modifier) cannot be used as a keyboard shortcut " +
                             "because it conflicts with typing new lines in the Notes field.\n\n" +
-                            "Try Ctrl+Enter instead.",
+                            "Try adding a modifier such as Ctrl+Enter.",
                             "Invalid Shortcut",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);

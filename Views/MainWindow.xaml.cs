@@ -46,8 +46,8 @@ namespace TimeTrack.Views
         public static readonly RoutedUICommand SubmitCommand =
             new("Submit Entry", "Submit", typeof(MainWindow));
             
-        public static readonly RoutedUICommand ToggleAllCommand =
-            new("Toggle All Recorded", "ToggleAll", typeof(MainWindow));
+        public static readonly RoutedUICommand SelectAllCommand =
+            new("Select All", "SelectAll", typeof(MainWindow));
 
         public static readonly RoutedUICommand DeleteCommand =
             new("Delete Selected", "Delete", typeof(MainWindow));
@@ -86,7 +86,7 @@ namespace TimeTrack.Views
             CommandBindings.Add(new CommandBinding(OptionsCommand, (s, e) => MenuOptions_Click(s, e)));
             CommandBindings.Add(new CommandBinding(HelpCommand, (s, e) => BtnProjectInfo_Click(s, e)));
             CommandBindings.Add(new CommandBinding(SubmitCommand, (s, e) => BtnSubmit(s, e), (s, e) => e.CanExecute = CanSubmit()));
-            CommandBindings.Add(new CommandBinding(ToggleAllCommand, (s, e) => BtnToggleAllRecorded(s, e)));
+            CommandBindings.Add(new CommandBinding(SelectAllCommand, (s, e) => BtnSelectAll(s, e)));
             CommandBindings.Add(new CommandBinding(DeleteCommand, (s, e) => BtnDelete(s, e), (s, e) => e.CanExecute = (_timeKeeper?.SelectedItem != null)));
 
             if (_timeKeeper != null)
@@ -120,7 +120,7 @@ namespace TimeTrack.Views
                 SetText(SubmitMenuItem, "Submit");
                 SetText(InsertMenuItem, "Insert");
                 SetText(DeleteMenuItem, "Delete");
-                SetText(ToggleAllMenuItem, "ToggleAll");
+                SetText(SelectAllMenuItem, "SelectAll");
                 SetText(TodayMenuItem, "Today");
                 SetText(PrevDayMenuItem, "PrevDay");
                 SetText(NextDayMenuItem, "NextDay");
@@ -258,6 +258,7 @@ namespace TimeTrack.Views
                 _timeKeeper.SetStartTimeField();
                 _timeKeeper.UpdateTimeTotals();
             }
+            UpdateSelectAllHeaderState();
         }
         
         private void LoadEntriesForDate(DateTime date)
@@ -317,6 +318,7 @@ namespace TimeTrack.Views
                 FldEndTime?.Focus();
 
                 Database.Update(_timeKeeper.Entries);
+                UpdateSelectAllHeaderState();
                 ShowStatus("Entry submitted successfully");
             }
             else
@@ -379,27 +381,65 @@ namespace TimeTrack.Views
             Clipboard.SetData(DataFormats.UnicodeText, text);
             selected.Recorded = true;
             Database.Update(_timeKeeper.Entries);
+            UpdateSelectAllHeaderState();
             ShowStatus("Entry exported to clipboard");
         }
 
-        private void BtnToggleAllRecorded(object sender, RoutedEventArgs e)
+        private void BtnSelectAll(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null)
                 return;
 
-            // Optimized LINQ: check if all entries are recorded
-            bool newStatus = !_timeKeeper.Entries.Any(e => e.Recorded);
+            // Select all = tick every entry's checkbox; if all are already ticked, untick them.
+            bool newStatus = !_timeKeeper.Entries.Any(entry => entry.Recorded);
+            SetAllRecorded(newStatus);
+        }
+
+        private void SetAllRecorded(bool newStatus)
+        {
+            if (_timeKeeper == null)
+                return;
 
             foreach (var entry in _timeKeeper.Entries)
             {
                 // Don't mark blank entries as recorded
                 if (newStatus && string.IsNullOrWhiteSpace(entry.TicketNumber))
                     continue;
-                    
+
                 entry.Recorded = newStatus;
             }
-            
+
             Database.Update(_timeKeeper.Entries);
+            UpdateSelectAllHeaderState();
+        }
+
+        private void UpdateSelectAllHeaderState()
+        {
+            if (ChkSelectAllHeader == null || _timeKeeper == null)
+                return;
+
+            var selectable = _timeKeeper.Entries.Where(en => !string.IsNullOrWhiteSpace(en.TicketNumber)).ToList();
+            _suppressHeaderCheck = true;
+            if (selectable.Count == 0)
+                ChkSelectAllHeader.IsChecked = false;
+            else if (selectable.All(en => en.Recorded))
+                ChkSelectAllHeader.IsChecked = true;
+            else if (selectable.Any(en => en.Recorded))
+                ChkSelectAllHeader.IsChecked = null;
+            else
+                ChkSelectAllHeader.IsChecked = false;
+            _suppressHeaderCheck = false;
+        }
+
+        private bool _suppressHeaderCheck;
+
+        private void ChkSelectAllHeader_Click(object sender, RoutedEventArgs e)
+        {
+            if (_suppressHeaderCheck || sender is not CheckBox cb)
+                return;
+
+            // A tri-state header resolves to checked on click; treat null as "select all".
+            SetAllRecorded(cb.IsChecked != false);
         }
 
         private void CalLoadDate(object sender, RoutedEventArgs e)
@@ -441,6 +481,7 @@ namespace TimeTrack.Views
             _timeKeeper.UpdateTimeTotals();
             _timeKeeper.UpdateSelectedTime();
             _timeKeeper.SetStartTimeField();
+            UpdateSelectAllHeaderState();
         }
 
         private void BtnGotoToday(object sender, RoutedEventArgs e)
@@ -691,13 +732,9 @@ namespace TimeTrack.Views
                 }
             }
 
-            if (shortcuts.TryGetValue("ToggleAll", out var toggleShortcut) && toggleShortcut.Key != Key.None)
+            if (shortcuts.TryGetValue("SelectAll", out var selectAllShortcut) && selectAllShortcut.Key != Key.None)
             {
-                InputBindings.Add(new KeyBinding(ToggleAllCommand, toggleShortcut.Key, toggleShortcut.Modifiers));
-            }
-            else if (shortcuts.TryGetValue("MarkAll", out var markAllShortcut) && markAllShortcut.Key != Key.None)
-            {
-                InputBindings.Add(new KeyBinding(ToggleAllCommand, markAllShortcut.Key, markAllShortcut.Modifiers));
+                InputBindings.Add(new KeyBinding(SelectAllCommand, selectAllShortcut.Key, selectAllShortcut.Modifiers));
             }
         }
 
