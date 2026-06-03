@@ -520,10 +520,6 @@
         <Menu DockPanel.Dock="Top" Height="40" Padding="8,4" 
               Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <MenuItem Header="_File">
-                <MenuItem x:Name="ExportMenuItem" Header="_Export Selected"
-                          Command="{x:Static views:MainWindow.ExportCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Export}"/>
-                <Separator/>
                 <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
             </MenuItem>
             <MenuItem Header="_Edit">
@@ -747,7 +743,7 @@
                                 ElementStyle="{StaticResource DataGridCheckBoxStyle}"
                                 EditingElementStyle="{StaticResource DataGridCheckBoxStyle}">
                                 <DataGridCheckBoxColumn.Header>
-                                    <CheckBox x:Name="ChkSelectAllHeader" IsThreeState="True"
+                                    <CheckBox x:Name="ChkSelectAllHeader"
                                               Click="ChkSelectAllHeader_Click"
                                               ToolTip="Select all (Ctrl+A)"
                                               HorizontalAlignment="Center"/>
@@ -829,9 +825,6 @@
                                 </ContextMenu.Resources>
                                 <MenuItem Header="Insert Record"
                                           Command="{x:Static views:MainWindow.InsertCommand}"
-                                          CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                <MenuItem Header="Export Selected"
-                                          Command="{x:Static views:MainWindow.ExportCommand}"
                                           CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 <Separator/>
                                 <MenuItem Header="Delete Selected"

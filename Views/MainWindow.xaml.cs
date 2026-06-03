@@ -22,9 +22,6 @@ namespace TimeTrack.Views
         private readonly System.Windows.Threading.DispatcherTimer _statusTimer = new();
 
         // Routed commands
-        public static readonly RoutedUICommand ExportCommand =
-            new("Export Selected", "Export", typeof(MainWindow));
-
         public static readonly RoutedUICommand InsertCommand =
             new("Insert Record", "Insert", typeof(MainWindow));
 
@@ -78,7 +75,6 @@ namespace TimeTrack.Views
             this.PreviewKeyDown += OnGlobalPreviewKeyDown;
 
             // Bind command handlers
-            CommandBindings.Add(new CommandBinding(ExportCommand, (s, e) => BtnExport(s, e)));
             CommandBindings.Add(new CommandBinding(InsertCommand, (s, e) => BtnInsert(s, e)));
             CommandBindings.Add(new CommandBinding(TodayCommand, (s, e) => BtnGotoToday(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
             CommandBindings.Add(new CommandBinding(PrevDayCommand, (s, e) => BtnGoBack(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
@@ -116,7 +112,6 @@ namespace TimeTrack.Views
                         mi.InputGestureText = sc?.DisplayText ?? string.Empty;
                 }
 
-                SetText(ExportMenuItem, "Export");
                 SetText(SubmitMenuItem, "Submit");
                 SetText(InsertMenuItem, "Insert");
                 SetText(DeleteMenuItem, "Delete");
@@ -351,40 +346,6 @@ namespace TimeTrack.Views
             }
         }
 
-        private void BtnExport(object sender, RoutedEventArgs e)
-        {
-            if (DgTimeRecords?.SelectedItem is not TimeEntry selected || _timeKeeper == null)
-                return;
-
-            if (selected.StartTime == null || selected.EndTime == null)
-            {
-                MessageBox.Show("Record must have a valid start and end time", "TimeTrack v3 - Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            if (selected.EndTime < selected.StartTime)
-            {
-                MessageBox.Show("Cannot export a negative time duration", "TimeTrack v3 - Error",
-                                MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            string dateTime = selected.Date.ToString("yyyy-MM-dd") + " " + selected.StartTime.ToString();
-
-            TimeSpan timespanWorked = (TimeSpan)(selected.EndTime - selected.StartTime);
-            int hoursWorked = timespanWorked.Hours;
-            double minutesWorked = timespanWorked.Minutes;
-            double timeWorked = hoursWorked + (Math.Ceiling((minutesWorked / 60) * 10) / 10);
-
-            string text = $"{dateTime},{timeWorked},{selected.Notes ?? string.Empty}";
-            Clipboard.SetData(DataFormats.UnicodeText, text);
-            selected.Recorded = true;
-            Database.Update(_timeKeeper.Entries);
-            UpdateSelectAllHeaderState();
-            ShowStatus("Entry exported to clipboard");
-        }
-
         private void BtnSelectAll(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null)
@@ -420,14 +381,7 @@ namespace TimeTrack.Views
 
             var selectable = _timeKeeper.Entries.Where(en => !string.IsNullOrWhiteSpace(en.TicketNumber)).ToList();
             _suppressHeaderCheck = true;
-            if (selectable.Count == 0)
-                ChkSelectAllHeader.IsChecked = false;
-            else if (selectable.All(en => en.Recorded))
-                ChkSelectAllHeader.IsChecked = true;
-            else if (selectable.Any(en => en.Recorded))
-                ChkSelectAllHeader.IsChecked = null;
-            else
-                ChkSelectAllHeader.IsChecked = false;
+            ChkSelectAllHeader.IsChecked = selectable.Count > 0 && selectable.All(en => en.Recorded);
             _suppressHeaderCheck = false;
         }
 
@@ -438,8 +392,8 @@ namespace TimeTrack.Views
             if (_suppressHeaderCheck || sender is not CheckBox cb)
                 return;
 
-            // A tri-state header resolves to checked on click; treat null as "select all".
-            SetAllRecorded(cb.IsChecked != false);
+            // Ticked = select all, unticked = deselect all.
+            SetAllRecorded(cb.IsChecked == true);
         }
 
         private void CalLoadDate(object sender, RoutedEventArgs e)
@@ -713,7 +667,6 @@ namespace TimeTrack.Views
                 }
             }
 
-            AddBinding("Export", ExportCommand);
             AddBinding("Insert", InsertCommand);
             AddBinding("Today", TodayCommand);
             AddBinding("PrevDay", PrevDayCommand);
