@@ -26,8 +26,8 @@ namespace TimeTrack.ViewModels
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
         private string _notes = string.Empty;
-        private double _hoursTotal;
-        private double _gapsTotal;
+        private string _hoursTotal = "-";
+        private string _gapsTotal = "-";
         private string _selectedHours = "-";
         private string _selectedMins = "-";
         private string _billableUnits = "-";
@@ -163,13 +163,13 @@ namespace TimeTrack.ViewModels
             }
         }
 
-        public double HoursTotal
+        public string HoursTotal
         {
             get => _hoursTotal;
             set { _hoursTotal = value; OnPropertyChanged(); }
         }
 
-        public double GapsTotal
+        public string GapsTotal
         {
             get => _gapsTotal;
             set { _gapsTotal = value; OnPropertyChanged(); }
@@ -443,8 +443,8 @@ namespace TimeTrack.ViewModels
                     lastEnd = end;
             }
 
-            HoursTotal = Math.Round(time.TotalHours, 2, MidpointRounding.AwayFromZero);
-            GapsTotal = Math.Round(gap.TotalMinutes);
+            HoursTotal = $"{(int)time.TotalHours}h {time.Minutes}m";
+            GapsTotal = $"{(int)gap.TotalHours}h {gap.Minutes}m";
             BillableUnits = (totalUnits / 10.0).ToString("F1");
         }
 
