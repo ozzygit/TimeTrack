@@ -23,8 +23,6 @@ namespace TimeTrack.ViewModels
         private bool _isMainTabFocused = true;
         private readonly DispatcherTimer _autoSaveTimer;
         private readonly DispatcherTimer _uiTimer;
-        private bool _isTimerRunning;
-        private DateTime _timerStartedAt;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -256,51 +254,52 @@ namespace TimeTrack.ViewModels
 
         // Running timer
 
-        public bool IsTimerRunning
-        {
-            get => _isTimerRunning;
-            private set
-            {
-                _isTimerRunning = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(TimerElapsedDisplay));
-            }
-        }
+        public bool IsTimerRunning => _focusedEntry?.IsTimerRunning ?? false;
 
         public string TimerElapsedDisplay
         {
             get
             {
-                if (!_isTimerRunning) return string.Empty;
-                var elapsed = DateTime.Now - _timerStartedAt;
-                if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
-                return $"{(int)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+                if (_focusedEntry == null || !_focusedEntry.IsTimerRunning || string.IsNullOrWhiteSpace(_focusedEntry.TimerStartedAt))
+                    return string.Empty;
+                
+                if (DateTime.TryParse(_focusedEntry.TimerStartedAt, out var startedAt))
+                {
+                    var elapsed = DateTime.Now - startedAt;
+                    if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
+                    return $"{(int)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+                }
+                return string.Empty;
             }
         }
 
         public void StartTimer()
         {
-            if (_isMainTabFocused) return;
-            _timerStartedAt = DateTime.Now;
-            StartTimeField = _timerStartedAt.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            if (_isMainTabFocused || _focusedEntry == null) return;
+            _focusedEntry.TimerStartedAt = DateTime.Now.ToString("o");
+            StartTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
             EndTimeField = string.Empty;
-            IsTimerRunning = true;
+            _focusedEntry.IsTimerRunning = true;
             _uiTimer.Start();
+            OnPropertyChanged(nameof(IsTimerRunning));
+            OnPropertyChanged(nameof(TimerElapsedDisplay));
+            SaveFocusedEntryToDb();
         }
 
         public void StopTimer()
         {
-            if (!_isTimerRunning) return;
+            if (_focusedEntry == null || !_focusedEntry.IsTimerRunning) return;
             EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
-            IsTimerRunning = false;
+            _focusedEntry.IsTimerRunning = false;
             _uiTimer.Stop();
+            OnPropertyChanged(nameof(IsTimerRunning));
+            OnPropertyChanged(nameof(TimerElapsedDisplay));
+            SaveFocusedEntryToDb();
         }
 
         private void ResetTimer()
         {
-            if (!_isTimerRunning) return;
-            IsTimerRunning = false;
-            _uiTimer.Stop();
+            // No-op: timer state is now per-entry and persists when switching tabs
         }
 
         public void SetStartTimeToNow() =>
@@ -323,7 +322,6 @@ namespace TimeTrack.ViewModels
 
         public void FocusMainTab()
         {
-            ResetTimer();
             SaveFocusedEntryToDb();
             foreach (var d in _openEntries)
                 d.IsActive = false;
@@ -333,11 +331,12 @@ namespace TimeTrack.ViewModels
             _isMainTabFocused = true;
             OnPropertyChanged(nameof(FocusedEntry));
             OnPropertyChanged(nameof(IsMainTabFocused));
+            OnPropertyChanged(nameof(IsTimerRunning));
+            OnPropertyChanged(nameof(TimerElapsedDisplay));
         }
 
         public void SetFocusEntry(DraftEntry entry)
         {
-            ResetTimer();
             SaveFocusedEntryToDb();
             foreach (var d in _openEntries)
                 d.IsActive = false;
@@ -347,13 +346,18 @@ namespace TimeTrack.ViewModels
             _isMainTabFocused = false;
             OnPropertyChanged(nameof(FocusedEntry));
             OnPropertyChanged(nameof(IsMainTabFocused));
+            OnPropertyChanged(nameof(IsTimerRunning));
+            OnPropertyChanged(nameof(TimerElapsedDisplay));
             LoadFocusedEntryIntoFields();
+            
+            // Resume UI timer if this entry has a running timer
+            if (_focusedEntry.IsTimerRunning)
+                _uiTimer.Start();
         }
 
         public void CloseEntry(DraftEntry entry)
         {
             bool wasFocused = (_focusedEntry == entry);
-            if (wasFocused) ResetTimer();
             Database.DeleteDraft(entry.Id);
             int index = _openEntries.IndexOf(entry);
             _openEntries.Remove(entry);
@@ -378,7 +382,13 @@ namespace TimeTrack.ViewModels
             }
 
             OnPropertyChanged(nameof(FocusedEntry));
+            OnPropertyChanged(nameof(IsTimerRunning));
+            OnPropertyChanged(nameof(TimerElapsedDisplay));
             LoadFocusedEntryIntoFields();
+            
+            // Resume UI timer if the new focused entry has a running timer
+            if (_focusedEntry != null && _focusedEntry.IsTimerRunning)
+                _uiTimer.Start();
         }
 
         private void SaveFocusedEntryToDb()

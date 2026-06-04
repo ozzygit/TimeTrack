@@ -39,6 +39,12 @@ namespace TimeTrack.Data
         [ObservableProperty]
         private bool isActive;
 
+        [ObservableProperty]
+        private bool isTimerRunning;
+
+        [ObservableProperty]
+        private string timerStartedAt = string.Empty;
+
         /// <summary>
         /// Short label shown on the tab strip.
         /// </summary>

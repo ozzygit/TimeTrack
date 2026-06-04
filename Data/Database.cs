@@ -160,6 +160,8 @@ public static class Database
             // Migrations: add columns that may not exist in older databases
             try { Exec(conn, "ALTER TABLE drafts ADD COLUMN is_active INTEGER NOT NULL DEFAULT 0"); } catch { }
             try { Exec(conn, "ALTER TABLE drafts ADD COLUMN end_time TEXT"); } catch { }
+            try { Exec(conn, "ALTER TABLE drafts ADD COLUMN is_timer_running INTEGER NOT NULL DEFAULT 0"); } catch { }
+            try { Exec(conn, "ALTER TABLE drafts ADD COLUMN timer_started_at TEXT"); } catch { }
 
             Exec(conn, "PRAGMA optimize");
         }
@@ -318,7 +320,7 @@ public static class Database
         {
             using var conn = OpenConnection();
             using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT id, ticket_number, notes, start_time, end_time, is_active FROM drafts ORDER BY parked_at";
+            cmd.CommandText = "SELECT id, ticket_number, notes, start_time, end_time, is_active, is_timer_running, timer_started_at FROM drafts ORDER BY parked_at";
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
                 result.Add(ReadDraftEntry(reader));
@@ -337,8 +339,8 @@ public static class Database
             using var conn = OpenConnection();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                INSERT INTO drafts (ticket_number, notes, start_time, end_time, parked_at, is_active)
-                VALUES (@ticket, @notes, @start, @end, @parkedAt, @active);
+                INSERT INTO drafts (ticket_number, notes, start_time, end_time, parked_at, is_active, is_timer_running, timer_started_at)
+                VALUES (@ticket, @notes, @start, @end, @parkedAt, @active, @timerRunning, @timerStartedAt);
                 SELECT last_insert_rowid()";
             cmd.Parameters.AddWithValue("@ticket", ticketNumber);
             cmd.Parameters.AddWithValue("@notes", notes);
@@ -346,6 +348,8 @@ public static class Database
             cmd.Parameters.AddWithValue("@end", endTime);
             cmd.Parameters.AddWithValue("@parkedAt", DateTime.Now.ToString("o"));
             cmd.Parameters.AddWithValue("@active", isActive ? 1 : 0);
+            cmd.Parameters.AddWithValue("@timerRunning", 0);
+            cmd.Parameters.AddWithValue("@timerStartedAt", string.Empty);
             var newId = Convert.ToInt32(cmd.ExecuteScalar());
             return new DraftEntry(newId, ticketNumber, notes, startTime, endTime, isActive);
         }
@@ -365,13 +369,15 @@ public static class Database
             cmd.CommandText = @"
                 UPDATE drafts
                 SET ticket_number = @ticket, notes = @notes, start_time = @start,
-                    end_time = @end, is_active = @active
+                    end_time = @end, is_active = @active, is_timer_running = @timerRunning, timer_started_at = @timerStartedAt
                 WHERE id = @id";
             cmd.Parameters.AddWithValue("@ticket", draft.TicketNumber);
             cmd.Parameters.AddWithValue("@notes", draft.Notes);
             cmd.Parameters.AddWithValue("@start", draft.StartTime);
             cmd.Parameters.AddWithValue("@end", draft.EndTime);
             cmd.Parameters.AddWithValue("@active", draft.IsActive ? 1 : 0);
+            cmd.Parameters.AddWithValue("@timerRunning", draft.IsTimerRunning ? 1 : 0);
+            cmd.Parameters.AddWithValue("@timerStartedAt", draft.TimerStartedAt);
             cmd.Parameters.AddWithValue("@id", draft.Id);
             cmd.ExecuteNonQuery();
         }
@@ -424,7 +430,12 @@ public static class Database
         var start = r.IsDBNull(3) ? string.Empty : r.GetString(3);
         var end = r.IsDBNull(4) ? string.Empty : r.GetString(4);
         var isActive = !r.IsDBNull(5) && r.GetInt32(5) != 0;
-        return new DraftEntry(id, ticket, notes, start, end, isActive);
+        var isTimerRunning = !r.IsDBNull(6) && r.GetInt32(6) != 0;
+        var timerStartedAt = r.IsDBNull(7) ? string.Empty : r.GetString(7);
+        var draft = new DraftEntry(id, ticket, notes, start, end, isActive);
+        draft.IsTimerRunning = isTimerRunning;
+        draft.TimerStartedAt = timerStartedAt;
+        return draft;
     }
 
     private static string DateToString(DateTime date) => date.ToString(DateFormat);
