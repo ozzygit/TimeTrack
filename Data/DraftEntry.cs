@@ -67,17 +67,4 @@ namespace TimeTrack.Data
 
     }
 
-    /// <summary>
-    /// EF Core entity for the drafts table.
-    /// </summary>
-    public class DraftEntity
-    {
-        public int Id { get; set; }
-        public string TicketNumber { get; set; } = string.Empty;
-        public string Notes { get; set; } = string.Empty;
-        public string StartTime { get; set; } = string.Empty;
-        public string EndTime { get; set; } = string.Empty;
-        public string ParkedAt { get; set; } = string.Empty;
-        public int IsActive { get; set; }
-    }
 }

@@ -77,8 +77,16 @@ namespace TimeTrack.ViewModels
         public DateTime Date
         {
             get => _date;
-            set => _date = value;
+            set
+            {
+                _date = value;
+                CurrentDate = value.Date.ToShortDateString();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsViewingToday));
+            }
         }
+
+        public bool IsViewingToday => _date.Date == DateTime.Today;
 
         public int CurrentIdCount
         {

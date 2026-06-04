@@ -50,4 +50,10 @@
     <SolidColorBrush x:Key="NavButtonHoverBrush"       Color="#F3F3F3"/>
     <SolidColorBrush x:Key="NavButtonSelectedBrush"    Color="#E5F1FB"/>
 
+    <!-- Not-today date highlight -->
+    <SolidColorBrush x:Key="NotTodayHighlightBrush"   Color="#C83B01"/>
+
+    <!-- Disabled input background -->
+    <SolidColorBrush x:Key="DisabledInputBrush"        Color="#F0F0F0"/>
+
 </ResourceDictionary>

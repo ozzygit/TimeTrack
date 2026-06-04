@@ -694,7 +694,19 @@
                         <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="14"
                                  VerticalAlignment="Center" Margin="0,0,8,0" Text="Date:"/>
                         <TextBlock Name="txtCurrentDate" Grid.Column="1" VerticalAlignment="Center"
-                                 Margin="0,0,12,0" FontSize="14" Text="{Binding CurrentDate}"/>
+                                 Margin="0,0,12,0" FontSize="14" Text="{Binding CurrentDate}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsViewingToday}" Value="False">
+                                            <Setter Property="Background" Value="{DynamicResource NotTodayHighlightBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Padding" Value="6,2"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <DatePicker Name="CalDate" Grid.Column="2" Width="140"
                                   HorizontalAlignment="Left" Margin="0,0,12,0"
                                   SelectedDate="{Binding Date}" SelectedDateChanged="CalLoadDate"
@@ -705,8 +717,19 @@
                               ToolTip="Go to previous day (Ctrl+Left)"/>
                         <Button Name="BtnToday" Grid.Column="4" Height="32" Padding="12,0"
                               Margin="0,0,4,0" Content="Today"
-                              Click="BtnGotoToday" ClickMode="Release" IsEnabled="False"
-                              ToolTip="Return to today's date (Ctrl+T)"/>
+                              Click="BtnGotoToday" ClickMode="Release"
+                              ToolTip="Return to today's date (Ctrl+T)">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsViewingToday}" Value="False">
+                                            <Setter Property="IsEnabled" Value="True"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Name="BtnForward" Grid.Column="5" Width="32" Height="32"
                               Content="→" FontSize="16"
                               Click="BtnGoForward" ClickMode="Release"
@@ -1081,9 +1104,18 @@
                                     ToolTip="Automatically create a 1-hour lunch break entry"/>
 
                             <Button Name="BtnSub" Grid.Column="4" Height="36" MinWidth="130"
-                                  Style="{StaticResource PrimaryButton}"
                                   TabIndex="4"
                                   Command="{x:Static views:MainWindow.SubmitCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsViewingToday}" Value="False">
+                                                <Setter Property="Background" Value="{DynamicResource NotTodayHighlightBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource NotTodayHighlightBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Submit Entry" VerticalAlignment="Center"/>
                                     <TextBlock VerticalAlignment="Center" FontSize="11" FontWeight="Normal"

@@ -16,7 +16,6 @@ namespace TimeTrack.Views
     public partial class MainWindow : Window
     {
         private readonly TimeKeeperViewModel? _timeKeeper;
-        private readonly Brush? _btnBrush;
         private readonly System.Windows.Threading.DispatcherTimer _statusTimer = new();
 
         // Routed commands
@@ -63,9 +62,6 @@ namespace TimeTrack.Views
             InitializeTimePickerComboBoxes();
             LoadEntriesForDate(DateTime.Today);
             InitializeWindow();
-            
-            if (BtnSub != null)
-                _btnBrush = BtnSub.Background;
             
             ApplyKeyboardShortcuts();
             UpdateMenuGestureTexts();
@@ -400,34 +396,6 @@ namespace TimeTrack.Views
                 return;
 
             var date = _timeKeeper.Date;
-            _timeKeeper.CurrentDate = date.Date.ToShortDateString();
-
-            if (txtCurrentDate != null)
-            {
-                if (date != DateTime.Today)
-                {
-                    txtCurrentDate.Background = Brushes.OrangeRed;
-                    txtCurrentDate.Foreground = Brushes.White;
-                    if (BtnSub != null)
-                    {
-                        BtnSub.Background = Brushes.OrangeRed;
-                        BtnSub.Foreground = Brushes.White;
-                    }
-                    if (BtnToday != null)
-                        BtnToday.IsEnabled = true;
-                }
-                else
-                {
-                    txtCurrentDate.Background = null;
-                    txtCurrentDate.Foreground = Brushes.Black;
-                    if (_btnBrush != null && BtnSub != null)
-                        BtnSub.Background = _btnBrush;
-                    if (BtnSub != null)
-                        BtnSub.Foreground = Brushes.Black;
-                    if (BtnToday != null)
-                        BtnToday.IsEnabled = false;
-                }
-            }
 
             LoadEntriesForDate(date);
             _timeKeeper.UpdateTimeTotals();
@@ -464,7 +432,7 @@ namespace TimeTrack.Views
             if (FldTicketNumber != null)
             {
                 FldTicketNumber.IsEnabled = false;
-                FldTicketNumber.Background = Brushes.LightGray;
+                FldTicketNumber.Background = (Brush)FindResource("DisabledInputBrush");
             }
 
             _timeKeeper.NotesField = "Lunch";
@@ -472,7 +440,7 @@ namespace TimeTrack.Views
             if (FldNotes != null)
             {
                 FldNotes.IsEnabled = false;
-                FldNotes.Background = Brushes.LightGray;
+                FldNotes.Background = (Brush)FindResource("DisabledInputBrush");
             }
 
             if (string.IsNullOrEmpty(_timeKeeper.EndTimeField))
@@ -498,7 +466,7 @@ namespace TimeTrack.Views
             if (FldTicketNumber != null)
             {
                 FldTicketNumber.IsEnabled = true;
-                FldTicketNumber.Background = Brushes.White;
+                FldTicketNumber.Background = (Brush)FindResource("BackgroundBrush");
             }
 
             _timeKeeper.EndTimeField = string.Empty;
@@ -506,7 +474,7 @@ namespace TimeTrack.Views
             if (FldNotes != null)
             {
                 FldNotes.IsEnabled = true;
-                FldNotes.Background = Brushes.White;
+                FldNotes.Background = (Brush)FindResource("BackgroundBrush");
             }
 
             CommandManager.InvalidateRequerySuggested();
