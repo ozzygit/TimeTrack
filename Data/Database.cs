@@ -3,7 +3,6 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using TimeTrack.Utilities;
 
@@ -263,7 +262,7 @@ public static class Database
                     catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}"); }
                     return;
                 }
-                Task.Delay(200 * (attempt + 1)).Wait();
+                System.Threading.Thread.Sleep(200 * (attempt + 1));
             }
             catch (Exception e)
             {
@@ -301,7 +300,7 @@ public static class Database
                     catch (Exception logEx) { System.Diagnostics.Debug.WriteLine($"Failed to log error: {logEx.Message}"); }
                     return;
                 }
-                Task.Delay(200 * (attempt + 1)).Wait();
+                System.Threading.Thread.Sleep(200 * (attempt + 1));
             }
             catch (Exception e)
             {

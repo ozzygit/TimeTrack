@@ -10,10 +10,12 @@ namespace TimeTrack.Views.Dialogs
     public partial class OptionsWindow : Window
     {
         private Dictionary<string, KeyboardShortcut> shortcuts = null!; // Suppress CS8618
+        private ThemeMode _originalTheme;
 
         public OptionsWindow()
         {
             InitializeComponent();
+            _originalTheme = SettingsManager.Theme;
             LoadShortcuts();
             LoadTheme();
         }
@@ -42,7 +44,16 @@ namespace TimeTrack.Views.Dialogs
 
         private void LoadShortcuts()
         {
-            shortcuts = SettingsManager.GetAllShortcuts();
+            // Deep-copy so local edits don't mutate the live SettingsManager state until OK is clicked.
+            shortcuts = SettingsManager.GetAllShortcuts().ToDictionary(
+                kvp => kvp.Key,
+                kvp => new KeyboardShortcut
+                {
+                    ActionName = kvp.Value.ActionName,
+                    DisplayName = kvp.Value.DisplayName,
+                    Key = kvp.Value.Key,
+                    Modifiers = kvp.Value.Modifiers
+                });
             // Submit is a fixed shortcut (Ctrl+Enter) and is intentionally not user-configurable.
             ShortcutsList.ItemsSource = shortcuts.Values
                 .Where(s => s.ActionName != "Submit")
@@ -142,6 +153,7 @@ namespace TimeTrack.Views.Dialogs
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
+            ThemeManager.Apply(_originalTheme);
             DialogResult = false;
             Close();
         }

@@ -51,9 +51,9 @@ namespace TimeTrack.Views.Dialogs
 
         private void UpdateCharacterCount()
         {
-            if (CharacterCount != null && NotesText != null)
+            if (CharacterCount != null)
             {
-                int count = NotesText.Length;
+                int count = NotesBox?.Text.Length ?? 0;
                 CharacterCount.Text = count == 1 ? "1 character" : $"{count} characters";
             }
         }

@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "TimeTrack": {
-      "commandName": "Project",
-      "dotnetRunMessages": true
-    }
-  }
-}

@@ -300,6 +300,7 @@ namespace TimeTrack.ViewModels
             {
                 _focusedEntry = null;
                 _isMainTabFocused = true;
+                OnPropertyChanged(nameof(FocusedEntry));
                 OnPropertyChanged(nameof(IsMainTabFocused));
                 return;
             }
@@ -359,7 +360,7 @@ namespace TimeTrack.ViewModels
             if (_timeRecords.Count == 0)
                 return false;
 
-            if (index < 0 | index > _timeRecords.Count)
+            if (index < 0 || index > _timeRecords.Count)
                 index = _timeRecords.Count;
 
             _timeRecords.Insert(index, new TimeEntry(_date, ++_currentIdCount));
