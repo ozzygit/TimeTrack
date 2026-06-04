@@ -308,6 +308,32 @@ namespace TimeTrack.ViewModels
         public void SetEndTimeToNow() =>
             EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
 
+        public void SplitEntry()
+        {
+            if (_isMainTabFocused || _focusedEntry == null) return;
+            
+            // Stop timer and stamp end time on current entry
+            if (_focusedEntry.IsTimerRunning)
+            {
+                StopTimer();
+            }
+            else
+            {
+                EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            }
+            
+            // Save current entry state
+            SaveFocusedEntryToDb();
+            
+            // Create new entry with start time = now
+            string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            var newDraft = Database.SaveDraft(string.Empty, string.Empty, startTime, string.Empty, isActive: false);
+            if (newDraft == null) return;
+            
+            _openEntries.Add(newDraft);
+            SetFocusEntry(newDraft);
+        }
+
         // Open entries / tab management
 
         public void NewEntry()

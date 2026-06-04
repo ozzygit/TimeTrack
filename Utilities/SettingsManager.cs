@@ -48,7 +48,7 @@ namespace TimeTrack.Utilities
     {
         private static readonly string SettingsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "timetrack_settings.xml");
         private static Dictionary<string, KeyboardShortcut> _shortcuts = new();
-        public static ThemeMode Theme { get; set; } = ThemeMode.SystemDefault;
+        public static ThemeMode Theme { get; set; } = ThemeMode.Light;
 
         static SettingsManager()
         {

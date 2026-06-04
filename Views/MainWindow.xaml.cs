@@ -699,6 +699,14 @@ namespace TimeTrack.Views
             ShowStatus("Timer stopped");
         }
 
+        private void BtnSplit_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            ClearGridSelection();
+            _timeKeeper.SplitEntry();
+            ShowStatus("Entry split - new entry created");
+        }
+
         private void ClearGridSelection()
         {
             if (DgTimeRecords != null)
