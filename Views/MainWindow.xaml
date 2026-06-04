@@ -924,6 +924,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <!-- Fields row: horizontal layout -->
@@ -943,8 +944,8 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="2"/>
-                                        <ColumnDefinition Width="28"/>
+                                        <ColumnDefinition Width="4"/>
+                                        <ColumnDefinition Width="44"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox Name="FldStartTime" Grid.Column="0"
                                              Text="{Binding StartTimeField, UpdateSourceTrigger=PropertyChanged}"
@@ -952,39 +953,10 @@
                                              LostFocus="TimeField_LostFocus"
                                              PreviewKeyDown="TimeField_PreviewKeyDown"
                                              TabIndex="0"/>
-                                    <Button Name="BtnStartTimePicker" Grid.Column="2"
-                                            Width="28" Content="🕒" FontSize="12" Padding="0"
-                                            Click="BtnStartTimePicker_Click"
-                                            ToolTip="Select start time from picker"/>
-                                    <Popup Name="PopupStartTime"
-                                           PlacementTarget="{Binding ElementName=BtnStartTimePicker}"
-                                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
-                                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1" CornerRadius="6" Padding="8">
-                                            <Border.Effect>
-                                                <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="12" ShadowDepth="4" Direction="270"/>
-                                            </Border.Effect>
-                                            <StackPanel>
-                                                <TextBlock Text="Select Start Time" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="8"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="8"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <ComboBox Name="CmbStartHour" Grid.Column="0" Width="60" SelectedIndex="8"/>
-                                                    <TextBlock Grid.Column="1" Text=":" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
-                                                    <ComboBox Name="CmbStartMinute" Grid.Column="2" Width="60" SelectedIndex="0"/>
-                                                    <ComboBox Name="CmbStartPeriod" Grid.Column="4" Width="60" SelectedIndex="0"/>
-                                                </Grid>
-                                                <Button Content="Set Time" Margin="0,8,0,0"
-                                                        Click="BtnSetStartTime_Click"
-                                                        Style="{StaticResource PrimaryButton}"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Popup>
+                                    <Button Name="BtnNowStart" Grid.Column="2"
+                                            Content="Now" FontSize="11" Padding="0"
+                                            Click="BtnNowStart_Click"
+                                            ToolTip="Set start time to current time"/>
                                 </Grid>
                             </StackPanel>
 
@@ -994,8 +966,8 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="2"/>
-                                        <ColumnDefinition Width="28"/>
+                                        <ColumnDefinition Width="4"/>
+                                        <ColumnDefinition Width="44"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox Name="FldEndTime" Grid.Column="0"
                                              Text="{Binding EndTimeField, UpdateSourceTrigger=PropertyChanged}"
@@ -1003,39 +975,10 @@
                                              LostFocus="TimeField_LostFocus"
                                              PreviewKeyDown="TimeField_PreviewKeyDown"
                                              TabIndex="1"/>
-                                    <Button Name="BtnEndTimePicker" Grid.Column="2"
-                                            Width="28" Content="🕒" FontSize="12" Padding="0"
-                                            Click="BtnEndTimePicker_Click"
-                                            ToolTip="Select end time from picker"/>
-                                    <Popup Name="PopupEndTime"
-                                           PlacementTarget="{Binding ElementName=BtnEndTimePicker}"
-                                           Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
-                                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1" CornerRadius="6" Padding="8">
-                                            <Border.Effect>
-                                                <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="12" ShadowDepth="4" Direction="270"/>
-                                            </Border.Effect>
-                                            <StackPanel>
-                                                <TextBlock Text="Select End Time" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="8"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="8"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <ComboBox Name="CmbEndHour" Grid.Column="0" Width="60" SelectedIndex="8"/>
-                                                    <TextBlock Grid.Column="1" Text=":" VerticalAlignment="Center" FontSize="16" FontWeight="Bold"/>
-                                                    <ComboBox Name="CmbEndMinute" Grid.Column="2" Width="60" SelectedIndex="0"/>
-                                                    <ComboBox Name="CmbEndPeriod" Grid.Column="4" Width="60" SelectedIndex="0"/>
-                                                </Grid>
-                                                <Button Content="Set Time" Margin="0,8,0,0"
-                                                        Click="BtnSetEndTime_Click"
-                                                        Style="{StaticResource PrimaryButton}"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </Popup>
+                                    <Button Name="BtnNowEnd" Grid.Column="2"
+                                            Content="Now" FontSize="11" Padding="0"
+                                            Click="BtnNowEnd_Click"
+                                            ToolTip="Set finish time to current time"/>
                                 </Grid>
                             </StackPanel>
 
@@ -1050,8 +993,54 @@
 
                         </Grid>
 
-                        <!-- Notes row: full width -->
+                        <!-- Timer row: start/stop + live elapsed -->
                         <Grid Grid.Row="1" Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Name="BtnStartTimer" Grid.Column="0" Height="32" MinWidth="120"
+                                    Content="▶  Start Timer"
+                                    Click="BtnStartTimer_Click"
+                                    ToolTip="Stamp start time and begin counting">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTimerRunning}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <Button Name="BtnStopTimer" Grid.Column="0" Height="32" MinWidth="120"
+                                    Content="⏹  Stop Timer"
+                                    Click="BtnStopTimer_Click"
+                                    ToolTip="Stamp finish time and stop the timer">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTimerRunning}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <TextBlock Grid.Column="1" Margin="14,0,0,0"
+                                       VerticalAlignment="Center"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       FontFamily="Consolas"
+                                       Foreground="{DynamicResource PrimaryBrush}"
+                                       Text="{Binding TimerElapsedDisplay}"/>
+                        </Grid>
+
+                        <!-- Notes row: full width -->
+                        <Grid Grid.Row="2" Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="2"/>
@@ -1082,7 +1071,7 @@
                         </Grid>
 
                         <!-- Bottom row: duration · lunch · submit -->
-                        <Grid Grid.Row="2" Margin="0,14,0,0">
+                        <Grid Grid.Row="3" Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>

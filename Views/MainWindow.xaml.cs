@@ -59,7 +59,6 @@ namespace TimeTrack.Views
             }
             _timeKeeper = DataContext as TimeKeeperViewModel;
 
-            InitializeTimePickerComboBoxes();
             LoadEntriesForDate(DateTime.Today);
             InitializeWindow();
             
@@ -671,75 +670,33 @@ namespace TimeTrack.Views
             _statusTimer.Start();
         }
 
-        private void InitializeTimePickerComboBoxes()
+        private void BtnNowStart_Click(object sender, RoutedEventArgs e)
         {
-            if (CmbStartHour == null || CmbStartMinute == null || CmbStartPeriod == null ||
-                CmbEndHour == null || CmbEndMinute == null || CmbEndPeriod == null)
-                return;
-
-            // Hours (1-12)
-            for (int i = 1; i <= 12; i++)
-            {
-                CmbStartHour.Items.Add(i.ToString("00"));
-                CmbEndHour.Items.Add(i.ToString("00"));
-            }
-            
-            // Minutes (00-59)
-            for (int i = 0; i < 60; i++)
-            {
-                CmbStartMinute.Items.Add(i.ToString("00"));
-                CmbEndMinute.Items.Add(i.ToString("00"));
-            }
-            
-            // AM/PM
-            CmbStartPeriod.Items.Add("AM");
-            CmbStartPeriod.Items.Add("PM");
-            CmbEndPeriod.Items.Add("AM");
-            CmbEndPeriod.Items.Add("PM");
+            if (_timeKeeper == null) return;
+            ClearGridSelection();
+            _timeKeeper.SetStartTimeToNow();
         }
 
-        private void BtnStartTimePicker_Click(object sender, RoutedEventArgs e)
+        private void BtnNowEnd_Click(object sender, RoutedEventArgs e)
         {
-            if (_timeKeeper == null || PopupStartTime == null)
-                return;
-
-            // Clear grid selection when starting a new entry
+            if (_timeKeeper == null) return;
             ClearGridSelection();
-
-            // Always default to current local time
-            var now = DateTime.Now;
-            int hour = now.Hour > 12 ? now.Hour - 12 : (now.Hour == 0 ? 12 : now.Hour);
-            
-            if (CmbStartHour != null)
-                CmbStartHour.SelectedItem = hour.ToString("00");
-            if (CmbStartMinute != null)
-                CmbStartMinute.SelectedItem = now.Minute.ToString("00");
-            if (CmbStartPeriod != null)
-                CmbStartPeriod.SelectedItem = now.Hour >= 12 ? "PM" : "AM";
-
-            PopupStartTime.IsOpen = true;
+            _timeKeeper.SetEndTimeToNow();
         }
 
-        private void BtnEndTimePicker_Click(object sender, RoutedEventArgs e)
+        private void BtnStartTimer_Click(object sender, RoutedEventArgs e)
         {
-            if (_timeKeeper == null || PopupEndTime == null)
-                return;
-
-            // Clear grid selection when starting a new entry
+            if (_timeKeeper == null) return;
             ClearGridSelection();
+            _timeKeeper.StartTimer();
+            ShowStatus("Timer started");
+        }
 
-            // Always default to current local time
-            var now = DateTime.Now;
-            int hour = now.Hour > 12 ? now.Hour - 12 : (now.Hour == 0 ? 12 : now.Hour);
-            
-            if (CmbEndHour != null)
-                CmbEndHour.SelectedItem = hour.ToString("00");
-            if (CmbEndMinute != null)
-                CmbEndMinute.SelectedItem = now.Minute.ToString("00");
-            if (CmbEndPeriod != null)
-                CmbEndPeriod.SelectedItem = now.Hour >= 12 ? "PM" : "AM";
-
-            PopupEndTime.IsOpen = true;
+        private void BtnStopTimer_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            _timeKeeper.StopTimer();
+            ShowStatus("Timer stopped");
         }
 
         private void ClearGridSelection()
@@ -758,32 +715,6 @@ namespace TimeTrack.Views
         {
             // Clear grid selection when user starts entering a new time entry
             ClearGridSelection();
-        }
-
-        private void BtnSetStartTime_Click(object sender, RoutedEventArgs e)
-        {
-            if (CmbStartHour?.SelectedItem == null || 
-                CmbStartMinute?.SelectedItem == null || 
-                CmbStartPeriod?.SelectedItem == null ||
-                _timeKeeper == null || PopupStartTime == null)
-                return;
-
-            string timeString = $"{CmbStartHour.SelectedItem}:{CmbStartMinute.SelectedItem} {CmbStartPeriod.SelectedItem}";
-            _timeKeeper.StartTimeField = timeString;
-            PopupStartTime.IsOpen = false;
-        }
-
-        private void BtnSetEndTime_Click(object sender, RoutedEventArgs e)
-        {
-            if (CmbEndHour?.SelectedItem == null || 
-                CmbEndMinute?.SelectedItem == null || 
-                CmbEndPeriod?.SelectedItem == null ||
-                _timeKeeper == null || PopupEndTime == null)
-                return;
-
-            string timeString = $"{CmbEndHour.SelectedItem}:{CmbEndMinute.SelectedItem} {CmbEndPeriod.SelectedItem}";
-            _timeKeeper.EndTimeField = timeString;
-            PopupEndTime.IsOpen = false;
         }
 
         private void BtnDelete(object sender, RoutedEventArgs e)

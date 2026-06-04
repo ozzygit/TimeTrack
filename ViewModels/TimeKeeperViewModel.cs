@@ -22,6 +22,9 @@ namespace TimeTrack.ViewModels
         private DraftEntry? _focusedEntry;
         private bool _isMainTabFocused = true;
         private readonly DispatcherTimer _autoSaveTimer;
+        private readonly DispatcherTimer _uiTimer;
+        private bool _isTimerRunning;
+        private DateTime _timerStartedAt;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -52,6 +55,9 @@ namespace TimeTrack.ViewModels
             _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
             _autoSaveTimer.Tick += (_, _) => SaveFocusedEntryToDb();
             _autoSaveTimer.Start();
+
+            _uiTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _uiTimer.Tick += (_, _) => OnPropertyChanged(nameof(TimerElapsedDisplay));
         }
 
         private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -248,6 +254,61 @@ namespace TimeTrack.ViewModels
             }
         }
 
+        // Running timer
+
+        public bool IsTimerRunning
+        {
+            get => _isTimerRunning;
+            private set
+            {
+                _isTimerRunning = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(TimerElapsedDisplay));
+            }
+        }
+
+        public string TimerElapsedDisplay
+        {
+            get
+            {
+                if (!_isTimerRunning) return string.Empty;
+                var elapsed = DateTime.Now - _timerStartedAt;
+                if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
+                return $"{(int)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+            }
+        }
+
+        public void StartTimer()
+        {
+            if (_isMainTabFocused) return;
+            _timerStartedAt = DateTime.Now;
+            StartTimeField = _timerStartedAt.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            EndTimeField = string.Empty;
+            IsTimerRunning = true;
+            _uiTimer.Start();
+        }
+
+        public void StopTimer()
+        {
+            if (!_isTimerRunning) return;
+            EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+            IsTimerRunning = false;
+            _uiTimer.Stop();
+        }
+
+        private void ResetTimer()
+        {
+            if (!_isTimerRunning) return;
+            IsTimerRunning = false;
+            _uiTimer.Stop();
+        }
+
+        public void SetStartTimeToNow() =>
+            StartTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+
+        public void SetEndTimeToNow() =>
+            EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+
         // Open entries / tab management
 
         public void NewEntry()
@@ -262,6 +323,7 @@ namespace TimeTrack.ViewModels
 
         public void FocusMainTab()
         {
+            ResetTimer();
             SaveFocusedEntryToDb();
             foreach (var d in _openEntries)
                 d.IsActive = false;
@@ -275,6 +337,7 @@ namespace TimeTrack.ViewModels
 
         public void SetFocusEntry(DraftEntry entry)
         {
+            ResetTimer();
             SaveFocusedEntryToDb();
             foreach (var d in _openEntries)
                 d.IsActive = false;
@@ -290,6 +353,7 @@ namespace TimeTrack.ViewModels
         public void CloseEntry(DraftEntry entry)
         {
             bool wasFocused = (_focusedEntry == entry);
+            if (wasFocused) ResetTimer();
             Database.DeleteDraft(entry.Id);
             int index = _openEntries.IndexOf(entry);
             _openEntries.Remove(entry);
