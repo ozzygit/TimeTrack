@@ -7,9 +7,10 @@
         xmlns:views="clr-namespace:TimeTrack.Views"
         xmlns:viewModels="clr-namespace:TimeTrack.ViewModels"
         xmlns:converters="clr-namespace:TimeTrack.Converters"
+        xmlns:utils="clr-namespace:TimeTrack.Utilities"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:TimeKeeperViewModel, IsDesignTimeCreatable=False}"
-        Title="TimeTrack v3" Height="675" Width="800" MinWidth="700" MinHeight="375"
+        Title="{x:Static utils:AppVersion.MainWindowTitle}" Height="675" Width="800" MinWidth="700" MinHeight="375"
         Icon="/Resources/time.png" Background="{DynamicResource WindowBackground}"
         WindowStartupLocation="CenterScreen">
 

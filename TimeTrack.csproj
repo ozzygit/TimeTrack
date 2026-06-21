@@ -20,8 +20,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>3.0.2</Version>
-    <AssemblyVersion>3.0.0.2</AssemblyVersion>
+    <Version>3.0.3</Version>
+    <AssemblyVersion>3.0.0.3</AssemblyVersion>
     
     <!-- Disable automatic Git version suffix -->
     <SourceRevisionId></SourceRevisionId>

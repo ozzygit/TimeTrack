@@ -86,12 +86,21 @@ namespace TimeTrack.Views
                     TimeKeeper_PropertyChanged);
             }
 
+            Closed += MainWindow_Closed;
+
             _statusTimer.Tick += (s, e) =>
             {
                 if (StatusText != null)
                     StatusText.Text = "Ready";
                 _statusTimer.Stop();
             };
+        }
+
+        private void MainWindow_Closed(object? sender, EventArgs e)
+        {
+            Closed -= MainWindow_Closed;
+            _statusTimer.Stop();
+            _timeKeeper?.Dispose();
         }
 
         public void UpdateMenuGestureTexts()

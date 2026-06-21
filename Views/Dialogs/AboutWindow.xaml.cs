@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Navigation;
 using TimeTrack.Data;
+using TimeTrack.Utilities;
 
 namespace TimeTrack.Views.Dialogs
 {
@@ -13,12 +14,9 @@ namespace TimeTrack.Views.Dialogs
         {
             InitializeComponent();
             
-            var assembly = Assembly.GetExecutingAssembly();
-            
-            // Set version from InformationalVersion attribute (user-friendly version)
-            var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-            string version = informationalVersion ?? assembly.GetName().Version?.ToString() ?? "Unknown";
-            VersionText.Text = $"Version: {version}";
+            var assembly = AppVersion.Assembly ?? Assembly.GetExecutingAssembly();
+
+            VersionText.Text = AppVersion.VersionLabel;
             
             // Set description from AssemblyDescription attribute
             var description = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description;

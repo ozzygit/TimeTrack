@@ -1,7 +1,8 @@
 <Window x:Class="TimeTrack.Views.Dialogs.AboutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="About TimeTrack v3" 
+        xmlns:utils="clr-namespace:TimeTrack.Utilities"
+        Title="{x:Static utils:AppVersion.AboutWindowTitle}" 
         Height="380" 
         Width="500"
         WindowStartupLocation="CenterOwner"
@@ -30,7 +31,7 @@
         
         <!-- Title -->
         <TextBlock Grid.Row="0" 
-                   Text="TimeTrack v3" 
+                   Text="{x:Static utils:AppVersion.ProductDisplay}" 
                    FontSize="24" 
                    FontWeight="SemiBold"
                    HorizontalAlignment="Center"

@@ -12,7 +12,7 @@ using TimeTrack.Utilities;
 
 namespace TimeTrack.ViewModels
 {
-    public partial class TimeKeeperViewModel : INotifyPropertyChanged
+    public partial class TimeKeeperViewModel : INotifyPropertyChanged, IDisposable
     {
         private DateTime _date;
         private string _currentDate;
@@ -23,6 +23,7 @@ namespace TimeTrack.ViewModels
         private bool _isMainTabFocused = true;
         private readonly DispatcherTimer _autoSaveTimer;
         private readonly DispatcherTimer _uiTimer;
+        private bool _disposed;
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
@@ -51,12 +52,16 @@ namespace TimeTrack.ViewModels
                 LoadFocusedEntryIntoFields();
 
             _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
-            _autoSaveTimer.Tick += (_, _) => SaveFocusedEntryToDb();
+            _autoSaveTimer.Tick += AutoSaveTimer_Tick;
             _autoSaveTimer.Start();
 
             _uiTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _uiTimer.Tick += (_, _) => OnPropertyChanged(nameof(TimerElapsedDisplay));
+            _uiTimer.Tick += UiTimer_Tick;
         }
+
+        private void AutoSaveTimer_Tick(object? sender, EventArgs e) => SaveFocusedEntryToDb();
+
+        private void UiTimer_Tick(object? sender, EventArgs e) => OnPropertyChanged(nameof(TimerElapsedDisplay));
 
         private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
@@ -102,9 +107,19 @@ namespace TimeTrack.ViewModels
             get => _timeRecords;
             set 
             { 
-                _timeRecords = value; 
+                if (_timeRecords == value)
+                    return;
+
+                if (_timeRecords != null)
+                {
+                    _timeRecords.CollectionChanged -= TimeRecords_CollectionChanged;
+                    RemoveChangedHandlerFromEntries(_timeRecords);
+                }
+
+                _timeRecords = value ?? new ObservableCollection<TimeEntry>();
+                _timeRecords.CollectionChanged += TimeRecords_CollectionChanged;
+                AddChangedHandlerToAllEntries();
                 OnPropertyChanged(); 
-                AddChangedHandlerToAllEntries(); 
             }
         }
 
@@ -280,7 +295,7 @@ namespace TimeTrack.ViewModels
             StartTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
             EndTimeField = string.Empty;
             _focusedEntry.IsTimerRunning = true;
-            _uiTimer.Start();
+            SyncUiTimerState();
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             SaveFocusedEntryToDb();
@@ -291,7 +306,7 @@ namespace TimeTrack.ViewModels
             if (_focusedEntry == null || !_focusedEntry.IsTimerRunning) return;
             EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
             _focusedEntry.IsTimerRunning = false;
-            _uiTimer.Stop();
+            SyncUiTimerState();
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             SaveFocusedEntryToDb();
@@ -359,6 +374,7 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(IsMainTabFocused));
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
+            SyncUiTimerState();
         }
 
         public void SetFocusEntry(DraftEntry entry)
@@ -375,10 +391,7 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             LoadFocusedEntryIntoFields();
-            
-            // Resume UI timer if this entry has a running timer
-            if (_focusedEntry.IsTimerRunning)
-                _uiTimer.Start();
+            SyncUiTimerState();
         }
 
         public void CloseEntry(DraftEntry entry)
@@ -411,10 +424,7 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             LoadFocusedEntryIntoFields();
-            
-            // Resume UI timer if the new focused entry has a running timer
-            if (_focusedEntry != null && _focusedEntry.IsTimerRunning)
-                _uiTimer.Start();
+            SyncUiTimerState();
         }
 
         private void SaveFocusedEntryToDb()
@@ -610,6 +620,27 @@ namespace TimeTrack.ViewModels
             }
         }
 
+        private void RemoveChangedHandlerFromEntries(ObservableCollection<TimeEntry> entries)
+        {
+            foreach (var entry in entries)
+            {
+                entry.TimeEntryChanged -= OnTimeEntryChanged;
+            }
+        }
+
+        private void SyncUiTimerState()
+        {
+            if (_focusedEntry != null && _focusedEntry.IsTimerRunning)
+            {
+                if (!_uiTimer.IsEnabled)
+                    _uiTimer.Start();
+            }
+            else if (_uiTimer.IsEnabled)
+            {
+                _uiTimer.Stop();
+            }
+        }
+
         public void OnTimeEntryChanged(bool timeChanged)
         {
             if (timeChanged)
@@ -619,6 +650,26 @@ namespace TimeTrack.ViewModels
                 SetStartTimeField();
             }
             Database.Update(_timeRecords);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
+            _autoSaveTimer.Tick -= AutoSaveTimer_Tick;
+            _autoSaveTimer.Stop();
+
+            _uiTimer.Tick -= UiTimer_Tick;
+            _uiTimer.Stop();
+
+            if (_timeRecords != null)
+            {
+                _timeRecords.CollectionChanged -= TimeRecords_CollectionChanged;
+                RemoveChangedHandlerFromEntries(_timeRecords);
+            }
         }
 
         // INotifyPropertyChanged
