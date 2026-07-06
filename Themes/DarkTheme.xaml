@@ -11,6 +11,7 @@
     <SolidColorBrush x:Key="PrimaryHoverBrush"         Color="#81D4FA"/>
     <SolidColorBrush x:Key="PrimaryPressedBrush"       Color="#0091CC"/>
     <SolidColorBrush x:Key="AccentBrush"               Color="#60CDFF"/>
+    <SolidColorBrush x:Key="PrimaryForegroundBrush"    Color="#0A1929"/>
 
     <!-- Borders -->
     <SolidColorBrush x:Key="BorderBrush"               Color="#404040"/>
@@ -32,11 +33,12 @@
     <SolidColorBrush x:Key="DataGridRowSelectedBrush"  Color="#1A3A50"/>
     <SolidColorBrush x:Key="DataGridGridLineBrush"     Color="#383838"/>
     <SolidColorBrush x:Key="DataGridAltRowBrush"       Color="#323232"/>
-    <SolidColorBrush x:Key="DataGridHeaderBackground"  Color="#363636"/>
+    <SolidColorBrush x:Key="DataGridHeaderBackground"  Color="#3D3D3D"/>
 
     <!-- Tabs -->
-    <SolidColorBrush x:Key="TabInactiveBrush"          Color="#3E3E3E"/>
-    <SolidColorBrush x:Key="TabHoverBrush"             Color="#505050"/>
+    <SolidColorBrush x:Key="TabInactiveBrush"          Color="#383838"/>
+    <SolidColorBrush x:Key="TabHoverBrush"             Color="#454545"/>
+    <SolidColorBrush x:Key="TabAccentBarBrush"         Color="#60CDFF"/>
 
     <!-- CheckBox states -->
     <SolidColorBrush x:Key="CheckBoxCheckedBrush"      Color="#1A3A50"/>
@@ -46,7 +48,7 @@
     <!-- Context menu -->
     <SolidColorBrush x:Key="ContextMenuItemHoverBrush" Color="#1A3A50"/>
 
-    <!-- Options nav sidebar -->
+    <!-- Settings nav sidebar -->
     <SolidColorBrush x:Key="NavButtonHoverBrush"       Color="#3E3E3E"/>
     <SolidColorBrush x:Key="NavButtonSelectedBrush"    Color="#1A3A50"/>
 
@@ -55,5 +57,14 @@
 
     <!-- Disabled input background -->
     <SolidColorBrush x:Key="DisabledInputBrush"        Color="#3A3A3A"/>
+
+    <!-- Calendar -->
+    <SolidColorBrush x:Key="CalendarDayForeground"     Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="CalendarBlackoutForeground" Color="#666666"/>
+    <SolidColorBrush x:Key="CalendarTodayBorder"       Color="#FF4444"/>
+    <SolidColorBrush x:Key="CalendarHeaderForeground"  Color="#F3F3F3"/>
+    <SolidColorBrush x:Key="CalendarMonthForeground"   Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="CalendarDayHover"          Color="#3E3E3E"/>
+    <SolidColorBrush x:Key="CalendarDaySelected"       Color="#1A3A50"/>
 
 </ResourceDictionary>

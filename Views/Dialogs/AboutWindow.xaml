@@ -6,8 +6,15 @@
         Height="380" 
         Width="500"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="{DynamicResource WindowBackground}">
+        Background="{DynamicResource WindowBackground}"
+        WindowStyle="None" ResizeMode="NoResize">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="6"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
     
     <Window.Resources>
         <Style TargetType="TextBlock">
@@ -16,6 +23,45 @@
         </Style>
     </Window.Resources>
     
+    <DockPanel>
+        <!-- Custom Title Bar -->
+        <Border DockPanel.Dock="Top" Height="32"
+                Background="{DynamicResource WindowBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{x:Static utils:AppVersion.AboutWindowTitle}"
+                           FontFamily="Segoe UI" FontSize="12"
+                           Foreground="{DynamicResource TextBrush}"
+                           VerticalAlignment="Center" Margin="12,0,0,0"/>
+                <Button Grid.Column="1" Click="CloseButton_Click"
+                        Width="36" Height="28" Content="&#xE8BB;"
+                        FontFamily="Segoe MDL2 Assets" FontSize="10"
+                        Background="Transparent" BorderThickness="0"
+                        Foreground="{DynamicResource TextBrush}" Cursor="Hand"
+                        WindowChrome.IsHitTestVisibleInChrome="True"
+                        ToolTip="Close">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="CloseBorder" Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CloseBorder" Property="Background" Value="#E81123"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -149,7 +195,7 @@
                     <Setter Property="FontFamily" Value="Segoe UI"/>
                     <Setter Property="FontSize" Value="13"/>
                     <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
                     <Setter Property="BorderThickness" Value="0"/>
                     <Setter Property="Cursor" Value="Hand"/>
                     <Setter Property="Template">
@@ -176,4 +222,5 @@
             </Button.Style>
         </Button>
     </Grid>
+    </DockPanel>
 </Window>

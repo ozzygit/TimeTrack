@@ -11,6 +11,7 @@
     <SolidColorBrush x:Key="PrimaryHoverBrush"         Color="#106EBE"/>
     <SolidColorBrush x:Key="PrimaryPressedBrush"       Color="#005A9E"/>
     <SolidColorBrush x:Key="AccentBrush"               Color="#0078D4"/>
+    <SolidColorBrush x:Key="PrimaryForegroundBrush"    Color="#FFFFFF"/>
 
     <!-- Borders -->
     <SolidColorBrush x:Key="BorderBrush"               Color="#E1E1E1"/>
@@ -35,8 +36,9 @@
     <SolidColorBrush x:Key="DataGridHeaderBackground"  Color="#F8F8F8"/>
 
     <!-- Tabs -->
-    <SolidColorBrush x:Key="TabInactiveBrush"          Color="#EBEBEB"/>
+    <SolidColorBrush x:Key="TabInactiveBrush"          Color="#ECECEC"/>
     <SolidColorBrush x:Key="TabHoverBrush"             Color="#D8D8D8"/>
+    <SolidColorBrush x:Key="TabAccentBarBrush"         Color="#0078D4"/>
 
     <!-- CheckBox states -->
     <SolidColorBrush x:Key="CheckBoxCheckedBrush"      Color="#E5F1FB"/>
@@ -46,7 +48,7 @@
     <!-- Context menu -->
     <SolidColorBrush x:Key="ContextMenuItemHoverBrush" Color="#E5F3FB"/>
 
-    <!-- Options nav sidebar -->
+    <!-- Settings nav sidebar -->
     <SolidColorBrush x:Key="NavButtonHoverBrush"       Color="#F3F3F3"/>
     <SolidColorBrush x:Key="NavButtonSelectedBrush"    Color="#E5F1FB"/>
 
@@ -55,5 +57,14 @@
 
     <!-- Disabled input background -->
     <SolidColorBrush x:Key="DisabledInputBrush"        Color="#F0F0F0"/>
+
+    <!-- Calendar -->
+    <SolidColorBrush x:Key="CalendarDayForeground"     Color="#333333"/>
+    <SolidColorBrush x:Key="CalendarBlackoutForeground" Color="#8C8C8C"/>
+    <SolidColorBrush x:Key="CalendarTodayBorder"       Color="#C83B01"/>
+    <SolidColorBrush x:Key="CalendarHeaderForeground"  Color="#323130"/>
+    <SolidColorBrush x:Key="CalendarMonthForeground"   Color="#333333"/>
+    <SolidColorBrush x:Key="CalendarDayHover"          Color="#F0F6FC"/>
+    <SolidColorBrush x:Key="CalendarDaySelected"       Color="#CCE4F7"/>
 
 </ResourceDictionary>

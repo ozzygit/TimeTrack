@@ -22,6 +22,14 @@ namespace TimeTrack.Data
 
         public int Id => _id;
 
+        /// <summary>
+        /// When non-null, this draft is editing an existing submitted entry (date, id).
+        /// When null, this draft is a new entry.
+        /// </summary>
+        public (DateTime Date, int Id)? EditingEntry { get; set; }
+
+        public bool IsEditing => EditingEntry.HasValue;
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TabDisplay))]
         private string ticketNumber = string.Empty;
@@ -62,9 +70,9 @@ namespace TimeTrack.Data
                 if (!string.IsNullOrWhiteSpace(TicketNumber))
                 {
                     string t = TicketNumber.Length > 16 ? TicketNumber[..16] + "…" : TicketNumber;
-                    return t + timeHint;
+                    return (IsEditing ? "✎ " : "") + t + timeHint;
                 }
-                return "New Entry" + timeHint;
+                return (IsEditing ? "✎ " : "") + "New Entry" + timeHint;
             }
         }
 

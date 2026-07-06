@@ -31,8 +31,8 @@ namespace TimeTrack.Views
         public static readonly RoutedUICommand NextDayCommand =
             new("Next Day", "NextDay", typeof(MainWindow));
 
-        public static readonly RoutedUICommand OptionsCommand =
-            new("Options", "Options", typeof(MainWindow));
+        public static readonly RoutedUICommand SettingsCommand =
+            new("Settings", "Settings", typeof(MainWindow));
 
         public static readonly RoutedUICommand HelpCommand =
             new("About", "Help", typeof(MainWindow));
@@ -72,11 +72,11 @@ namespace TimeTrack.Views
             CommandBindings.Add(new CommandBinding(TodayCommand, (s, e) => BtnGotoToday(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
             CommandBindings.Add(new CommandBinding(PrevDayCommand, (s, e) => BtnGoBack(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
             CommandBindings.Add(new CommandBinding(NextDayCommand, (s, e) => BtnGoForward(s, e), (s, e) => e.CanExecute = (_timeKeeper?.IsMainTabFocused == true)));
-            CommandBindings.Add(new CommandBinding(OptionsCommand, (s, e) => MenuOptions_Click(s, e)));
+            CommandBindings.Add(new CommandBinding(SettingsCommand, (s, e) => MenuSettings_Click(s, e)));
             CommandBindings.Add(new CommandBinding(HelpCommand, (s, e) => BtnProjectInfo_Click(s, e)));
             CommandBindings.Add(new CommandBinding(SubmitCommand, (s, e) => BtnSubmit(s, e), (s, e) => e.CanExecute = CanSubmit()));
             CommandBindings.Add(new CommandBinding(SelectAllCommand, (s, e) => BtnSelectAll(s, e)));
-            CommandBindings.Add(new CommandBinding(DeleteCommand, (s, e) => BtnDelete(s, e), (s, e) => e.CanExecute = (_timeKeeper?.SelectedItem != null)));
+            CommandBindings.Add(new CommandBinding(DeleteCommand, (s, e) => BtnDelete(s, e), (s, e) => e.CanExecute = (_timeKeeper?.Entries.Any(en => en.Recorded) == true)));
 
             if (_timeKeeper != null)
             {
@@ -105,29 +105,7 @@ namespace TimeTrack.Views
 
         public void UpdateMenuGestureTexts()
         {
-            try
-            {
-                static void SetText(MenuItem? mi, string action)
-                {
-                    var sc = SettingsManager.GetShortcut(action);
-                    if (mi != null)
-                        mi.InputGestureText = sc?.DisplayText ?? string.Empty;
-                }
-
-                SetText(SubmitMenuItem, "Submit");
-                SetText(InsertMenuItem, "Insert");
-                SetText(DeleteMenuItem, "Delete");
-                SetText(SelectAllMenuItem, "SelectAll");
-                SetText(TodayMenuItem, "Today");
-                SetText(PrevDayMenuItem, "PrevDay");
-                SetText(NextDayMenuItem, "NextDay");
-                SetText(OptionsMenuItem, "Options");
-                SetText(AboutMenuItem, "About");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error updating menu gesture texts: {ex.Message}");
-            }
+            // Menu bar removed — keyboard shortcuts still work via CommandBindings
         }
 
         private void TimeKeeper_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -149,13 +127,13 @@ namespace TimeTrack.Views
             if (_timeKeeper == null) return false;
             var hasStart = _timeKeeper.StartTimeFieldAsTime().HasValue;
             var hasEnd = _timeKeeper.EndTimeFieldAsTime().HasValue;
-            bool isLunch = ChkLunch?.IsChecked == true;
+            bool isPreset = CmbPreset?.SelectedIndex > 0;
             bool hasTicket = !string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField);
             bool hasNotes = !string.IsNullOrWhiteSpace(_timeKeeper.NotesField);
             
             if (!hasStart || !hasEnd) return false;
-            if (!isLunch && !hasTicket) return false;
-            if (!hasNotes) return false;
+            if (!isPreset && !hasTicket) return false;
+            if (!isPreset && !hasNotes) return false;
             return true;
         }
 
@@ -217,10 +195,10 @@ namespace TimeTrack.Views
                 }
             }
 
-            var options = SettingsManager.GetShortcut("Options");
-            if (MatchesShortcut(e, options))
+            var settings = SettingsManager.GetShortcut("Settings");
+            if (MatchesShortcut(e, settings))
             {
-                MenuOptions_Click(this, new RoutedEventArgs());
+                MenuSettings_Click(this, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             }
@@ -275,9 +253,9 @@ namespace TimeTrack.Views
 
             if (!CanSubmit())
             {
-                ShowStatus("Please enter start, end, ticket number (unless Lunch), and notes", 5000);
+                ShowStatus("Please enter start, end, ticket number (unless Preset), and notes", 5000);
                 
-                if ((ChkLunch == null || ChkLunch.IsChecked != true) && 
+                if ((CmbPreset == null || CmbPreset.SelectedIndex <= 0) && 
                     string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField))
                 {
                     FldTicketNumber?.Focus();
@@ -303,8 +281,8 @@ namespace TimeTrack.Views
                 if (submitted != null)
                     _timeKeeper.CloseEntry(submitted);
 
-                if (ChkLunch != null)
-                    ChkLunch.IsChecked = false;
+                if (CmbPreset != null)
+                    CmbPreset.SelectedIndex = 0;
 
                 if (DgTimeRecords != null && _timeKeeper.Entries.Count > 0)
                 {
@@ -412,46 +390,109 @@ namespace TimeTrack.Views
             UpdateSelectAllHeaderState();
         }
 
+        private void DateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DatePopup != null)
+            {
+                if (DateCalendar != null && _timeKeeper != null)
+                    DateCalendar.SelectedDate = _timeKeeper.Date;
+                if (CalendarTodayButton != null)
+                    CalendarTodayButton.Content = $"Today: {DateTime.Today.ToShortDateString()}";
+                DatePopup.IsOpen = !DatePopup.IsOpen;
+            }
+        }
+
+        private void DateCalendar_SelectedDatesChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DateCalendar?.SelectedDate != null && _timeKeeper != null)
+            {
+                _timeKeeper.Date = DateCalendar.SelectedDate.Value;
+                CalLoadDate(sender, e);
+            }
+            if (DatePopup != null)
+                DatePopup.IsOpen = false;
+        }
+
+        private void CalendarToday_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper != null)
+            {
+                _timeKeeper.Date = DateTime.Today;
+                CalLoadDate(sender, e);
+            }
+            if (DatePopup != null)
+                DatePopup.IsOpen = false;
+        }
+
         private void BtnGotoToday(object sender, RoutedEventArgs e)
         {
-            if (CalDate != null)
-                CalDate.SelectedDate = DateTime.Today;
+            if (_timeKeeper != null)
+            {
+                _timeKeeper.Date = DateTime.Today;
+                CalLoadDate(sender, e);
+            }
         }
 
         private void BtnGoForward(object sender, RoutedEventArgs e)
         {
-            if (CalDate?.SelectedDate != null)
-                CalDate.SelectedDate = CalDate.SelectedDate.Value.AddDays(1);
+            if (_timeKeeper != null)
+            {
+                _timeKeeper.Date = _timeKeeper.Date.AddDays(1);
+                CalLoadDate(sender, e);
+            }
         }
 
         private void BtnGoBack(object sender, RoutedEventArgs e)
         {
-            if (CalDate?.SelectedDate != null)
-                CalDate.SelectedDate = CalDate.SelectedDate.Value.AddDays(-1);
+            if (_timeKeeper != null)
+            {
+                _timeKeeper.Date = _timeKeeper.Date.AddDays(-1);
+                CalLoadDate(sender, e);
+            }
         }
 
-        private void ChkLunch_Checked(object sender, RoutedEventArgs e)
+        private void CmbPreset_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (_timeKeeper == null)
+            if (_timeKeeper == null || CmbPreset == null)
                 return;
 
-            _timeKeeper.TicketNumberField = string.Empty;
-            
-            if (FldTicketNumber != null)
+            // Avoid running during initial setup
+            if (!CmbPreset.IsLoaded)
+                return;
+
+            int idx = CmbPreset.SelectedIndex;
+            if (idx <= 0)
             {
-                FldTicketNumber.IsEnabled = false;
-                FldTicketNumber.Background = (Brush)FindResource("DisabledInputBrush");
+                // Reset — re-enable ticket and notes fields
+                if (FldTicketNumber != null)
+                {
+                    FldTicketNumber.IsEnabled = true;
+                    FldTicketNumber.Background = (Brush)FindResource("BackgroundBrush");
+                }
+                if (FldNotes != null)
+                {
+                    FldNotes.IsEnabled = true;
+                    FldNotes.Background = (Brush)FindResource("BackgroundBrush");
+                }
+                _timeKeeper.NotesField = string.Empty;
+                CommandManager.InvalidateRequerySuggested();
+                return;
             }
 
-            _timeKeeper.NotesField = "Lunch";
-            
+            string presetName = (CmbPreset.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? string.Empty;
+
+            // Auto-fill ticket number (editable)
+            _timeKeeper.TicketNumberField = presetName;
+
+            // Dim notes field (not required when preset is selected)
             if (FldNotes != null)
             {
                 FldNotes.IsEnabled = false;
                 FldNotes.Background = (Brush)FindResource("DisabledInputBrush");
             }
 
-            if (string.IsNullOrEmpty(_timeKeeper.EndTimeField))
+            // For Lunch preset, auto-set end time to start + 1 hour
+            if (presetName == "Lunch" && string.IsNullOrEmpty(_timeKeeper.EndTimeField))
             {
                 var startTimeSpan = TimeStringConverter.StringToTimeSpan(_timeKeeper.StartTimeField);
                 if (startTimeSpan != null)
@@ -460,29 +501,6 @@ namespace TimeTrack.Views
                     endLunch = endLunch.AddHours(1);
                     _timeKeeper.EndTimeField = endLunch.ToShortTimeString();
                 }
-            }
-
-            CommandManager.InvalidateRequerySuggested();
-        }
-
-        private void ChkLunch_Unchecked(object sender, RoutedEventArgs e)
-        {
-            if (_timeKeeper == null)
-                return;
-
-            _timeKeeper.TicketNumberField = string.Empty;
-            if (FldTicketNumber != null)
-            {
-                FldTicketNumber.IsEnabled = true;
-                FldTicketNumber.Background = (Brush)FindResource("BackgroundBrush");
-            }
-
-            _timeKeeper.EndTimeField = string.Empty;
-            _timeKeeper.NotesField = string.Empty;
-            if (FldNotes != null)
-            {
-                FldNotes.IsEnabled = true;
-                FldNotes.Background = (Brush)FindResource("BackgroundBrush");
             }
 
             CommandManager.InvalidateRequerySuggested();
@@ -547,34 +565,11 @@ namespace TimeTrack.Views
             if (sender is not DataGridRow row || row.Item is not TimeEntry entry)
                 return;
 
-            var editor = new EditEntryWindow(entry)
-            {
-                Owner = this
-            };
+            if (_timeKeeper == null) return;
 
-            if (editor.ShowDialog() == true && _timeKeeper != null)
-            {
-                Database.Update(_timeKeeper.Entries);
-                _timeKeeper.UpdateTimeTotals();
-                _timeKeeper.UpdateSelectedTime();
-                _timeKeeper.SetStartTimeField();
-            }
-        }
-
-        private void BtnNotesPopOut_Click(object sender, RoutedEventArgs e)
-        {
-            if (_timeKeeper == null)
-                return;
-
-            var notesEditor = new NotesEditorWindow(_timeKeeper.NotesField)
-            {
-                Owner = this
-            };
-
-            if (notesEditor.ShowDialog() == true)
-            {
-                _timeKeeper.NotesField = notesEditor.NotesText ?? string.Empty;
-            }
+            _timeKeeper.EditEntry(entry);
+            FldTicketNumber?.Focus();
+            ShowStatus("Editing entry — submit to save changes");
         }
 
         private void TimeField_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -620,10 +615,39 @@ namespace TimeTrack.Views
             Close();
         }
 
-        private void MenuOptions_Click(object sender, RoutedEventArgs e)
+        private void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
-            var optionsWindow = new OptionsWindow { Owner = this };
-            optionsWindow.ShowDialog();
+            WindowState = WindowState.Minimized;
+        }
+
+        private void BtnMaximize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow { Owner = this };
+            settingsWindow.ShowDialog();
+            ApplyKeyboardShortcuts();
+            UpdateMenuGestureTexts();
+        }
+
+        private void BtnAbout_Click(object sender, RoutedEventArgs e)
+        {
+            var aboutWindow = new AboutWindow { Owner = this };
+            aboutWindow.ShowDialog();
+        }
+
+        private void MenuSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow { Owner = this };
+            settingsWindow.ShowDialog();
             ApplyKeyboardShortcuts();
             UpdateMenuGestureTexts();
         }
@@ -645,7 +669,7 @@ namespace TimeTrack.Views
             AddBinding("Today", TodayCommand);
             AddBinding("PrevDay", PrevDayCommand);
             AddBinding("NextDay", NextDayCommand);
-            AddBinding("Options", OptionsCommand);
+            AddBinding("Settings", SettingsCommand);
             AddBinding("About", HelpCommand);
             AddBinding("Delete", DeleteCommand);
 
@@ -736,17 +760,14 @@ namespace TimeTrack.Views
 
         private void BtnDelete(object sender, RoutedEventArgs e)
         {
-            if (_timeKeeper?.SelectedItem == null)
-            {
-                System.Diagnostics.Debug.WriteLine("BtnDelete: No item selected");
-                return;
-            }
+            if (_timeKeeper == null) return;
 
-            var itemToDelete = _timeKeeper.SelectedItem;
-            System.Diagnostics.Debug.WriteLine($"BtnDelete: Deleting entry ID {itemToDelete.ID} at {itemToDelete.StartTime}");
-            
-            _timeKeeper.RemoveCommand.Execute(null);
-            ShowStatus("Entry deleted");
+            int count = _timeKeeper.RemoveRecordedEntries();
+            if (count > 0)
+            {
+                ShowStatus($"{count} {(count == 1 ? "entry" : "entries")} deleted");
+                UpdateSelectAllHeaderState();
+            }
         }
 
         private void BtnMainTab(object sender, RoutedEventArgs e)

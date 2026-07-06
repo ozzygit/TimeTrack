@@ -259,11 +259,12 @@ namespace TimeTrack.ViewModels
                 if (!start.HasValue || !end.HasValue) return string.Empty;
                 var duration = end.Value - start.Value;
                 if (duration <= TimeSpan.Zero) return string.Empty;
-                int units = (int)Math.Ceiling(duration.TotalMinutes / 6.0);
+                int blocks = Math.Max(1, (int)Math.Ceiling(duration.TotalMinutes / 6.0));
+                double units = blocks / 10.0;
                 string timeStr = duration.Hours > 0
                     ? $"{duration.Hours}h {duration.Minutes:D2}m"
                     : $"{duration.Minutes}m";
-                return $"{timeStr}  ·  {units} units";
+                return $"{timeStr}  ·  {units:F1} units";
             }
         }
 
@@ -357,6 +358,18 @@ namespace TimeTrack.ViewModels
             string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
             var draft = Database.SaveDraft(string.Empty, string.Empty, startTime, string.Empty, isActive: false);
             if (draft == null) return;
+            _openEntries.Add(draft);
+            SetFocusEntry(draft);
+        }
+
+        public void EditEntry(TimeEntry entry)
+        {
+            SaveFocusedEntryToDb();
+            string startTimeStr = entry.StartTime?.ToString("hh:mm tt", CultureInfo.CurrentCulture) ?? string.Empty;
+            string endTimeStr = entry.EndTime?.ToString("hh:mm tt", CultureInfo.CurrentCulture) ?? string.Empty;
+            var draft = Database.SaveDraft(entry.TicketNumber, entry.Notes, startTimeStr, endTimeStr, isActive: false);
+            if (draft == null) return;
+            draft.EditingEntry = (entry.Date, entry.ID);
             _openEntries.Add(draft);
             SetFocusEntry(draft);
         }
@@ -486,6 +499,20 @@ namespace TimeTrack.ViewModels
             if (startTime == null || endTime == null)
                 return false;
 
+            if (_focusedEntry != null && _focusedEntry.IsEditing)
+            {
+                var (date, id) = _focusedEntry.EditingEntry!.Value;
+                var existing = _timeRecords.FirstOrDefault(e => e.Date == date && e.ID == id);
+                if (existing != null)
+                {
+                    existing.StartTime = TimeOnly.FromTimeSpan((TimeSpan)startTime);
+                    existing.EndTime = TimeOnly.FromTimeSpan((TimeSpan)endTime);
+                    existing.TicketNumber = _ticketNo;
+                    existing.Notes = _notes;
+                    return true;
+                }
+            }
+
             AddEntry(_date, ++_currentIdCount, (TimeSpan)startTime, (TimeSpan)endTime, _ticketNo, _notes);
             return true;
         }
@@ -509,6 +536,25 @@ namespace TimeTrack.ViewModels
 
         // Expose the generated command with the old name for backward compatibility
         public ICommand RemoveCommand => RemoveCurrentlySelectedEntryCommand;
+
+        public int RemoveRecordedEntries()
+        {
+            var toDelete = Entries.Where(e => e.Recorded).ToList();
+            if (toDelete.Count == 0) return 0;
+
+            foreach (var item in toDelete)
+            {
+                item.TimeEntryChanged -= OnTimeEntryChanged;
+                Database.Delete(item.Date, item.ID);
+                Entries.Remove(item);
+            }
+
+            SelectLastEntry();
+            UpdateTimeTotals();
+            SetStartTimeField();
+            Database.Update(Entries);
+            return toDelete.Count;
+        }
 
         public void SelectLastEntry()
         {
@@ -539,7 +585,7 @@ namespace TimeTrack.ViewModels
                 {
                     var d = entry.Duration.Value;
                     time += d;
-                    totalUnits += Math.Max(0, (int)Math.Ceiling(d.TotalMinutes / 6.0));
+                    totalUnits += Math.Max(1, (int)Math.Ceiling(d.TotalMinutes / 6.0));
                 }
             }
 

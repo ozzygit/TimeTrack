@@ -10,13 +10,128 @@
         xmlns:utils="clr-namespace:TimeTrack.Utilities"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:TimeKeeperViewModel, IsDesignTimeCreatable=False}"
-        Title="{x:Static utils:AppVersion.MainWindowTitle}" Height="675" Width="800" MinWidth="700" MinHeight="375"
+        Title="{x:Static utils:AppVersion.MainWindowTitle}" Height="675" Width="800" MinWidth="700" MinHeight="500"
         Icon="/Resources/time.png" Background="{DynamicResource WindowBackground}"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="6"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
 
     <Window.Resources>
         <data:TimeEntryUIConverter x:Key="TimeEntryUIConverter"/>
         <converters:ShortcutDisplayConverter x:Key="ShortcutDisplayConverter"/>
+
+        <!-- Calendar Day Button Style (theme-aware + red border on today) -->
+        <Style x:Key="CalendarDayButtonStyle" TargetType="CalendarDayButton">
+            <Setter Property="Foreground" Value="{DynamicResource CalendarDayForeground}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinWidth" Value="28"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CalendarDayButton">
+                        <Grid>
+                            <Border x:Name="DayBorder"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="3">
+                                <ContentPresenter x:Name="DayContent"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Margin="2"
+                                                  TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsBlackedOut" Value="True">
+                                <Setter TargetName="DayContent" Property="TextBlock.Foreground" Value="{DynamicResource CalendarBlackoutForeground}"/>
+                                <Setter TargetName="DayContent" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                            <Trigger Property="IsToday" Value="True">
+                                <Setter TargetName="DayBorder" Property="BorderBrush" Value="{DynamicResource CalendarTodayBorder}"/>
+                                <Setter TargetName="DayBorder" Property="BorderThickness" Value="2"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="DayBorder" Property="Background" Value="{DynamicResource CalendarDaySelected}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsBlackedOut" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="DayBorder" Property="Background" Value="{DynamicResource CalendarDayHover}"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsToday" Value="True"/>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="DayBorder" Property="Background" Value="{DynamicResource CalendarDaySelected}"/>
+                                <Setter TargetName="DayBorder" Property="BorderBrush" Value="{DynamicResource CalendarTodayBorder}"/>
+                                <Setter TargetName="DayBorder" Property="BorderThickness" Value="2"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Calendar Month/Year Button Style (theme-aware) -->
+        <Style x:Key="CalendarButtonStyle" TargetType="CalendarButton">
+            <Setter Property="Foreground" Value="{DynamicResource CalendarMonthForeground}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="MinWidth" Value="40"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CalendarButton">
+                        <Border x:Name="MonthBorder"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="1"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="MonthBorder" Property="Background" Value="{DynamicResource CalendarDayHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="MonthBorder" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Calendar Item Style (theme-aware header + nav) -->
+        <Style x:Key="CalendarItemStyle" TargetType="CalendarItem">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource CalendarHeaderForeground}"/>
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
 
 
         <!-- Modern Menu Styles -->
@@ -210,7 +325,7 @@
         <!-- Primary Button Style -->
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -234,7 +349,7 @@
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
 
@@ -290,7 +405,7 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Background" Value="{DynamicResource DataGridHeaderBackground}"/>
-            <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Padding" Value="8,10"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -464,82 +579,110 @@
             <Setter Property="ToolTip" Value="{Binding Notes}"/>
         </Style>
 
-        <!-- Tab strip: label button (left portion of each tab) -->
+        <!-- Tab strip: label button (left portion of each tab) — flat flush style -->
         <Style x:Key="TabButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="28"/>
+            <Setter Property="Height" Value="30"/>
             <Setter Property="MinWidth" Value="60"/>
-            <Setter Property="MaxWidth" Value="120"/>
-            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="MaxWidth" Value="130"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Background" Value="{DynamicResource TabInactiveBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4,0,0,4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}"/>
+                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,1,0,1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="2"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border x:Name="AccentBar" Grid.Row="0" Background="Transparent"/>
+                                <ContentPresenter Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Margin="{TemplateBinding Padding}"/>
+                            </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource TabAccentBarBrush}"/>
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="1,1,0,0"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource TabHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsActive}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
-                </DataTrigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource TabHoverBrush}"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
 
-        <!-- Tab strip: close button (right portion of each tab) -->
+        <!-- Tab strip: close button (right portion of each tab) — flat flush style -->
         <Style x:Key="TabCloseButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="22"/>
-            <Setter Property="Height" Value="28"/>
+            <Setter Property="Height" Value="30"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Background" Value="{DynamicResource TabInactiveBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
-            <Setter Property="BorderThickness" Value="0,1,1,1"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="0,4,4,0">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="TabBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,1,1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="2"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border x:Name="AccentBar" Grid.Row="0" Background="Transparent"/>
+                                <ContentPresenter Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource TabAccentBarBrush}"/>
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+                                <Setter TargetName="TabBorder" Property="BorderThickness" Value="0,1,1,0"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#D32F2F"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsActive}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
-                </DataTrigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#D32F2F"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="BorderBrush" Value="#D32F2F"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Window caption button style -->
+        <Style x:Key="CaptionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CaptionBorder"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CaptionBorder" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Keyboard bindings are configured dynamically in MainWindow.xaml.cs via ApplyKeyboardShortcuts() -->
@@ -547,93 +690,152 @@
     </Window.InputBindings>
 
     <DockPanel>
-        <!--Menu Bar-->
-        <Menu DockPanel.Dock="Top" Height="40" Padding="8,4" 
-              Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-            <MenuItem Header="_File">
-                <MenuItem Header="E_xit" Click="MenuExit_Click" InputGestureText="Alt+F4"/>
-            </MenuItem>
-            <MenuItem Header="_Edit">
-                <MenuItem x:Name="SubmitMenuItem" Header="_Submit Entry" Click="BtnSubmit"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Submit}"/>
-                <MenuItem x:Name="InsertMenuItem" Header="_Insert Record"
-                          Command="{x:Static views:MainWindow.InsertCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Insert}"/>
-                <MenuItem x:Name="DeleteMenuItem" Header="_Delete Selected"
-                          Command="{x:Static views:MainWindow.DeleteCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Delete}"/>
-                <Separator/>
-                <MenuItem x:Name="SelectAllMenuItem" Header="_Select All" Click="BtnSelectAll"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=SelectAll}"/>
-            </MenuItem>
-            <MenuItem Header="_Navigation">
-                <MenuItem x:Name="TodayMenuItem" Header="_Today"
-                          Command="{x:Static views:MainWindow.TodayCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Today}"/>
-                <MenuItem x:Name="PrevDayMenuItem" Header="_Previous Day"
-                          Command="{x:Static views:MainWindow.PrevDayCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=PrevDay}"/>
-                <MenuItem x:Name="NextDayMenuItem" Header="_Next Day"
-                          Command="{x:Static views:MainWindow.NextDayCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=NextDay}"/>
-            </MenuItem>
-            <MenuItem Header="_Tools">
-                <MenuItem x:Name="OptionsMenuItem" Header="_Options"
-                          Command="{x:Static views:MainWindow.OptionsCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=Options}"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem x:Name="AboutMenuItem" Header="_About TimeTrack v3"
-                          Command="{x:Static views:MainWindow.HelpCommand}"
-                          InputGestureText="{Binding Path=., Mode=OneWay, Converter={StaticResource ShortcutDisplayConverter}, ConverterParameter=About}"/>
-            </MenuItem>
-        </Menu>
+        <!-- Custom Title Bar -->
+        <Border DockPanel.Dock="Top" Height="32"
+                Background="{DynamicResource WindowBackground}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Image Grid.Column="0" Source="/Resources/time.png"
+                       Width="16" Height="16" Margin="10,0,0,0"
+                       VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1"
+                           Text="{x:Static utils:AppVersion.MainWindowTitle}"
+                           FontFamily="Segoe UI" FontSize="12"
+                           Foreground="{DynamicResource TextBrush}"
+                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center" Margin="0,0,2,0">
+                    <Button Name="BtnMinimize" Click="BtnMinimize_Click"
+                            Style="{StaticResource CaptionButtonStyle}"
+                            Width="36" Height="28" Content="&#xE949;"
+                            FontFamily="Segoe MDL2 Assets" FontSize="10"
+                            Foreground="{DynamicResource TextBrush}" Cursor="Hand"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            ToolTip="Minimize"/>
+                    <Button Name="BtnMaximize" Click="BtnMaximize_Click"
+                            Style="{StaticResource CaptionButtonStyle}"
+                            Width="36" Height="28" Content="&#xE740;"
+                            FontFamily="Segoe MDL2 Assets" FontSize="10"
+                            Foreground="{DynamicResource TextBrush}" Cursor="Hand"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            ToolTip="Maximize"/>
+                    <Button Name="BtnClose" Click="BtnClose_Click"
+                            Style="{StaticResource CaptionButtonStyle}"
+                            Width="36" Height="28" Content="&#xE8BB;"
+                            FontFamily="Segoe MDL2 Assets" FontSize="10"
+                            Foreground="{DynamicResource TextBrush}" Cursor="Hand"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            ToolTip="Close"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- Tab Bar -->
-        <Border DockPanel.Dock="Top" Background="{DynamicResource BackgroundBrush}"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
-                Padding="12,5,12,5">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Disabled"
-                          PanningMode="HorizontalOnly">
+        <Border DockPanel.Dock="Top" Background="{DynamicResource TabInactiveBrush}"
+                Padding="0,0,0,0">
+            <DockPanel>
+                <!-- Settings + About icons on the right -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Stretch"
+                            Background="{DynamicResource TabInactiveBrush}">
+                    <Button Name="BtnSettings" Click="BtnSettings_Click"
+                            Width="36" Height="30" Content="&#xE700;"
+                            FontFamily="Segoe MDL2 Assets" FontSize="14"
+                            Background="{DynamicResource TabInactiveBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,1,0,1"
+                            Foreground="{DynamicResource SubtleBrush}" Cursor="Hand"
+                            ToolTip="Settings">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="SettingsBorder"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="SettingsBorder" Property="Background" Value="{DynamicResource TabHoverBrush}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button Name="BtnAbout" Click="BtnAbout_Click"
+                            Width="36" Height="30" Content="&#xE946;"
+                            FontFamily="Segoe MDL2 Assets" FontSize="14"
+                            Background="{DynamicResource TabInactiveBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,1,1"
+                            Foreground="{DynamicResource SubtleBrush}" Cursor="Hand"
+                            ToolTip="About TimeTrack">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="AboutBorder"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="AboutBorder" Property="Background" Value="{DynamicResource TabHoverBrush}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              PanningMode="HorizontalOnly">
                 <StackPanel Orientation="Horizontal">
-                    <!-- Permanent Main tab -->
-                    <Button Height="28" Margin="0,0,2,0" Padding="12,0" FontSize="12" Cursor="Hand"
+                    <!-- Permanent Main tab — flat flush style -->
+                    <Button Height="30" Margin="0" Padding="12,0" FontSize="12" Cursor="Hand"
                             Click="BtnMainTab" ToolTip="Main — entries log and date navigation">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Background" Value="{DynamicResource TabInactiveBrush}"/>
-                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    CornerRadius="4">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                  Margin="{TemplateBinding Padding}"/>
+                                            <Border x:Name="TabBorder" Background="{TemplateBinding Background}"
+                                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,1,1,1">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="2"/>
+                                                        <RowDefinition Height="*"/>
+                                                    </Grid.RowDefinitions>
+                                                    <Border x:Name="AccentBar" Grid.Row="0" Background="Transparent"/>
+                                                    <ContentPresenter Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                      Margin="{TemplateBinding Padding}"/>
+                                                </Grid>
                                             </Border>
+                                            <ControlTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsMainTabFocused}" Value="True">
+                                                    <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource TabAccentBarBrush}"/>
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+                                                    <Setter TargetName="TabBorder" Property="BorderThickness" Value="1,1,1,0"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                                </DataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource TabHoverBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsMainTabFocused}" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
-                                    </DataTrigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource TabHoverBrush}"/>
-                                    </Trigger>
-                                </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <TextBlock Text="Main"/>
                     </Button>
-                    <Border Width="1" Background="{DynamicResource BorderBrush}" Margin="4,2,6,2"/>
                     <ItemsControl ItemsSource="{Binding OpenEntries}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -642,7 +844,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,2,0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
                                     <Button Style="{StaticResource TabButtonStyle}"
                                             Tag="{Binding}" Click="BtnFocusTab"
                                             ToolTip="{Binding TicketDisplay}">
@@ -657,18 +859,48 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <Button Width="28" Height="28" Content="+" FontSize="14"
-                            FontWeight="Bold" Padding="0" Margin="6,0,0,0"
+                    <Button Width="30" Height="30" Content="+" FontSize="14"
+                            FontWeight="Bold" Padding="0" Margin="0,0,0,0"
                             Click="BtnNewEntry"
-                            ToolTip="Start a new open entry"/>
+                            ToolTip="Start a new open entry">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="{DynamicResource TabInactiveBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SubtleBrush}"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="TabBorder" Background="{TemplateBinding Background}"
+                                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,1,1,1">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource TabHoverBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </DockPanel>
         </Border>
 
         <!--Status Bar - MOVED OUTSIDE ScrollViewer-->
-        <StatusBar DockPanel.Dock="Bottom" Height="25">
+        <StatusBar DockPanel.Dock="Bottom" Height="26"
+                   Background="{DynamicResource BackgroundBrush}"
+                   BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                   FontFamily="Segoe UI" FontSize="11"
+                   Foreground="{DynamicResource SubtleBrush}">
             <StatusBarItem>
-                <TextBlock x:Name="StatusText" Text="Ready" />
+                <TextBlock x:Name="StatusText" Text="Ready"
+                           Foreground="{DynamicResource SubtleBrush}"/>
             </StatusBarItem>
         </StatusBar>
 
@@ -678,87 +910,102 @@
             <Grid Visibility="{Binding IsMainTabFocused, Converter={StaticResource BoolToVis}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Date nav + inline stats -->
-                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="12,12,12,8" Padding="12,10">
+                <!-- Stats row with date nav on left -->
+                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="12,12,12,8" Padding="16,10">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="14"
-                                 VerticalAlignment="Center" Margin="0,0,8,0" Text="Date:"/>
-                        <TextBlock Name="txtCurrentDate" Grid.Column="1" VerticalAlignment="Center"
-                                 Margin="0,0,12,0" FontSize="14" Text="{Binding CurrentDate}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsViewingToday}" Value="False">
-                                            <Setter Property="Background" Value="{DynamicResource NotTodayHighlightBrush}"/>
-                                            <Setter Property="Foreground" Value="White"/>
-                                            <Setter Property="Padding" Value="6,2"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <DatePicker Name="CalDate" Grid.Column="2" Width="140"
-                                  HorizontalAlignment="Left" Margin="0,0,12,0"
-                                  SelectedDate="{Binding Date}" SelectedDateChanged="CalLoadDate"
-                                  ToolTip="Select a date to view entries"/>
-                        <Button Name="BtnBack" Grid.Column="3" Width="32" Height="32"
-                              Margin="0,0,4,0" Content="←" FontSize="16"
-                              Click="BtnGoBack" ClickMode="Release"
-                              ToolTip="Go to previous day (Ctrl+Left)"/>
-                        <Button Name="BtnToday" Grid.Column="4" Height="32" Padding="12,0"
-                              Margin="0,0,4,0" Content="Today"
-                              Click="BtnGotoToday" ClickMode="Release"
-                              ToolTip="Return to today's date (Ctrl+T)">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsViewingToday}" Value="False">
-                                            <Setter Property="IsEnabled" Value="True"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                        <Button Name="BtnForward" Grid.Column="5" Width="32" Height="32"
-                              Content="→" FontSize="16"
-                              Click="BtnGoForward" ClickMode="Release"
-                              ToolTip="Go to next day (Ctrl+Right)"/>
-                    </Grid>
-                </Border>
-
-                <!-- Stats row -->
-                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="12,0,12,8" Padding="16,10">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
+                        <!-- Date nav -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <Grid>
+                                <Button Name="DateButton" Click="DateButton_Click"
+                                        Height="28" Padding="12,0"
+                                        FontSize="13" Cursor="Hand"
+                                        Background="{DynamicResource BackgroundBrush}"
+                                        BorderBrush="{DynamicResource TextBoxHoverBorderBrush}"
+                                        BorderThickness="1"
+                                        ToolTip="Click to choose a date">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="DateBtnBorder"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="4">
+                                                <TextBlock x:Name="DateText"
+                                                           Text="{Binding CurrentDate}"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="{TemplateBinding Padding}"
+                                                           FontSize="{TemplateBinding FontSize}"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="DateBtnBorder" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                </Trigger>
+                                                <DataTrigger Binding="{Binding IsViewingToday}" Value="False">
+                                                    <Setter TargetName="DateText" Property="Foreground" Value="{DynamicResource NotTodayHighlightBrush}"/>
+                                                    <Setter TargetName="DateText" Property="FontWeight" Value="Bold"/>
+                                                </DataTrigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                                <Popup Name="DatePopup" Placement="Bottom"
+                                       StaysOpen="False" AllowsTransparency="False"
+                                       PopupAnimation="Slide">
+                                    <Border Background="{DynamicResource BackgroundBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1" Padding="0">
+                                        <StackPanel>
+                                            <Calendar Name="DateCalendar"
+                                                      Margin="0"
+                                                      Background="{DynamicResource BackgroundBrush}"
+                                                      BorderBrush="Transparent"
+                                                      BorderThickness="0"
+                                                      CalendarDayButtonStyle="{StaticResource CalendarDayButtonStyle}"
+                                                      CalendarButtonStyle="{StaticResource CalendarButtonStyle}"
+                                                      CalendarItemStyle="{StaticResource CalendarItemStyle}"
+                                                      SelectedDatesChanged="DateCalendar_SelectedDatesChanged"/>
+                                            <Border BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="0,1,0,0"/>
+                                            <Button Name="CalendarTodayButton"
+                                                    Click="CalendarToday_Click"
+                                                    Height="30"
+                                                    Background="{DynamicResource BackgroundBrush}"
+                                                    BorderThickness="0"
+                                                    Cursor="Hand"
+                                                    FontSize="12"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{DynamicResource PrimaryBrush}"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    ToolTip="Jump to today's date"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
                             <TextBlock Text="TOTAL" FontSize="10" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,2"/>
                             <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding HoursTotal}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1">
+                        <StackPanel Grid.Column="2">
                             <TextBlock Text="GAPS" FontSize="10" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,2"/>
                             <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding GapsTotal}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="2">
+                        <StackPanel Grid.Column="3">
                             <TextBlock Text="BILLABLE" FontSize="10" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,2"/>
                             <TextBlock FontSize="15" FontWeight="SemiBold">
@@ -766,7 +1013,7 @@
                                 <Run Text=" units" Foreground="{DynamicResource SubtleBrush}" FontSize="12" FontWeight="Normal"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel Grid.Column="3">
+                        <StackPanel Grid.Column="4">
                             <TextBlock Text="SELECTED" FontSize="10" FontWeight="SemiBold"
                                        Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,2"/>
                             <TextBlock FontSize="15" FontWeight="SemiBold">
@@ -780,7 +1027,7 @@
                 </Border>
 
                 <!-- DataGrid -->
-                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="12,0,12,8" Padding="12">
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="12,0,12,8" Padding="12">
                     <DataGrid Name="DgTimeRecords"
                              ItemsSource="{Binding Entries}"
                              SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
@@ -907,7 +1154,7 @@
             </Grid>
 
             <!-- ENTRY TAB PANEL -->
-            <Grid VerticalAlignment="Top">
+            <Grid>
                 <Grid.Style>
                     <Style TargetType="Grid">
                         <Setter Property="Visibility" Value="Visible"/>
@@ -924,7 +1171,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
@@ -936,6 +1183,8 @@
                                 <ColumnDefinition Width="155"/>
                                 <ColumnDefinition Width="12"/>
                                 <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="160"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
@@ -990,6 +1239,21 @@
                                          Text="{Binding TicketNumberField, UpdateSourceTrigger=PropertyChanged}"
                                          GotFocus="InputField_GotFocus"
                                          TabIndex="2"/>
+                            </StackPanel>
+
+                            <!-- Preset Dropdown -->
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Text="Preset" Style="{StaticResource LabelStyle}"/>
+                                <ComboBox Name="CmbPreset" TabIndex="5"
+                                          SelectionChanged="CmbPreset_SelectionChanged"
+                                          ToolTip="Select a preset to auto-fill ticket number and notes">
+                                    <ComboBoxItem Content="—" IsSelected="True"/>
+                                    <ComboBoxItem Content="Team Meeting"/>
+                                    <ComboBoxItem Content="Internal Training"/>
+                                    <ComboBoxItem Content="1 on 1"/>
+                                    <ComboBoxItem Content="Break"/>
+                                    <ComboBoxItem Content="Lunch"/>
+                                </ComboBox>
                             </StackPanel>
 
                         </Grid>
@@ -1060,42 +1324,50 @@
 
                         <!-- Notes row: full width -->
                         <Grid Grid.Row="2" Margin="0,12,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="2"/>
-                                <ColumnDefinition Width="28"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Name="FldNotes"
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0">
+                                    <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
+                                    <TextBlock Text="Enter detailed notes for this time entry"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource SubtleBrush}"
+                                               Margin="0,0,0,4"/>
+                                </StackPanel>
+                                <TextBox Grid.Row="1" Name="FldNotes"
                                          Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"
                                          GotFocus="InputField_GotFocus"
                                          TextWrapping="Wrap"
-                                         Height="180"
+                                         MinHeight="120"
                                          AcceptsReturn="True"
                                          SpellCheck.IsEnabled="True"
                                          VerticalScrollBarVisibility="Auto"
                                          TabIndex="3"/>
-                                <TextBlock Text="{Binding NotesCharacterCount}"
+                                <TextBlock Grid.Row="2" Text="{Binding NotesCharacterCount}"
                                            FontSize="11"
                                            Foreground="{DynamicResource SubtleBrush}"
                                            HorizontalAlignment="Right"
                                            Margin="0,3,0,0"/>
-                            </StackPanel>
-                            <Button Name="BtnNotesPopOut" Grid.Column="2"
-                                    Width="28" Height="180" VerticalAlignment="Bottom"
-                                    Content="↗" FontSize="12" Padding="0"
-                                    Click="BtnNotesPopOut_Click"
-                                    ToolTip="Pop out notes editor"/>
+                                <TextBlock Grid.Row="3" Margin="0,4,0,0"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SubtleBrush}"
+                                           TextWrapping="Wrap">
+                                    <Run Text="Tip: Press"/>
+                                    <Run FontWeight="SemiBold" Text="Ctrl+Enter"/>
+                                    <Run Text="to submit."/>
+                                </TextBlock>
+                            </Grid>
                         </Grid>
 
-                        <!-- Bottom row: duration · lunch · submit -->
+                        <!-- Bottom row: duration · submit -->
                         <Grid Grid.Row="3" Margin="0,14,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="16"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
@@ -1105,14 +1377,7 @@
                                        Foreground="{DynamicResource PrimaryBrush}"
                                        VerticalAlignment="Center"/>
 
-                            <CheckBox Name="ChkLunch" Grid.Column="2"
-                                    Content="Lunch Break"
-                                    Checked="ChkLunch_Checked" Unchecked="ChkLunch_Unchecked"
-                                    DataContext="{x:Null}"
-                                    VerticalAlignment="Center"
-                                    ToolTip="Automatically create a 1-hour lunch break entry"/>
-
-                            <Button Name="BtnSub" Grid.Column="4" Height="36" MinWidth="130"
+                            <Button Name="BtnSub" Grid.Column="2" Height="36" MinWidth="130"
                                   TabIndex="4"
                                   Command="{x:Static views:MainWindow.SubmitCommand}">
                                 <Button.Style>

@@ -67,7 +67,7 @@ namespace TimeTrack.Utilities
                 { "PrevDay", new KeyboardShortcut { ActionName = "PrevDay", DisplayName = "Previous Day", Key = Key.Left, Modifiers = ModifierKeys.Control } },
                 { "NextDay", new KeyboardShortcut { ActionName = "NextDay", DisplayName = "Next Day", Key = Key.Right, Modifiers = ModifierKeys.Control } },
                 { "About", new KeyboardShortcut { ActionName = "About", DisplayName = "About TimeTrack", Key = Key.F1, Modifiers = ModifierKeys.None } },
-                { "Options", new KeyboardShortcut { ActionName = "Options", DisplayName = "Options", Key = Key.OemComma, Modifiers = ModifierKeys.Control } },
+                { "Settings", new KeyboardShortcut { ActionName = "Settings", DisplayName = "Settings", Key = Key.OemComma, Modifiers = ModifierKeys.Control } },
                 { "SelectAll", new KeyboardShortcut { ActionName = "SelectAll", DisplayName = "Select All", Key = Key.A, Modifiers = ModifierKeys.Control } }
             };
         }

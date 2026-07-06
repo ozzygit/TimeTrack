@@ -7,12 +7,12 @@ using TimeTrack.Utilities;
 
 namespace TimeTrack.Views.Dialogs
 {
-    public partial class OptionsWindow : Window
+    public partial class SettingsWindow : Window
     {
         private Dictionary<string, KeyboardShortcut> shortcuts = null!; // Suppress CS8618
         private ThemeMode _originalTheme;
 
-        public OptionsWindow()
+        public SettingsWindow()
         {
             InitializeComponent();
             _originalTheme = SettingsManager.Theme;
@@ -135,6 +135,34 @@ namespace TimeTrack.Views.Dialogs
                 LoadShortcuts();
                 MessageBox.Show("Shortcuts have been reset to defaults.", "Reset Complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+        }
+
+        private bool _navCollapsed = false;
+
+        private void BtnHamburger_Click(object sender, RoutedEventArgs e)
+        {
+            _navCollapsed = !_navCollapsed;
+            if (_navCollapsed)
+            {
+                NavPanel.Width = 52;
+                NavTitle.Visibility = Visibility.Collapsed;
+                GeneralTab.Content = string.Empty;
+                KeyboardTab.Content = string.Empty;
+                AppearanceTab.Content = string.Empty;
+            }
+            else
+            {
+                NavPanel.Width = 220;
+                NavTitle.Visibility = Visibility.Visible;
+                GeneralTab.Content = "General";
+                KeyboardTab.Content = "Keyboard Shortcuts";
+                AppearanceTab.Content = "Appearance";
+            }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Cancel_Click(sender, e);
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)

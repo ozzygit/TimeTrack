@@ -124,13 +124,9 @@ namespace TimeTrack.Data
                     return string.Empty;
 
                 double totalMinutes = duration.Value.TotalMinutes;
-                
-                // If no time (0 minutes), no billable units
-                if (totalMinutes < 0.01)
-                    return "0.0";
 
-                // Round up to nearest 6-minute block
-                int blocks = (int)Math.Ceiling(totalMinutes / 6.0);
+                // Round up to nearest 6-minute block, minimum 1 unit
+                int blocks = Math.Max(1, (int)Math.Ceiling(totalMinutes / 6.0));
                 double units = blocks / 10.0;
 
                 return units.ToString("F1");
