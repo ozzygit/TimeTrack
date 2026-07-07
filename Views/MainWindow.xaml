@@ -8,10 +8,11 @@
         xmlns:viewModels="clr-namespace:TimeTrack.ViewModels"
         xmlns:converters="clr-namespace:TimeTrack.Converters"
         xmlns:utils="clr-namespace:TimeTrack.Utilities"
+        xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:TimeKeeperViewModel, IsDesignTimeCreatable=False}"
         Title="{x:Static utils:AppVersion.MainWindowTitle}" Height="675" Width="800" MinWidth="700" MinHeight="500"
-        Icon="/Resources/time.png" Background="{DynamicResource WindowBackground}"
+        Icon="/Resources/Timetrack.ico" Background="{DynamicResource WindowBackground}"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" ResizeMode="CanResizeWithGrip"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
@@ -150,7 +151,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Border x:Name="Border" 
+                        <Border x:Name="Border"
                                 Background="{TemplateBinding Background}"
                                 BorderThickness="0"
                                 CornerRadius="4"
@@ -210,11 +211,11 @@
                                           CornerRadius="6"
                                           Padding="4">
                                         <Border.Effect>
-                                            <DropShadowEffect Color="#000000" Opacity="0.15" 
+                                            <DropShadowEffect Color="#000000" Opacity="0.15"
                                                             BlurRadius="12" ShadowDepth="4" Direction="270"/>
                                         </Border.Effect>
-                                        <ScrollViewer Style="{DynamicResource {ComponentResourceKey 
-                                                      TypeInTargetAssembly={x:Type FrameworkElement}, 
+                                        <ScrollViewer Style="{DynamicResource {ComponentResourceKey
+                                                      TypeInTargetAssembly={x:Type FrameworkElement},
                                                       ResourceId=MenuScrollViewer}}"
                                                     MaxHeight="400">
                                             <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"
@@ -274,8 +275,8 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Separator">
-                        <Border Background="{DynamicResource BorderBrush}" 
-                              Height="1" 
+                        <Border Background="{DynamicResource BorderBrush}"
+                              Height="1"
                               Margin="32,4,8,4"
                               CornerRadius="0.5"/>
                     </ControlTemplate>
@@ -300,7 +301,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
+                            <ContentPresenter HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Margin="{TemplateBinding Padding}"/>
                         </Border>
@@ -369,7 +370,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost" 
+                            <ScrollViewer x:Name="PART_ContentHost"
                                         Focusable="False"
                                         Margin="{TemplateBinding Padding}"/>
                         </Border>
@@ -565,7 +566,7 @@
             <Setter Property="Padding" Value="16"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="#000000" Opacity="0.05" 
+                    <DropShadowEffect Color="#000000" Opacity="0.05"
                                     BlurRadius="8" ShadowDepth="2" Direction="270"/>
                 </Setter.Value>
             </Setter>
@@ -690,6 +691,22 @@
     </Window.InputBindings>
 
     <DockPanel>
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        ToolTipText="TimeTrack"
+                        IconSource="/Resources/Timetrack.ico"
+                        TrayLeftMouseUp="TrayIcon_TrayLeftMouseUp"
+                        Visibility="Collapsed">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Show TimeTrack" Click="TrayMenu_Show_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Settings" Click="TrayMenu_Settings_Click"/>
+                    <MenuItem Header="About" Click="TrayMenu_About_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Exit" Click="TrayMenu_Exit_Click"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
         <!-- Custom Title Bar -->
         <Border DockPanel.Dock="Top" Height="32"
                 Background="{DynamicResource WindowBackground}"
@@ -700,23 +717,9 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <!-- Vector clock icon — theme-aware via DynamicResource -->
-                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="10,0,0,0"
-                         VerticalAlignment="Center" Stretch="Uniform">
-                    <Canvas Width="24" Height="24">
-                        <!-- Clock face circle -->
-                        <Ellipse Canvas.Left="2" Canvas.Top="2" Width="20" Height="20"
-                                 Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
-                                 Fill="Transparent"/>
-                        <!-- Clock hands -->
-                        <Line X1="12" Y1="12" X2="12" Y2="7"
-                              Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                        <Line X1="12" Y1="12" X2="16" Y2="14"
-                              Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                    </Canvas>
-                </Viewbox>
+                <Image Grid.Column="0" Source="/Resources/Timetrack.ico"
+                       Width="16" Height="16" Margin="10,0,0,0"
+                       VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="1"
                            Text="{x:Static utils:AppVersion.MainWindowTitle}"
                            FontFamily="Segoe UI" FontSize="12"
@@ -936,6 +939,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <!-- Date nav -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
@@ -1037,6 +1041,14 @@
                                 <Run Text="m" Foreground="{DynamicResource SubtleBrush}" FontSize="12" FontWeight="Normal"/>
                             </TextBlock>
                         </StackPanel>
+                        <Button Grid.Column="5" Name="BtnRecycleBin" Click="BtnRecycleBin_Click"
+                                Width="28" Height="28" Padding="0" Margin="8,0,0,0"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="{DynamicResource SubtleBrush}" Cursor="Hand"
+                                ToolTip="Recycle Bin — restore deleted entries"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -1345,12 +1357,15 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <StackPanel Grid.Row="0">
+                                <StackPanel Grid.Row="0" Orientation="Horizontal">
                                     <TextBlock Text="Notes" Style="{StaticResource LabelStyle}"/>
-                                    <TextBlock Text="Enter detailed notes for this time entry"
-                                               FontSize="11"
-                                               Foreground="{DynamicResource SubtleBrush}"
-                                               Margin="0,0,0,4"/>
+                                    <Button Name="BtnUndoNotes" Click="BtnUndoNotes_Click"
+                                            Content="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                            Width="24" Height="24" Margin="8,0,0,0"
+                                            Padding="0" Background="Transparent" BorderThickness="0"
+                                            Foreground="{DynamicResource PrimaryBrush}"
+                                            Cursor="Hand" ToolTip="Undo notes to previous saved version"
+                                            VerticalAlignment="Center"/>
                                 </StackPanel>
                                 <TextBox Grid.Row="1" Name="FldNotes"
                                          Text="{Binding NotesField, UpdateSourceTrigger=PropertyChanged}"

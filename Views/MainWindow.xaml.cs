@@ -9,6 +9,7 @@ using System.Windows.Media;
 using TimeTrack.Data;
 using TimeTrack.ViewModels;
 using TimeTrack.Utilities;
+using H.NotifyIcon;
 using TimeTrack.Views.Dialogs;
 
 namespace TimeTrack.Views
@@ -39,7 +40,7 @@ namespace TimeTrack.Views
 
         public static readonly RoutedUICommand SubmitCommand =
             new("Submit Entry", "Submit", typeof(MainWindow));
-            
+
         public static readonly RoutedUICommand SelectAllCommand =
             new("Select All", "SelectAll", typeof(MainWindow));
 
@@ -61,7 +62,7 @@ namespace TimeTrack.Views
 
             LoadEntriesForDate(DateTime.Today);
             InitializeWindow();
-            
+
             ApplyKeyboardShortcuts();
             UpdateMenuGestureTexts();
 
@@ -81,12 +82,14 @@ namespace TimeTrack.Views
             if (_timeKeeper != null)
             {
                 WeakEventManager<TimeKeeperViewModel, PropertyChangedEventArgs>.AddHandler(
-                    _timeKeeper, 
-                    nameof(_timeKeeper.PropertyChanged), 
+                    _timeKeeper,
+                    nameof(_timeKeeper.PropertyChanged),
                     TimeKeeper_PropertyChanged);
             }
 
             Closed += MainWindow_Closed;
+            StateChanged += MainWindow_StateChanged;
+            Closing += MainWindow_Closing;
 
             _statusTimer.Tick += (s, e) =>
             {
@@ -101,6 +104,84 @@ namespace TimeTrack.Views
             Closed -= MainWindow_Closed;
             _statusTimer.Stop();
             _timeKeeper?.Dispose();
+            TrayIcon?.Dispose();
+        }
+
+        private bool _closeToTrayRequested = false;
+        private bool _hasShownTrayNotification = false;
+
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized && SettingsManager.MinimizeToTray && SettingsManager.ShowTrayIcon)
+            {
+                Hide();
+                ShowTrayNotification();
+            }
+        }
+
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            if (SettingsManager.CloseToTray && SettingsManager.ShowTrayIcon && !_closeToTrayRequested)
+            {
+                e.Cancel = true;
+                Hide();
+                ShowTrayNotification();
+            }
+        }
+
+        private void ShowTrayNotification()
+        {
+            if (_hasShownTrayNotification || TrayIcon == null) return;
+            _hasShownTrayNotification = true;
+            try
+            {
+                TrayIcon?.ShowNotification("TimeTrack", "TimeTrack is still running in the background. Click the tray icon to restore.");
+            }
+            catch { }
+        }
+
+        private void TrayIcon_TrayLeftMouseUp(object sender, RoutedEventArgs e)
+        {
+            RestoreFromTray();
+        }
+
+        private void TrayIcon_TrayRightMouseDown(object sender, RoutedEventArgs e)
+        {
+            if (TrayIcon?.ContextMenu != null)
+            {
+                TrayIcon.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void TrayMenu_Show_Click(object sender, RoutedEventArgs e)
+        {
+            RestoreFromTray();
+        }
+
+        private void TrayMenu_Settings_Click(object sender, RoutedEventArgs e)
+        {
+            RestoreFromTray();
+            MenuSettings_Click(this, new RoutedEventArgs());
+        }
+
+        private void TrayMenu_About_Click(object sender, RoutedEventArgs e)
+        {
+            RestoreFromTray();
+            BtnProjectInfo_Click(this, new RoutedEventArgs());
+        }
+
+        private void TrayMenu_Exit_Click(object sender, RoutedEventArgs e)
+        {
+            _closeToTrayRequested = true;
+            Application.Current.Shutdown();
+        }
+
+        private void RestoreFromTray()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+            Focus();
         }
 
         public void UpdateMenuGestureTexts()
@@ -130,7 +211,7 @@ namespace TimeTrack.Views
             bool isPreset = CmbPreset?.SelectedIndex > 0;
             bool hasTicket = !string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField);
             bool hasNotes = !string.IsNullOrWhiteSpace(_timeKeeper.NotesField);
-            
+
             if (!hasStart || !hasEnd) return false;
             if (!isPreset && !hasTicket) return false;
             if (!isPreset && !hasNotes) return false;
@@ -140,10 +221,10 @@ namespace TimeTrack.Views
         private static bool MatchesShortcut(KeyEventArgs e, KeyboardShortcut? shortcut)
         {
             if (shortcut is null || shortcut.Key == Key.None) return false;
-            
+
             // When Alt is pressed, WPF reports e.Key as Key.System and the actual key is in e.SystemKey
             Key actualKey = e.Key == Key.System ? e.SystemKey : e.Key;
-            
+
             return actualKey == shortcut.Key && Keyboard.Modifiers == shortcut.Modifiers;
         }
 
@@ -226,7 +307,7 @@ namespace TimeTrack.Views
         private void InitializeWindow()
         {
             FldStartTime?.Focus();
-            
+
             if (_timeKeeper != null)
             {
                 _timeKeeper.UpdateSelectedTime();
@@ -234,8 +315,11 @@ namespace TimeTrack.Views
                 _timeKeeper.UpdateTimeTotals();
             }
             UpdateSelectAllHeaderState();
+
+            if (TrayIcon != null && SettingsManager.ShowTrayIcon)
+                TrayIcon.Visibility = Visibility.Visible;
         }
-        
+
         private void LoadEntriesForDate(DateTime date)
         {
             if (_timeKeeper == null)
@@ -254,8 +338,8 @@ namespace TimeTrack.Views
             if (!CanSubmit())
             {
                 ShowStatus("Please enter start, end, ticket number (unless Preset), and notes", 5000);
-                
-                if ((CmbPreset == null || CmbPreset.SelectedIndex <= 0) && 
+
+                if ((CmbPreset == null || CmbPreset.SelectedIndex <= 0) &&
                     string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField))
                 {
                     FldTicketNumber?.Focus();
@@ -319,7 +403,7 @@ namespace TimeTrack.Views
                     DgTimeRecords.SelectedIndex = DgTimeRecords.Items.Count - 1;
                 else
                     DgTimeRecords.SelectedIndex = insertedIndex;
-                
+
                 DgTimeRecords.Focus();
                 Database.Update(_timeKeeper.Entries);
                 ShowStatus("Blank entry inserted");
@@ -533,17 +617,17 @@ namespace TimeTrack.Views
         {
             // Find the DataGridRow that was right-clicked
             var row = FindVisualParent<DataGridRow>(e.OriginalSource as DependencyObject);
-            
+
             if (row != null && DgTimeRecords != null)
             {
                 row.IsSelected = true;
                 DgTimeRecords.SelectedItem = row.Item;
                 DgTimeRecords.CurrentItem = row.Item;
                 DgTimeRecords.SelectedIndex = DgTimeRecords.Items.IndexOf(row.Item);
-                
+
                 if (_timeKeeper != null && row.Item is TimeEntry entry)
                     _timeKeeper.SelectedItem = entry;
-                
+
                 e.Handled = true;
             }
         }
@@ -554,7 +638,7 @@ namespace TimeTrack.Views
             {
                 if (child is T parent)
                     return parent;
-                
+
                 child = System.Windows.Media.VisualTreeHelper.GetParent(child);
             }
             return null;
@@ -588,18 +672,18 @@ namespace TimeTrack.Views
         private void FormatTimeField(TextBox? tb)
         {
             if (tb == null || _timeKeeper == null) return;
-            
+
             var ts = TimeStringConverter.StringToTimeSpan(tb.Text);
             if (!ts.HasValue) return;
-            
+
             var formatted = (DateTime.Today + ts.Value).ToString("hh:mm tt", CultureInfo.CurrentCulture);
             tb.Text = formatted;
-            
+
             if (tb == FldStartTime)
                 _timeKeeper.StartTimeField = formatted;
             else if (tb == FldEndTime)
                 _timeKeeper.EndTimeField = formatted;
-            
+
             // Update selected time display after formatting
             _timeKeeper.UpdateSelectedTime();
         }
@@ -696,7 +780,7 @@ namespace TimeTrack.Views
                 System.Diagnostics.Debug.WriteLine("ERROR: StatusText is null!");
                 return;
             }
-            
+
             StatusText.Text = message;
             _statusTimer.Interval = TimeSpan.FromMilliseconds(durationMs);
             _statusTimer.Stop();
@@ -708,6 +792,23 @@ namespace TimeTrack.Views
             if (_timeKeeper == null) return;
             ClearGridSelection();
             _timeKeeper.SetStartTimeToNow();
+        }
+
+        private void BtnUndoNotes_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            _timeKeeper.UndoNotes();
+            ShowStatus("Notes restored to previous version", 3000);
+        }
+
+        private void BtnRecycleBin_Click(object sender, RoutedEventArgs e)
+        {
+            var recycleBin = new RecycleBinWindow { Owner = this };
+            recycleBin.ShowDialog();
+
+            // Refresh entries in case anything was restored
+            if (_timeKeeper != null)
+                CalLoadDate(sender, e);
         }
 
         private void BtnNowEnd_Click(object sender, RoutedEventArgs e)
@@ -762,6 +863,18 @@ namespace TimeTrack.Views
         {
             if (_timeKeeper == null) return;
 
+            int recordedCount = _timeKeeper.Entries.Count(en => en.Recorded);
+            if (recordedCount == 0) return;
+
+            if (SettingsManager.ConfirmDelete)
+            {
+                if (!ModernDialog.Confirm(
+                    $"Are you sure you want to delete {recordedCount} {(recordedCount == 1 ? "entry" : "entries")}?\n" +
+                    "Deleted entries can be restored from the Recycle Bin.",
+                    "Confirm Delete"))
+                    return;
+            }
+
             int count = _timeKeeper.RemoveRecordedEntries();
             if (count > 0)
             {
@@ -781,20 +894,16 @@ namespace TimeTrack.Views
             if (_timeKeeper == null) return;
             if (_timeKeeper.FocusedEntry != null && string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField))
             {
-                System.Windows.MessageBox.Show(
+                ModernDialog.ShowWarning(
                     "Please enter a ticket number before opening a new entry.",
-                    "Ticket Number Required",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
+                    "Ticket Number Required");
                 return;
             }
             if (_timeKeeper.FocusedEntry != null && string.IsNullOrWhiteSpace(_timeKeeper.EndTimeField))
             {
-                System.Windows.MessageBox.Show(
+                ModernDialog.ShowWarning(
                     "Please set a finish time before opening a new entry.",
-                    "Finish Time Required",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
+                    "Finish Time Required");
                 return;
             }
             _timeKeeper.NewEntry();
