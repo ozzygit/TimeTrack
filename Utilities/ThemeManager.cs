@@ -7,8 +7,12 @@ namespace TimeTrack.Utilities
 {
     public static class ThemeManager
     {
-        private const string LightThemeUri = "pack://application:,,,/Themes/LightTheme.xaml";
-        private const string DarkThemeUri  = "pack://application:,,,/Themes/DarkTheme.xaml";
+        private const string LightThemeUri         = "pack://application:,,,/Themes/LightTheme.xaml";
+        private const string DarkThemeUri          = "pack://application:,,,/Themes/DarkTheme.xaml";
+        private const string MonokaiDimmedThemeUri   = "pack://application:,,,/Themes/MonokaiDimmedTheme.xaml";
+        private const string KimbieDarkThemeUri       = "pack://application:,,,/Themes/KimbieDarkTheme.xaml";
+        private const string SolarizedDarkThemeUri    = "pack://application:,,,/Themes/SolarizedDarkTheme.xaml";
+        private const string TomorrowNightBlueThemeUri = "pack://application:,,,/Themes/TomorrowNightBlueTheme.xaml";
 
         public static void ApplySavedTheme()
         {
@@ -27,7 +31,11 @@ namespace TimeTrack.Utilities
             {
                 ThemeMode.Dark          => DarkThemeUri,
                 ThemeMode.Light         => LightThemeUri,
-                ThemeMode.SystemDefault => IsSystemDark() ? DarkThemeUri : LightThemeUri,
+                ThemeMode.MonokaiDimmed    => MonokaiDimmedThemeUri,
+                ThemeMode.KimbieDark       => KimbieDarkThemeUri,
+                ThemeMode.SolarizedDark    => SolarizedDarkThemeUri,
+                ThemeMode.TomorrowNightBlue => TomorrowNightBlueThemeUri,
+                ThemeMode.SystemDefault    => IsSystemDark() ? DarkThemeUri : LightThemeUri,
                 _                       => LightThemeUri
             };
         }
@@ -38,7 +46,11 @@ namespace TimeTrack.Utilities
             var existing = merged.FirstOrDefault(d =>
                 d.Source != null &&
                 (d.Source.OriginalString.Contains("LightTheme") ||
-                 d.Source.OriginalString.Contains("DarkTheme")));
+                 d.Source.OriginalString.Contains("DarkTheme") ||
+                 d.Source.OriginalString.Contains("MonokaiDimmedTheme") ||
+                 d.Source.OriginalString.Contains("KimbieDarkTheme") ||
+                 d.Source.OriginalString.Contains("SolarizedDarkTheme") ||
+                 d.Source.OriginalString.Contains("TomorrowNightBlueTheme")));
 
             if (existing != null && existing.Source == targetUri)
                 return;

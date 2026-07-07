@@ -26,6 +26,10 @@ namespace TimeTrack.Views.Dialogs
             {
                 case ThemeMode.Dark:          ThemeDark.IsChecked          = true; break;
                 case ThemeMode.Light:         ThemeLight.IsChecked         = true; break;
+                case ThemeMode.MonokaiDimmed:    ThemeMonokaiDimmed.IsChecked    = true; break;
+                case ThemeMode.KimbieDark:       ThemeKimbieDark.IsChecked       = true; break;
+                case ThemeMode.SolarizedDark:    ThemeSolarizedDark.IsChecked    = true; break;
+                case ThemeMode.TomorrowNightBlue: ThemeTomorrowNightBlue.IsChecked = true; break;
                 default:                      ThemeSystemDefault.IsChecked = true; break;
             }
         }
@@ -34,6 +38,10 @@ namespace TimeTrack.Views.Dialogs
         {
             if (ThemeDark.IsChecked          == true) return ThemeMode.Dark;
             if (ThemeLight.IsChecked         == true) return ThemeMode.Light;
+            if (ThemeMonokaiDimmed.IsChecked    == true) return ThemeMode.MonokaiDimmed;
+            if (ThemeKimbieDark.IsChecked       == true) return ThemeMode.KimbieDark;
+            if (ThemeSolarizedDark.IsChecked    == true) return ThemeMode.SolarizedDark;
+            if (ThemeTomorrowNightBlue.IsChecked == true) return ThemeMode.TomorrowNightBlue;
             return ThemeMode.SystemDefault;
         }
 

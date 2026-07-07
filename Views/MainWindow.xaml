@@ -700,9 +700,23 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Image Grid.Column="0" Source="/Resources/time.png"
-                       Width="16" Height="16" Margin="10,0,0,0"
-                       VerticalAlignment="Center"/>
+                <!-- Vector clock icon — theme-aware via DynamicResource -->
+                <Viewbox Grid.Column="0" Width="16" Height="16" Margin="10,0,0,0"
+                         VerticalAlignment="Center" Stretch="Uniform">
+                    <Canvas Width="24" Height="24">
+                        <!-- Clock face circle -->
+                        <Ellipse Canvas.Left="2" Canvas.Top="2" Width="20" Height="20"
+                                 Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                                 Fill="Transparent"/>
+                        <!-- Clock hands -->
+                        <Line X1="12" Y1="12" X2="12" Y2="7"
+                              Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <Line X1="12" Y1="12" X2="16" Y2="14"
+                              Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="2"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    </Canvas>
+                </Viewbox>
                 <TextBlock Grid.Column="1"
                            Text="{x:Static utils:AppVersion.MainWindowTitle}"
                            FontFamily="Segoe UI" FontSize="12"

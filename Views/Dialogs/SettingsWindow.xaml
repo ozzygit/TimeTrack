@@ -345,6 +345,34 @@
                                              GroupName="ThemeGroup"
                                              FontFamily="Segoe UI" FontSize="13"
                                              Foreground="{DynamicResource TextBrush}"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeMonokaiDimmed"
+                                             Content="Monokai Dimmed"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource TextBrush}"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeKimbieDark"
+                                             Content="Kimbie Dark"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource TextBrush}"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeSolarizedDark"
+                                             Content="Solarized Dark"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource TextBrush}"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeTomorrowNightBlue"
+                                             Content="Tomorrow Night Blue"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource TextBrush}"
                                              Checked="ThemeRadio_Checked"/>
                             </StackPanel>
                         </Border>

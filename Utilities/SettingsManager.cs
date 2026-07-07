@@ -11,7 +11,11 @@ namespace TimeTrack.Utilities
     {
         SystemDefault,
         Light,
-        Dark
+        Dark,
+        MonokaiDimmed,
+        KimbieDark,
+        SolarizedDark,
+        TomorrowNightBlue
     }
 
     public class KeyboardShortcut
