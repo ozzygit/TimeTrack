@@ -6,7 +6,7 @@
     <StartupObject>TimeTrack.App</StartupObject>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    
+
     <!-- Display name for the built assembly -->
     <AssemblyName>TimeTrack</AssemblyName>
     <Product>TimeTrack v3</Product>
@@ -14,15 +14,15 @@
     <Authors>Jared Kinnear, Richard Moore</Authors>
     <Description>MSP time tracking with instant billable units calculation</Description>
     <Copyright>Copyright © 2020-2026</Copyright>
-    
+
     <!-- Application icon and manifest -->
     <ApplicationIcon>Resources\Timetrack.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>3.0.4</Version>
+    <Version>3.0.5</Version>
     <AssemblyVersion>$(Version.Split('.')[0]).$(Version.Split('.')[1]).0.$(Version.Split('.')[2])</AssemblyVersion>
-    
+
     <!-- Disable automatic Git version suffix -->
     <SourceRevisionId></SourceRevisionId>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
@@ -34,7 +34,7 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    
+
     <!-- Optimization -->
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
