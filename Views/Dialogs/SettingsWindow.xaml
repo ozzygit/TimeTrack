@@ -77,7 +77,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" 
+                            <ContentPresenter HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Margin="{TemplateBinding Padding}"/>
                         </Border>
@@ -225,6 +225,10 @@
                                 Tag="&#xE790;"
                                 Style="{StaticResource NavButtonStyle}"
                                 Checked="NavButton_Checked"/>
+                    <RadioButton x:Name="DataTab" Content="Data"
+                                Tag="&#xE8B7;"
+                                Style="{StaticResource NavButtonStyle}"
+                                Checked="NavButton_Checked"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -242,26 +246,38 @@
                     <!-- General Settings Panel -->
                     <StackPanel x:Name="GeneralPanel" Visibility="Visible">
                         <TextBlock Text="General Settings" Style="{StaticResource SectionHeaderStyle}"/>
-                        <TextBlock Text="Configure general application settings and preferences." 
+                        <TextBlock Text="Configure general application settings and preferences."
                                   Style="{StaticResource SectionDescriptionStyle}"/>
-                        
-                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
+
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="Application Behavior" FontWeight="SemiBold" 
+                                <TextBlock Text="Application Behavior" FontWeight="SemiBold"
                                           FontSize="14" Margin="0,0,0,12"/>
-                                
-                                <CheckBox x:Name="ChkStartWithWindows" Content="Start with Windows (coming soon)" 
+
+                                <CheckBox x:Name="ChkStartWithWindows" Content="Start with Windows"
                                          FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
-                                         IsEnabled="False" Foreground="{DynamicResource SubtleBrush}"/>
-                                
-                                <CheckBox x:Name="ChkMinimizeToTray" Content="Minimize to system tray (coming soon)" 
+                                         Foreground="{DynamicResource TextBrush}"/>
+
+                                <CheckBox x:Name="ChkShowTrayIcon" Content="Show system tray icon"
                                          FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
-                                         IsEnabled="False" Foreground="{DynamicResource SubtleBrush}"/>
-                                
-                                <CheckBox x:Name="ChkConfirmDelete" Content="Confirm before deleting entries (coming soon)" 
-                                         FontFamily="Segoe UI" FontSize="13" IsChecked="True"
-                                         IsEnabled="False" Foreground="{DynamicResource SubtleBrush}"/>
+                                         Foreground="{DynamicResource TextBrush}"
+                                         IsChecked="True"/>
+
+                                <CheckBox x:Name="ChkMinimizeToTray" Content="Minimize to system tray instead of taskbar"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         IsChecked="True"/>
+
+                                <CheckBox x:Name="ChkCloseToTray" Content="Close to system tray (keep running in background)"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         IsChecked="False"/>
+
+                                <CheckBox x:Name="ChkConfirmDelete" Content="Confirm before deleting entries"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         IsChecked="True"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -269,10 +285,10 @@
                     <!-- Keyboard Shortcuts Panel -->
                     <StackPanel x:Name="KeyboardPanel" Visibility="Collapsed">
                         <TextBlock Text="Keyboard Shortcuts" Style="{StaticResource SectionHeaderStyle}"/>
-                        <TextBlock Text="Customize keyboard shortcuts for quick actions throughout the application." 
+                        <TextBlock Text="Customize keyboard shortcuts for quick actions throughout the application."
                                   Style="{StaticResource SectionDescriptionStyle}"/>
-                        
-                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
+
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                BorderThickness="1" CornerRadius="8" Padding="8,4">
                             <ItemsControl x:Name="ShortcutsList">
                                 <ItemsControl.ItemTemplate>
@@ -306,21 +322,21 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </Border>
-                        
-                        <Button Content="Reset to Defaults" Click="ResetDefaults_Click" 
+
+                        <Button Content="Reset to Defaults" Click="ResetDefaults_Click"
                                HorizontalAlignment="Left" Margin="0,12,0,0" Padding="12,6"/>
                     </StackPanel>
 
                     <!-- Appearance Panel -->
                     <StackPanel x:Name="AppearancePanel" Visibility="Collapsed">
                         <TextBlock Text="Appearance" Style="{StaticResource SectionHeaderStyle}"/>
-                        <TextBlock Text="Customize the look and feel of the application." 
+                        <TextBlock Text="Customize the look and feel of the application."
                                   Style="{StaticResource SectionDescriptionStyle}"/>
-                        
-                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
+
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                BorderThickness="1" CornerRadius="8" Padding="16">
                             <StackPanel>
-                                <TextBlock Text="Theme" FontWeight="SemiBold" 
+                                <TextBlock Text="Theme" FontWeight="SemiBold"
                                           FontSize="14" Margin="0,0,0,4"/>
                                 <TextBlock Text="Choose how TimeTrack looks. System Default follows your Windows colour preference."
                                           Foreground="{DynamicResource SubtleBrush}" FontSize="12"
@@ -377,15 +393,100 @@
                             </StackPanel>
                         </Border>
                     </StackPanel>
+
+                    <!-- Data Management Panel -->
+                    <StackPanel x:Name="DataPanel" Visibility="Collapsed">
+                        <TextBlock Text="Data Management" Style="{StaticResource SectionHeaderStyle}"/>
+                        <TextBlock Text="Backup, restore, import, and export your TimeTrack database."
+                                  Style="{StaticResource SectionDescriptionStyle}"/>
+
+                        <!-- Quick Actions -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Quick Actions" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,12"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <Button Content="Create Backup Now" Click="CreateBackup_Click"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Padding="16,6" Margin="0,0,8,0"/>
+                                    <Button Content="Export Database..." Click="ExportDatabase_Click"
+                                            Padding="16,6" Margin="0,0,8,0"/>
+                                    <Button Content="Import Database..." Click="ImportDatabase_Click"
+                                            Padding="16,6"/>
+                                </StackPanel>
+                                <TextBlock Text="A pre-restore backup is automatically created before any restore or import."
+                                          Foreground="{DynamicResource SubtleBrush}" FontSize="12"
+                                          TextWrapping="Wrap" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Backup List -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="Available Backups" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,4"/>
+                                <TextBlock Text="Select a backup and click Restore to roll back to that point."
+                                          Foreground="{DynamicResource SubtleBrush}" FontSize="12"
+                                          TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                <ListView x:Name="BackupList" Height="200" Margin="0,0,0,12"
+                                          Background="Transparent" BorderBrush="{DynamicResource BorderBrush}"
+                                          BorderThickness="1"
+                                          SelectionMode="Single">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding DisplayDate}"
+                                                           FontFamily="Segoe UI" FontSize="13"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DisplaySize}"
+                                                           FontFamily="Segoe UI" FontSize="12"
+                                                           Foreground="{DynamicResource SubtleBrush}"
+                                                           Margin="12,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="8,4"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource NavButtonSelectedBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource NavButtonHoverBrush}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Restore Selected" Click="RestoreBackup_Click"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Padding="16,6" Margin="0,0,8,0"/>
+                                    <Button Content="Open Backup Folder" Click="OpenBackupFolder_Click"
+                                            Padding="16,6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Grid>
             </ScrollViewer>
 
             <!-- Bottom Action Buttons -->
-            <Border Grid.Row="1" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" 
+            <Border Grid.Row="1" Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
                    BorderThickness="0,1,0,0" Padding="24,16">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="OK" Click="OK_Click" IsDefault="True" 
-                           Style="{StaticResource PrimaryButton}" 
+                    <Button Content="OK" Click="OK_Click" IsDefault="True"
+                           Style="{StaticResource PrimaryButton}"
                            Padding="24,6" Margin="0,0,8,0"/>
                     <Button Content="Cancel" Click="Cancel_Click" IsCancel="True" Padding="24,6"/>
                 </StackPanel>

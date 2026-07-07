@@ -1,8 +1,12 @@
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.Win32;
+using TimeTrack.Data;
 using TimeTrack.Utilities;
 
 namespace TimeTrack.Views.Dialogs
@@ -18,6 +22,7 @@ namespace TimeTrack.Views.Dialogs
             _originalTheme = SettingsManager.Theme;
             LoadShortcuts();
             LoadTheme();
+            LoadTraySettings();
         }
 
         private void LoadTheme()
@@ -32,6 +37,15 @@ namespace TimeTrack.Views.Dialogs
                 case ThemeMode.TomorrowNightBlue: ThemeTomorrowNightBlue.IsChecked = true; break;
                 default:                      ThemeSystemDefault.IsChecked = true; break;
             }
+        }
+
+        private void LoadTraySettings()
+        {
+            ChkStartWithWindows.IsChecked = SettingsManager.IsStartWithWindowsEnabled();
+            ChkShowTrayIcon.IsChecked = SettingsManager.ShowTrayIcon;
+            ChkMinimizeToTray.IsChecked = SettingsManager.MinimizeToTray;
+            ChkCloseToTray.IsChecked = SettingsManager.CloseToTray;
+            ChkConfirmDelete.IsChecked = SettingsManager.ConfirmDelete;
         }
 
         private ThemeMode SelectedTheme()
@@ -69,6 +83,10 @@ namespace TimeTrack.Views.Dialogs
                 .ToList();
         }
 
+        private double _originalWidth = 800;
+        private double _originalHeight = 600;
+        private bool _isDataSized = false;
+
         private void NavButton_Checked(object sender, RoutedEventArgs e)
         {
             if (sender is RadioButton radioButton)
@@ -77,21 +95,59 @@ namespace TimeTrack.Views.Dialogs
                 if (GeneralPanel != null) GeneralPanel.Visibility = Visibility.Collapsed;
                 if (KeyboardPanel != null) KeyboardPanel.Visibility = Visibility.Collapsed;
                 if (AppearancePanel != null) AppearancePanel.Visibility = Visibility.Collapsed;
+                if (DataPanel != null) DataPanel.Visibility = Visibility.Collapsed;
 
                 // Show selected panel
                 if (radioButton == GeneralTab && GeneralPanel != null)
                 {
                     GeneralPanel.Visibility = Visibility.Visible;
+                    RestoreWindowSize();
                 }
                 else if (radioButton == KeyboardTab && KeyboardPanel != null)
                 {
                     KeyboardPanel.Visibility = Visibility.Visible;
+                    RestoreWindowSize();
                 }
                 else if (radioButton == AppearanceTab && AppearancePanel != null)
                 {
                     AppearancePanel.Visibility = Visibility.Visible;
+                    RestoreWindowSize();
+                }
+                else if (radioButton == DataTab && DataPanel != null)
+                {
+                    DataPanel.Visibility = Visibility.Visible;
+                    LoadBackups();
+                    EnlargeForDataTab();
                 }
             }
+        }
+
+        private void EnlargeForDataTab()
+        {
+            if (_isDataSized) return;
+            _originalWidth = ActualWidth;
+            _originalHeight = ActualHeight;
+            _isDataSized = true;
+
+            var targetWidth = Math.Max(_originalWidth, 860);
+            var targetHeight = Math.Max(_originalHeight, 720);
+
+            double maxWidth = SystemParameters.WorkArea.Width;
+            double maxHeight = SystemParameters.WorkArea.Height;
+
+            if (targetWidth > maxWidth) targetWidth = maxWidth;
+            if (targetHeight > maxHeight) targetHeight = maxHeight;
+
+            Width = targetWidth;
+            Height = targetHeight;
+        }
+
+        private void RestoreWindowSize()
+        {
+            if (!_isDataSized) return;
+            _isDataSized = false;
+            Width = _originalWidth;
+            Height = _originalHeight;
         }
 
         private void ChangeShortcut_Click(object sender, RoutedEventArgs e)
@@ -112,13 +168,11 @@ namespace TimeTrack.Views.Dialogs
                     if ((selectedKey == Key.Enter || selectedKey == Key.Return) &&
                         selectedMods == ModifierKeys.None)
                     {
-                        MessageBox.Show(
+                        ModernDialog.ShowWarning(
                             "Enter (without a modifier) cannot be used as a keyboard shortcut " +
                             "because it conflicts with typing new lines in the Notes field.\n\n" +
                             "Try adding a modifier such as Ctrl+Enter.",
-                            "Invalid Shortcut",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                            "Invalid Shortcut");
                         return;
                     }
 
@@ -131,17 +185,13 @@ namespace TimeTrack.Views.Dialogs
 
         private void ResetDefaults_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show(
+            if (ModernDialog.Confirm(
                 "Are you sure you want to reset all keyboard shortcuts to their default values?",
-                "Reset to Defaults",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+                "Reset to Defaults"))
             {
                 SettingsManager.ResetToDefaults();
                 LoadShortcuts();
-                MessageBox.Show("Shortcuts have been reset to defaults.", "Reset Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                ModernDialog.ShowInfo("Shortcuts have been reset to defaults.", "Reset Complete");
             }
         }
 
@@ -157,6 +207,7 @@ namespace TimeTrack.Views.Dialogs
                 GeneralTab.Content = string.Empty;
                 KeyboardTab.Content = string.Empty;
                 AppearanceTab.Content = string.Empty;
+                DataTab.Content = string.Empty;
             }
             else
             {
@@ -165,6 +216,7 @@ namespace TimeTrack.Views.Dialogs
                 GeneralTab.Content = "General";
                 KeyboardTab.Content = "Keyboard Shortcuts";
                 AppearanceTab.Content = "Appearance";
+                DataTab.Content = "Data";
             }
         }
 
@@ -181,8 +233,14 @@ namespace TimeTrack.Views.Dialogs
                 SettingsManager.UpdateShortcut(kvp.Key, kvp.Value.Key, kvp.Value.Modifiers);
             }
             SettingsManager.Theme = SelectedTheme();
+            SettingsManager.ShowTrayIcon = ChkShowTrayIcon.IsChecked == true;
+            SettingsManager.MinimizeToTray = ChkMinimizeToTray.IsChecked == true;
+            SettingsManager.CloseToTray = ChkCloseToTray.IsChecked == true;
+            SettingsManager.ConfirmDelete = ChkConfirmDelete.IsChecked == true;
+            SettingsManager.StartWithWindows = ChkStartWithWindows.IsChecked == true;
+            SettingsManager.ApplyStartWithWindows();
             SettingsManager.Save();
-            
+
             DialogResult = true;
             Close();
         }
@@ -192,6 +250,120 @@ namespace TimeTrack.Views.Dialogs
             ThemeManager.Apply(_originalTheme);
             DialogResult = false;
             Close();
+        }
+
+        // ── Data Management ──
+
+        private void LoadBackups()
+        {
+            BackupList.ItemsSource = Database.GetBackups();
+        }
+
+        private void CreateBackup_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Database.CreateBackupNow();
+                LoadBackups();
+                ModernDialog.ShowInfo("Backup created successfully.", "Backup Complete");
+            }
+            catch
+            {
+                // Error already handled by ErrorHandler
+            }
+        }
+
+        private void RestoreBackup_Click(object sender, RoutedEventArgs e)
+        {
+            if (BackupList.SelectedItem is not Database.BackupInfo selected)
+            {
+                ModernDialog.ShowWarning("Please select a backup to restore.", "No Backup Selected");
+                return;
+            }
+
+            if (!ModernDialog.Confirm(
+                $"Are you sure you want to restore the backup from {selected.DisplayDate}?\n\n" +
+                "A safety backup of your current database will be created first.\n" +
+                "The application will need to restart to apply the changes.",
+                "Confirm Restore"))
+                return;
+
+            if (Database.RestoreFromBackup(selected.FilePath))
+            {
+                ModernDialog.ShowInfo(
+                    "Database restored successfully. The application will now restart.",
+                    "Restore Complete");
+
+                RestartApp();
+            }
+        }
+
+        private void ExportDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = "SQLite Database (*.db)|*.db|All Files (*.*)|*.*",
+                FileName = $"timetrack_export_{DateTime.Now:yyyy-MM-dd}.db",
+                Title = "Export Database"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                if (Database.ExportDatabase(dialog.FileName))
+                    ModernDialog.ShowInfo("Database exported successfully.", "Export Complete");
+            }
+        }
+
+        private void ImportDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "SQLite Database (*.db)|*.db|All Files (*.*)|*.*",
+                Title = "Import Database"
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            if (!ModernDialog.Confirm(
+                $"Are you sure you want to import '{Path.GetFileName(dialog.FileName)}'?\n\n" +
+                "This will replace your current database. A safety backup will be created first.\n" +
+                "The application will need to restart to apply the changes.",
+                "Confirm Import"))
+                return;
+
+            if (Database.ImportDatabase(dialog.FileName))
+            {
+                ModernDialog.ShowInfo(
+                    "Database imported successfully. The application will now restart.",
+                    "Import Complete");
+
+                RestartApp();
+            }
+        }
+
+        private void OpenBackupFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var folder = Database.GetBackupFolder();
+            if (Directory.Exists(folder))
+                Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true });
+            else
+                ModernDialog.ShowInfo("No backup folder exists yet.", "No Backups");
+        }
+
+        private void RestartApp()
+        {
+            var exePath = Environment.ProcessPath;
+            if (exePath != null)
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            Application.Current.Shutdown();
         }
     }
 }

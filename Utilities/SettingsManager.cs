@@ -41,7 +41,7 @@ namespace TimeTrack.Utilities
                     result += "Shift+";
                 if (Modifiers.HasFlag(ModifierKeys.Windows))
                     result += "Win+";
-                
+
                 result += Key.ToString();
                 return result;
             }
@@ -53,6 +53,46 @@ namespace TimeTrack.Utilities
         private static readonly string SettingsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "timetrack_settings.xml");
         private static Dictionary<string, KeyboardShortcut> _shortcuts = new();
         public static ThemeMode Theme { get; set; } = ThemeMode.Light;
+        public static bool MinimizeToTray { get; set; } = true;
+        public static bool CloseToTray { get; set; } = false;
+        public static bool ShowTrayIcon { get; set; } = true;
+        public static bool StartWithWindows { get; set; } = false;
+        public static bool ConfirmDelete { get; set; } = true;
+
+        private static readonly string RunRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+        private const string AppName = "TimeTrack";
+
+        public static void ApplyStartWithWindows()
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunRegistryKey, true);
+                if (key == null) return;
+
+                if (StartWithWindows)
+                {
+                    var exePath = Environment.ProcessPath;
+                    if (exePath != null)
+                        key.SetValue(AppName, $"\"{exePath}\"");
+                }
+                else
+                {
+                    if (key.GetValue(AppName) != null)
+                        key.DeleteValue(AppName, false);
+                }
+            }
+            catch { }
+        }
+
+        public static bool IsStartWithWindowsEnabled()
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunRegistryKey, false);
+                return key?.GetValue(AppName) != null;
+            }
+            catch { return false; }
+        }
 
         static SettingsManager()
         {
@@ -103,6 +143,14 @@ namespace TimeTrack.Utilities
                     new XElement("Appearance",
                         new XAttribute("Theme", Theme.ToString())
                     ),
+                    new XElement("Tray",
+                        new XAttribute("MinimizeToTray", MinimizeToTray),
+                        new XAttribute("CloseToTray", CloseToTray),
+                        new XAttribute("ShowTrayIcon", ShowTrayIcon)
+                    ),
+                    new XElement("Behavior",
+                        new XAttribute("ConfirmDelete", ConfirmDelete)
+                    ),
                     new XElement("Shortcuts",
                         _shortcuts.Values.Select(s =>
                             new XElement("Shortcut",
@@ -136,6 +184,24 @@ namespace TimeTrack.Utilities
                 var themeStr = doc.Root?.Element("Appearance")?.Attribute("Theme")?.Value;
                 if (themeStr != null && Enum.TryParse<ThemeMode>(themeStr, out var savedTheme))
                     Theme = savedTheme;
+
+                var trayElem = doc.Root?.Element("Tray");
+                if (trayElem != null)
+                {
+                    if (bool.TryParse(trayElem.Attribute("MinimizeToTray")?.Value, out var minTray))
+                        MinimizeToTray = minTray;
+                    if (bool.TryParse(trayElem.Attribute("CloseToTray")?.Value, out var closeTray))
+                        CloseToTray = closeTray;
+                    if (bool.TryParse(trayElem.Attribute("ShowTrayIcon")?.Value, out var showIcon))
+                        ShowTrayIcon = showIcon;
+                }
+
+                var behaviorElem = doc.Root?.Element("Behavior");
+                if (behaviorElem != null)
+                {
+                    if (bool.TryParse(behaviorElem.Attribute("ConfirmDelete")?.Value, out var confirmDel))
+                        ConfirmDelete = confirmDel;
+                }
 
                 if (shortcutElements != null)
                 {
