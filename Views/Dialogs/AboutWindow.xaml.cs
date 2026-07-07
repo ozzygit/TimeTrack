@@ -13,11 +13,11 @@ namespace TimeTrack.Views.Dialogs
         public AboutWindow()
         {
             InitializeComponent();
-            
+
             var assembly = AppVersion.Assembly ?? Assembly.GetExecutingAssembly();
 
             VersionText.Text = AppVersion.VersionLabel;
-            
+
             // Set description from AssemblyDescription attribute
             var description = assembly.GetCustomAttribute<AssemblyDescriptionAttribute>()?.Description;
             if (!string.IsNullOrEmpty(description))
@@ -28,11 +28,11 @@ namespace TimeTrack.Views.Dialogs
             {
                 DescriptionText.Text = "Time tracking application for daily work entries";
             }
-            
+
             // Set database location
             UpdateDatabaseLocationDisplay();
         }
-        
+
         private void UpdateDatabaseLocationDisplay()
         {
             try
@@ -52,20 +52,18 @@ namespace TimeTrack.Views.Dialogs
                 }
             }
         }
-        
+
         private void DatabaseLocationLink_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 var dbDirectory = Database.GetDatabaseDirectory();
-                
+
                 // Ensure the directory exists before trying to open it
                 if (!System.IO.Directory.Exists(dbDirectory))
                 {
-                    MessageBox.Show($"Database directory does not exist yet:\n{dbDirectory}", 
-                                    "Directory Not Found", 
-                                    MessageBoxButton.OK, 
-                                    MessageBoxImage.Information);
+                    ModernDialog.ShowInfo($"Database directory does not exist yet:\n{dbDirectory}",
+                                    "Directory Not Found");
                     return;
                 }
 
@@ -79,13 +77,11 @@ namespace TimeTrack.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open database folder:\n{ex.Message}", 
-                                "Error", 
-                                MessageBoxButton.OK, 
-                                MessageBoxImage.Error);
+                ModernDialog.ShowError($"Failed to open database folder:\n{ex.Message}",
+                                "Error");
             }
         }
-        
+
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
             try
@@ -100,13 +96,11 @@ namespace TimeTrack.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open link:\n{ex.Message}", 
-                                "Error", 
-                                MessageBoxButton.OK, 
-                                MessageBoxImage.Error);
+                ModernDialog.ShowError($"Failed to open link:\n{ex.Message}",
+                                "Error");
             }
         }
-        
+
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
