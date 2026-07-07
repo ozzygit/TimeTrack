@@ -4,10 +4,11 @@ A lightweight WPF desktop application for tracking time entries with instant bil
 
 ## Screenshots
 
-<img width="402" height="341" alt="image" src="https://github.com/user-attachments/assets/3fa7f5f7-7272-400b-b3fa-09ffdc62251e" />
-<img width="249" height="136" alt="image" src="https://github.com/user-attachments/assets/ab3fe080-4042-4b5e-9f8f-d8b8a66ee4f5" />
-<img width="403" height="186" alt="image" src="https://github.com/user-attachments/assets/0c225927-1b77-4edd-a76a-e3cc947090df" />
-<img width="430" height="324" alt="image" src="https://github.com/user-attachments/assets/f5c751da-7ae2-45d2-a931-3e3423f9655a" />
+| Main Window | Tray Icon |
+|---|---|
+| <img width="402" height="341" alt="Main TimeTrack window showing time entry form with start/end times, ticket field, and notes" src="https://github.com/user-attachments/assets/3fa7f5f7-7272-400b-b3fa-09ffdc62251e" /> | <img width="249" height="136" alt="System tray icon and context menu" src="https://github.com/user-attachments/assets/ab3fe080-4042-4b5e-9f8f-d8b8a66ee4f5" /> |
+| Settings Window | Recycle Bin |
+| <img width="403" height="186" alt="Settings dialog showing theme and keyboard shortcut options" src="https://github.com/user-attachments/assets/0c225927-1b77-4edd-a76a-e3cc947090df" /> | <img width="430" height="324" alt="Recycle Bin window showing deleted entries" src="https://github.com/user-attachments/assets/f5c751da-7ae2-45d2-a931-3e3423f9655a" /> |
 
 ## Features
 
