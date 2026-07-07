@@ -2,6 +2,13 @@
 
 A lightweight WPF desktop application for tracking time entries with instant billable unit calculations. Built for MSP (Managed Service Provider) workflows where tracking time against tickets is essential.
 
+## Screenshots
+
+<img width="402" height="341" alt="image" src="https://github.com/user-attachments/assets/3fa7f5f7-7272-400b-b3fa-09ffdc62251e" />
+<img width="249" height="136" alt="image" src="https://github.com/user-attachments/assets/ab3fe080-4042-4b5e-9f8f-d8b8a66ee4f5" />
+<img width="403" height="186" alt="image" src="https://github.com/user-attachments/assets/0c225927-1b77-4edd-a76a-e3cc947090df" />
+<img width="430" height="324" alt="image" src="https://github.com/user-attachments/assets/f5c751da-7ae2-45d2-a931-3e3423f9655a" />
+
 ## Features
 
 ### Time Entry Management
