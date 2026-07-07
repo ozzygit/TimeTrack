@@ -51,7 +51,7 @@ namespace TimeTrack.ViewModels
             if (_focusedEntry != null)
                 LoadFocusedEntryIntoFields();
 
-            _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+            _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
             _autoSaveTimer.Tick += AutoSaveTimer_Tick;
             _autoSaveTimer.Start();
 
@@ -448,6 +448,28 @@ namespace TimeTrack.ViewModels
             _focusedEntry.StartTime = _startTime;
             _focusedEntry.EndTime = _endTime;
             Database.UpdateDraft(_focusedEntry);
+        }
+
+        public bool CanUndoNotes => _focusedEntry != null;
+
+        public void UndoNotes()
+        {
+            if (_focusedEntry == null) return;
+
+            var lastHistory = Database.GetLastNotesHistory(_focusedEntry.Id);
+            if (lastHistory == null) return;
+
+            // Restore the previous notes directly (bypasses history logging)
+            NotesField = lastHistory.Notes;
+            if (_focusedEntry != null)
+            {
+                _focusedEntry.Notes = lastHistory.Notes;
+                Database.UpdateDraftNotesDirect(_focusedEntry.Id, lastHistory.Notes);
+            }
+
+            // Remove the restored history record so the next undo goes further back
+            Database.RemoveNotesHistoryRecord(lastHistory.Id);
+            OnPropertyChanged(nameof(CanUndoNotes));
         }
 
         private void LoadFocusedEntryIntoFields()

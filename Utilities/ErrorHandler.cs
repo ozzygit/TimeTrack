@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using TimeTrack.Views.Dialogs;
 
 namespace TimeTrack.Utilities
 {
@@ -38,9 +39,10 @@ namespace TimeTrack.Utilities
 
             void ShowError()
             {
-                string caption = "TimeTrack v3 - Error";
-                string msg = $"{errorText}\n\nFunction: {caller}\nLine: {lineNumber}\n\nException:\n{e}\n\nLog: {logPath}";
-                MessageBox.Show(msg, caption, MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                string summary = errorText;
+                string details = $"Function: {caller}\nLine: {lineNumber}\n\nException:\n{e}\n\nLog: {logPath}";
+                var dialog = new ErrorDialog(summary, details);
+                dialog.ShowDialog();
             }
 
             var app = Application.Current;
