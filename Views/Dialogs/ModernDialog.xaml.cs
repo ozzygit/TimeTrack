@@ -107,5 +107,26 @@ namespace TimeTrack.Views.Dialogs
         {
             return Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
         }
+
+        public static string? ShowInput(string message, string title = "Input")
+        {
+            var dialog = new ModernDialog(title, message, MessageBoxButton.OKCancel, MessageBoxImage.Question);
+            var inputBox = new TextBox
+            {
+                Margin = new Thickness(0, 12, 0, 12),
+                Padding = new Thickness(8, 4, 8, 4),
+                FontSize = 14
+            };
+            var panel = dialog.MessageText.Parent as StackPanel;
+            if (panel != null)
+            {
+                var msgIndex = panel.Children.IndexOf(dialog.MessageText);
+                panel.Children.Insert(msgIndex + 1, inputBox);
+            }
+            dialog.ShowDialog();
+            if (dialog.Result == MessageBoxResult.OK)
+                return inputBox.Text;
+            return null;
+        }
     }
 }
