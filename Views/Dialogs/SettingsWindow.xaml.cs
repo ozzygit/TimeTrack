@@ -15,6 +15,7 @@ namespace TimeTrack.Views.Dialogs
     {
         private Dictionary<string, KeyboardShortcut> shortcuts = null!; // Suppress CS8618
         private ThemeMode _originalTheme;
+        private bool _isLoading = true;
 
         public SettingsWindow()
         {
@@ -24,6 +25,7 @@ namespace TimeTrack.Views.Dialogs
             LoadTheme();
             LoadTraySettings();
             LoadAccessibilitySettings();
+            _isLoading = false;
         }
 
         private void LoadTheme()
@@ -488,6 +490,7 @@ namespace TimeTrack.Views.Dialogs
 
         private void MasterToggle_Changed(object sender, RoutedEventArgs e)
         {
+            if (_isLoading) return;
             var isOn = ChkMasterToggle.IsChecked == true;
             foreach (var name in _accessibilityCheckBoxes)
             {
@@ -499,6 +502,7 @@ namespace TimeTrack.Views.Dialogs
 
         private void SubToggle_Changed(object sender, RoutedEventArgs e)
         {
+            if (_isLoading) return;
             UpdateMasterToggle();
             UpdateSubSettingEnabledState();
         }
@@ -520,13 +524,13 @@ namespace TimeTrack.Views.Dialogs
         private void UpdateSubSettingEnabledState()
         {
             // Enable/disable sub-setting controls based on parent toggle
-            TxtTimerCaution.IsEnabled = ChkTimerColourCoding.IsChecked == true;
-            TxtTimerWarning.IsEnabled = ChkTimerColourCoding.IsChecked == true;
-            TxtExpectedSession.IsEnabled = ChkSessionProgress.IsChecked == true;
-            TxtCheckInInterval.IsEnabled = ChkCheckIn.IsChecked == true;
-            TxtIdleThreshold.IsEnabled = ChkIdleDetection.IsChecked == true;
-            TxtAutoPause.IsEnabled = ChkIdleDetection.IsChecked == true;
-            TxtEodTime.IsEnabled = ChkEodReminder.IsChecked == true;
+            if (TxtTimerCaution != null) TxtTimerCaution.IsEnabled = ChkTimerColourCoding.IsChecked == true;
+            if (TxtTimerWarning != null) TxtTimerWarning.IsEnabled = ChkTimerColourCoding.IsChecked == true;
+            if (TxtExpectedSession != null) TxtExpectedSession.IsEnabled = ChkSessionProgress.IsChecked == true;
+            if (TxtCheckInInterval != null) TxtCheckInInterval.IsEnabled = ChkCheckIn.IsChecked == true;
+            if (TxtIdleThreshold != null) TxtIdleThreshold.IsEnabled = ChkIdleDetection.IsChecked == true;
+            if (TxtAutoPause != null) TxtAutoPause.IsEnabled = ChkIdleDetection.IsChecked == true;
+            if (TxtEodTime != null) TxtEodTime.IsEnabled = ChkEodReminder.IsChecked == true;
         }
     }
 }
