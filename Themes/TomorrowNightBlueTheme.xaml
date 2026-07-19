@@ -58,6 +58,11 @@
     <!-- Disabled input background -->
     <SolidColorBrush x:Key="DisabledInputBrush"        Color="#003E78"/>
 
+    <!-- Timer colour coding -->
+    <SolidColorBrush x:Key="TimerNormalBrush"          Color="#7FB369"/>
+    <SolidColorBrush x:Key="TimerCautionBrush"         Color="#E5B567"/>
+    <SolidColorBrush x:Key="TimerWarningBrush"         Color="#D6776D"/>
+
     <!-- Calendar -->
     <SolidColorBrush x:Key="CalendarDayForeground"     Color="#FFFFFF"/>
     <SolidColorBrush x:Key="CalendarBlackoutForeground" Color="#5C70A0"/>
