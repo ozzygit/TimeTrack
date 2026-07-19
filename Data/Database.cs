@@ -899,4 +899,64 @@ public static class Database
             return TimeOnly.FromTimeSpan(ts);
         return null;
     }
+
+    public static List<string> GetRecentTickets(int limit = 10)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT DISTINCT ticket_number
+                FROM time_entries
+                WHERE ticket_number IS NOT NULL AND ticket_number != ''
+                ORDER BY date DESC, id DESC
+                LIMIT @limit";
+            cmd.Parameters.AddWithValue("@limit", limit);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                result.Add(reader.GetString(0));
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get recent tickets: {ex.Message}");
+        }
+        return result;
+    }
+
+    public static int GetDayStreak()
+    {
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT DISTINCT date FROM time_entries
+                WHERE ticket_number IS NOT NULL AND ticket_number != ''
+                ORDER BY date DESC LIMIT 365";
+            var dates = new HashSet<DateTime>();
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                dates.Add(StringToDate(reader.GetString(0)));
+            }
+
+            int streak = 0;
+            var checkDate = DateTime.Today;
+            while (dates.Contains(checkDate))
+            {
+                streak++;
+                checkDate = checkDate.AddDays(-1);
+            }
+            return streak;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get day streak: {ex.Message}");
+            return 0;
+        }
+    }
 }
