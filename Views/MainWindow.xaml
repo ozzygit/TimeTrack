@@ -1156,7 +1156,7 @@
                         <TextBlock FontSize="12" Foreground="{DynamicResource SubtleBrush}"
                                    Text="{Binding DayAtAGlanceSummary}"/>
                         <ProgressBar Height="4" Minimum="0" Maximum="100" Margin="0,4,0,0"
-                                     Value="{Binding DayProgressValue}"
+                                     Value="{Binding DayProgressValue, Mode=OneWay}"
                                      Foreground="{DynamicResource PrimaryBrush}"
                                      Background="{DynamicResource BorderBrush}"
                                      BorderThickness="0"/>
@@ -1493,7 +1493,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <ProgressBar Grid.Column="0" Height="6" Minimum="0" Maximum="100"
-                                             Value="{Binding SessionProgressValue}"
+                                             Value="{Binding SessionProgressValue, Mode=OneWay}"
                                              Foreground="{DynamicResource PrimaryBrush}"
                                              Background="{DynamicResource BorderBrush}"
                                              BorderThickness="0">
