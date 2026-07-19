@@ -89,6 +89,8 @@ namespace TimeTrack.Utilities
 
         // 1a. Day Timeline Bar
         public static bool DayTimelineEnabled { get; set; } = true;
+        public static int TimelineStartHour { get; set; } = 7;
+        public static int TimelineEndHour { get; set; } = 19;
 
         // 1b. Elapsed Time Colour Coding
         public static bool TimerColourCodingEnabled { get; set; } = true;
@@ -275,6 +277,8 @@ namespace TimeTrack.Utilities
                     new XElement("Accessibility",
                         new XAttribute("PromptShown", AccessibilityPromptShown),
                         new XAttribute("DayTimelineEnabled", DayTimelineEnabled),
+                        new XAttribute("TimelineStartHour", TimelineStartHour),
+                        new XAttribute("TimelineEndHour", TimelineEndHour),
                         new XAttribute("TimerColourCodingEnabled", TimerColourCodingEnabled),
                         new XAttribute("TimerCautionMinutes", TimerCautionMinutes),
                         new XAttribute("TimerWarningMinutes", TimerWarningMinutes),
@@ -382,6 +386,10 @@ namespace TimeTrack.Utilities
                         AccessibilityPromptShown = promptShown;
                     if (bool.TryParse(acc.Attribute("DayTimelineEnabled")?.Value, out var dayTimeline))
                         DayTimelineEnabled = dayTimeline;
+                    if (int.TryParse(acc.Attribute("TimelineStartHour")?.Value, out var tlStart))
+                        TimelineStartHour = tlStart;
+                    if (int.TryParse(acc.Attribute("TimelineEndHour")?.Value, out var tlEnd))
+                        TimelineEndHour = tlEnd;
                     if (bool.TryParse(acc.Attribute("TimerColourCodingEnabled")?.Value, out var timerColour))
                         TimerColourCodingEnabled = timerColour;
                     if (int.TryParse(acc.Attribute("TimerCautionMinutes")?.Value, out var cautionMin))

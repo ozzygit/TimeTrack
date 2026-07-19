@@ -1,0 +1,101 @@
+<Window x:Class="TimeTrack.Views.Dialogs.ParkingLotDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Parking Lot" 
+        Width="480" Height="520"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource WindowBackground}"
+        ResizeMode="CanResize" MinWidth="360" MinHeight="320"
+        ShowInTaskbar="False">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+    
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Distraction Parking Lot" FontSize="18" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextBrush}" Margin="0,0,0,4"/>
+            <TextBlock Text="Quickly jot down distracting thoughts. Deal with them later."
+                       FontSize="12" Foreground="{DynamicResource SubtleBrush}"/>
+        </StackPanel>
+        
+        <!-- Input area -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" Name="TxtInput" 
+                     FontSize="14" Padding="8,6"
+                     BorderBrush="{DynamicResource BorderBrush}"
+                     Background="{DynamicResource BackgroundBrush}"
+                     Foreground="{DynamicResource TextBrush}"
+                     KeyDown="TxtInput_KeyDown"
+                     ToolTip="Type a thought and press Enter to park it"/>
+            <Button Grid.Column="2" Name="BtnPark" Content="Park" 
+                    Padding="16,6" Click="BtnPark_Click"
+                    Style="{DynamicResource PrimaryButton}"/>
+        </Grid>
+        
+        <!-- Items list -->
+        <Border Grid.Row="2" Background="{DynamicResource BackgroundBrush}" 
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6">
+            <ListBox Name="LstItems" 
+                     ItemsSource="{Binding ParkingLotItems}"
+                     Background="Transparent" BorderThickness="0"
+                     Foreground="{DynamicResource TextBrush}"
+                     FontSize="13" Padding="4"
+                     HorizontalContentAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding DisplayTimestamp}" 
+                                       FontSize="11" Foreground="{DynamicResource SubtleBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Text}" 
+                                       TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="Done" FontSize="11"
+                                    Padding="8,2" Margin="4,0,0,0"
+                                    Background="Transparent" BorderThickness="1"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    Foreground="{DynamicResource TextBrush}"
+                                    Cursor="Hand" Click="BtnResolve_Click"
+                                    Tag="{Binding .}"
+                                    ToolTip="Mark as resolved"/>
+                            <Button Grid.Column="3" Content="X" FontSize="11"
+                                    Padding="8,2" Margin="4,0,0,0"
+                                    Background="Transparent" BorderThickness="0"
+                                    Foreground="{DynamicResource SubtleBrush}"
+                                    Cursor="Hand" Click="BtnDelete_Click"
+                                    Tag="{Binding .}"
+                                    ToolTip="Delete"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+        
+        <!-- Status / count -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
+            <TextBlock Name="TxtStatus" FontSize="11" Foreground="{DynamicResource SubtleBrush}"
+                       Text="0 items parked"/>
+            <TextBlock Name="TxtHint" FontSize="11" Foreground="{DynamicResource SubtleBrush}"
+                       Text="  —  Press Enter to park quickly" Margin="12,0,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>

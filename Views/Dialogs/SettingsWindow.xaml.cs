@@ -397,6 +397,8 @@ namespace TimeTrack.Views.Dialogs
         private void LoadAccessibilitySettings()
         {
             ChkDayTimeline.IsChecked = SettingsManager.DayTimelineEnabled;
+            TxtTimelineStart.Text = SettingsManager.TimelineStartHour.ToString();
+            TxtTimelineEnd.Text = SettingsManager.TimelineEndHour.ToString();
             ChkTimerColourCoding.IsChecked = SettingsManager.TimerColourCodingEnabled;
             TxtTimerCaution.Text = SettingsManager.TimerCautionMinutes.ToString();
             TxtTimerWarning.Text = SettingsManager.TimerWarningMinutes.ToString();
@@ -451,6 +453,10 @@ namespace TimeTrack.Views.Dialogs
         private void SaveAccessibilitySettings()
         {
             SettingsManager.DayTimelineEnabled = ChkDayTimeline.IsChecked == true;
+            if (int.TryParse(TxtTimelineStart.Text, out var tlStart) && tlStart >= 0 && tlStart <= 23)
+                SettingsManager.TimelineStartHour = tlStart;
+            if (int.TryParse(TxtTimelineEnd.Text, out var tlEnd) && tlEnd >= 1 && tlEnd <= 24)
+                SettingsManager.TimelineEndHour = tlEnd;
             SettingsManager.TimerColourCodingEnabled = ChkTimerColourCoding.IsChecked == true;
             if (int.TryParse(TxtTimerCaution.Text, out var caution)) SettingsManager.TimerCautionMinutes = caution;
             if (int.TryParse(TxtTimerWarning.Text, out var warning)) SettingsManager.TimerWarningMinutes = warning;
@@ -524,6 +530,8 @@ namespace TimeTrack.Views.Dialogs
         private void UpdateSubSettingEnabledState()
         {
             // Enable/disable sub-setting controls based on parent toggle
+            if (TxtTimelineStart != null) TxtTimelineStart.IsEnabled = ChkDayTimeline.IsChecked == true;
+            if (TxtTimelineEnd != null) TxtTimelineEnd.IsEnabled = ChkDayTimeline.IsChecked == true;
             if (TxtTimerCaution != null) TxtTimerCaution.IsEnabled = ChkTimerColourCoding.IsChecked == true;
             if (TxtTimerWarning != null) TxtTimerWarning.IsEnabled = ChkTimerColourCoding.IsChecked == true;
             if (TxtExpectedSession != null) TxtExpectedSession.IsEnabled = ChkSessionProgress.IsChecked == true;

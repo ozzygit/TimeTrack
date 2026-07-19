@@ -366,6 +366,14 @@ public static class Database
             )");
             Exec(conn, "CREATE INDEX IF NOT EXISTS IX_notes_history_draft_id ON notes_history (draft_id, id DESC)");
 
+            Exec(conn, @"CREATE TABLE IF NOT EXISTS parking_lot (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                text        TEXT NOT NULL,
+                created_at  TEXT NOT NULL,
+                resolved_at TEXT
+            )");
+            Exec(conn, "CREATE INDEX IF NOT EXISTS IX_parking_lot_created ON parking_lot (created_at DESC)");
+
             Exec(conn, "PRAGMA optimize");
         }
         catch (Exception ex)
@@ -898,6 +906,91 @@ public static class Database
         if (TimeSpan.TryParseExact(str, "c", CultureInfo.InvariantCulture, TimeSpanStyles.None, out var ts))
             return TimeOnly.FromTimeSpan(ts);
         return null;
+    }
+
+    public static List<ParkingLotItem> RetrieveParkingLotItems()
+    {
+        var result = new List<ParkingLotItem>();
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT id, text, created_at, resolved_at
+                FROM parking_lot
+                WHERE resolved_at IS NULL
+                ORDER BY created_at DESC";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                result.Add(new ParkingLotItem
+                {
+                    Id = reader.GetInt32(0),
+                    Text = reader.GetString(1),
+                    CreatedAt = DateTime.Parse(reader.GetString(2), null, System.Globalization.DateTimeStyles.RoundtripKind),
+                    ResolvedAt = reader.IsDBNull(3) ? null : DateTime.Parse(reader.GetString(3), null, System.Globalization.DateTimeStyles.RoundtripKind)
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to retrieve parking lot items: {ex.Message}");
+        }
+        return result;
+    }
+
+    public static int AddParkingLotItem(string text)
+    {
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO parking_lot (text, created_at)
+                VALUES (@text, @createdAt);
+                SELECT last_insert_rowid()";
+            cmd.Parameters.AddWithValue("@text", text);
+            cmd.Parameters.AddWithValue("@createdAt", DateTime.Now.ToString("o"));
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to add parking lot item: {ex.Message}");
+            return -1;
+        }
+    }
+
+    public static void ResolveParkingLotItem(int id)
+    {
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE parking_lot SET resolved_at = @resolvedAt WHERE id = @id";
+            cmd.Parameters.AddWithValue("@resolvedAt", DateTime.Now.ToString("o"));
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to resolve parking lot item: {ex.Message}");
+        }
+    }
+
+    public static void DeleteParkingLotItem(int id)
+    {
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM parking_lot WHERE id = @id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to delete parking lot item: {ex.Message}");
+        }
     }
 
     public static List<string> GetRecentTickets(int limit = 10)

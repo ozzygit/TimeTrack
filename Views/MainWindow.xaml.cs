@@ -1056,13 +1056,8 @@ namespace TimeTrack.Views
         private void BtnParkingLot_Click(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null) return;
-            // Simple approach: use ModernDialog to get input
-            var result = ModernDialog.ShowInput("Park a quick thought:", "Parking Lot");
-            if (!string.IsNullOrWhiteSpace(result))
-            {
-                _timeKeeper.AddParkingLotItem(result);
-                ShowStatus("Parked!", 3000);
-            }
+            var dialog = new ParkingLotDialog(_timeKeeper) { Owner = this };
+            dialog.ShowDialog();
         }
     }
 }

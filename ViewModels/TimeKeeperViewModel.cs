@@ -83,6 +83,7 @@ namespace TimeTrack.ViewModels
 
             RefreshRecentTickets();
             RefreshDayStreak();
+            RefreshParkingLotItems();
         }
 
         private void AutoSaveTimer_Tick(object? sender, EventArgs e) => SaveFocusedEntryToDb();
@@ -334,11 +335,25 @@ namespace TimeTrack.ViewModels
             }
         }
 
+        public string TimelineLabel
+        {
+            get
+            {
+                int start = SettingsManager.TimelineStartHour;
+                int end = SettingsManager.TimelineEndHour;
+                string FormatHour(int h) => h == 0 ? "12am" : h < 12 ? $"{h}am" : h == 12 ? "12pm" : $"{h - 12}pm";
+                return $"Day Timeline ({FormatHour(start)} – {FormatHour(end)})";
+            }
+        }
+
         public List<DayTimelineSegment> DayTimelineSegments
         {
             get
             {
                 var segments = new List<DayTimelineSegment>();
+                double spanMinutes = (SettingsManager.TimelineEndHour - SettingsManager.TimelineStartHour) * 60;
+                if (spanMinutes <= 0) spanMinutes = 12 * 60;
+                double offsetMinutes = SettingsManager.TimelineStartHour * 60;
                 foreach (var entry in _timeRecords.OrderBy(e => e.StartTime))
                 {
                     if (entry.StartTime == null || entry.EndTime == null) continue;
@@ -348,8 +363,8 @@ namespace TimeTrack.ViewModels
 
                     segments.Add(new DayTimelineSegment
                     {
-                        StartPercent = start.TotalMinutes / (12 * 60) * 100,
-                        WidthPercent = (end - start).TotalMinutes / (12 * 60) * 100,
+                        StartPercent = (start.TotalMinutes - offsetMinutes) / spanMinutes * 100,
+                        WidthPercent = (end - start).TotalMinutes / spanMinutes * 100,
                         TicketNumber = entry.TicketNumber,
                         HasTicket = !string.IsNullOrWhiteSpace(entry.TicketNumber)
                     });
@@ -363,8 +378,11 @@ namespace TimeTrack.ViewModels
             get
             {
                 if (!IsViewingToday) return -1;
+                double spanMinutes = (SettingsManager.TimelineEndHour - SettingsManager.TimelineStartHour) * 60;
+                if (spanMinutes <= 0) spanMinutes = 12 * 60;
+                double offsetMinutes = SettingsManager.TimelineStartHour * 60;
                 var now = DateTime.Now.TimeOfDay;
-                return now.TotalMinutes / (12 * 60) * 100;
+                return (now.TotalMinutes - offsetMinutes) / spanMinutes * 100;
             }
         }
 
@@ -379,7 +397,7 @@ namespace TimeTrack.ViewModels
 
         public string StreakDisplay => _dayStreak > 0 ? $"{_dayStreak} day streak" : string.Empty;
 
-        public ObservableCollection<string> ParkingLotItems { get; } = new();
+        public ObservableCollection<ParkingLotItem> ParkingLotItems { get; } = new();
 
         public void RefreshRecentTickets()
         {
@@ -394,11 +412,39 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(StreakDisplay));
         }
 
+        public void RefreshParkingLotItems()
+        {
+            ParkingLotItems.Clear();
+            foreach (var item in Database.RetrieveParkingLotItems())
+                ParkingLotItems.Add(item);
+        }
+
         public void AddParkingLotItem(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
-            var timestamp = DateTime.Now.ToString("hh:mm tt");
-            ParkingLotItems.Add($"[{timestamp}] {text.Trim()}");
+            var id = Database.AddParkingLotItem(text.Trim());
+            if (id > 0)
+            {
+                ParkingLotItems.Insert(0, new ParkingLotItem
+                {
+                    Id = id,
+                    Text = text.Trim(),
+                    CreatedAt = DateTime.Now
+                });
+            }
+        }
+
+        public void ResolveParkingLotItem(ParkingLotItem item)
+        {
+            Database.ResolveParkingLotItem(item.Id);
+            item.ResolvedAt = DateTime.Now;
+            OnPropertyChanged(nameof(ParkingLotItems));
+        }
+
+        public void DeleteParkingLotItem(ParkingLotItem item)
+        {
+            Database.DeleteParkingLotItem(item.Id);
+            ParkingLotItems.Remove(item);
         }
 
         public ObservableCollection<TimeEntry> Entries
@@ -987,6 +1033,7 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(DayAtAGlanceSummary));
             OnPropertyChanged(nameof(DayTimelineSegments));
             OnPropertyChanged(nameof(CurrentTimeMarkerPercent));
+            OnPropertyChanged(nameof(TimelineLabel));
         }
 
         public void UpdateSelectedTime()

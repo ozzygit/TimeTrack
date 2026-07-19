@@ -1084,21 +1084,13 @@
                 <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="12,0,12,4" Padding="16,8"
                         Visibility="{Binding IsFocusModeVisible, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
-                        <TextBlock Text="Day Timeline (7am – 7pm)" FontSize="11" Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding TimelineLabel}" FontSize="11" Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,4"/>
                         <Grid Height="24" ClipToBounds="True">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <!-- Background track -->
                             <Border Background="{DynamicResource BorderBrush}" Opacity="0.3" CornerRadius="3"/>
-                            <!-- Hour labels -->
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Opacity="0.4">
-                                <TextBlock Text="7am" FontSize="9" Foreground="{DynamicResource SubtleBrush}" Margin="0,0,0,0"/>
-                                <TextBlock Text="10am" FontSize="9" Foreground="{DynamicResource SubtleBrush}" Margin="80,0,0,0"/>
-                                <TextBlock Text="1pm" FontSize="9" Foreground="{DynamicResource SubtleBrush}" Margin="80,0,0,0"/>
-                                <TextBlock Text="4pm" FontSize="9" Foreground="{DynamicResource SubtleBrush}" Margin="80,0,0,0"/>
-                                <TextBlock Text="7pm" FontSize="9" Foreground="{DynamicResource SubtleBrush}" Margin="80,0,0,0"/>
-                            </StackPanel>
                             <!-- Entry blocks -->
                             <ItemsControl ItemsSource="{Binding DayTimelineSegments}">
                                 <ItemsControl.ItemsPanel>

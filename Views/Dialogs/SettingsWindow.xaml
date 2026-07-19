@@ -515,9 +515,21 @@
                                           FontSize="14" Margin="0,0,0,12" Foreground="{DynamicResource TextBrush}"/>
 
                                 <CheckBox x:Name="ChkDayTimeline" Content="Show day timeline bar on Main tab"
-                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
                                          Foreground="{DynamicResource TextBrush}" IsChecked="True"
                                          Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                                <StackPanel Margin="24,0,0,8" Orientation="Horizontal">
+                                    <TextBlock Text="Timeline hours: " FontSize="12"
+                                               Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="TxtTimelineStart" Width="40" FontSize="12" Padding="4,2"
+                                             BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="to" FontSize="12" Foreground="{DynamicResource SubtleBrush}"
+                                               VerticalAlignment="Center" Margin="4,0,4,0"/>
+                                    <TextBox x:Name="TxtTimelineEnd" Width="40" FontSize="12" Padding="4,2"
+                                             BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="(24h, e.g. 7 to 19)" FontSize="11" Foreground="{DynamicResource SubtleBrush}"
+                                               VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                </StackPanel>
 
                                 <CheckBox x:Name="ChkTimerColourCoding" Content="Colour-code timer by elapsed duration"
                                          FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
