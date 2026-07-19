@@ -13,6 +13,7 @@ namespace TimeTrack.Utilities
         private const string KimbieDarkThemeUri       = "pack://application:,,,/Themes/KimbieDarkTheme.xaml";
         private const string SolarizedDarkThemeUri    = "pack://application:,,,/Themes/SolarizedDarkTheme.xaml";
         private const string TomorrowNightBlueThemeUri = "pack://application:,,,/Themes/TomorrowNightBlueTheme.xaml";
+        private const string HighContrastThemeUri   = "pack://application:,,,/Themes/HighContrastTheme.xaml";
 
         public static void ApplySavedTheme()
         {
@@ -35,6 +36,7 @@ namespace TimeTrack.Utilities
                 ThemeMode.KimbieDark       => KimbieDarkThemeUri,
                 ThemeMode.SolarizedDark    => SolarizedDarkThemeUri,
                 ThemeMode.TomorrowNightBlue => TomorrowNightBlueThemeUri,
+                ThemeMode.HighContrast    => HighContrastThemeUri,
                 ThemeMode.SystemDefault    => IsSystemDark() ? DarkThemeUri : LightThemeUri,
                 _                       => LightThemeUri
             };
@@ -50,7 +52,8 @@ namespace TimeTrack.Utilities
                  d.Source.OriginalString.Contains("MonokaiDimmedTheme") ||
                  d.Source.OriginalString.Contains("KimbieDarkTheme") ||
                  d.Source.OriginalString.Contains("SolarizedDarkTheme") ||
-                 d.Source.OriginalString.Contains("TomorrowNightBlueTheme")));
+                 d.Source.OriginalString.Contains("TomorrowNightBlueTheme") ||
+                 d.Source.OriginalString.Contains("HighContrastTheme")));
 
             if (existing != null && existing.Source == targetUri)
                 return;
