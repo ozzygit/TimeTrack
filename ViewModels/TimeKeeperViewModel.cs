@@ -34,6 +34,18 @@ namespace TimeTrack.ViewModels
         private string _selectedMins = "-";
         private string _billableUnits = "-";
         private TimeEntry? _selectedItem;
+        private bool _isFocusMode;
+        private string _contextSummary = string.Empty;
+        private DispatcherTimer _checkInTimer;
+        private DispatcherTimer _eodTimer;
+        private DateTime _lastInputTime = DateTime.Now;
+        private bool _isIdleNudgeShown;
+
+        public event Action<string, string>? TrayNotificationRequested;
+        public event Action<string, string>? IdleNudgeRequested;
+        public event Action? EodReminderRequested;
+
+        public enum TimerLevel { Normal, Caution, Warning }
 
         public TimeKeeperViewModel()
         {
@@ -57,11 +69,104 @@ namespace TimeTrack.ViewModels
 
             _uiTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _uiTimer.Tick += UiTimer_Tick;
+            SyncUiTimerState();
+
+            // Check-in timer for periodic notifications while timer is running
+            _checkInTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(SettingsManager.CheckInIntervalMinutes) };
+            _checkInTimer.Tick += CheckInTimer_Tick;
+
+            // EOD reminder timer — checks every minute if we've passed the configured time
+            _eodTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+            _eodTimer.Tick += EodTimer_Tick;
+            if (SettingsManager.EodReminderEnabled)
+                _eodTimer.Start();
+
+            RefreshRecentTickets();
+            RefreshDayStreak();
         }
 
         private void AutoSaveTimer_Tick(object? sender, EventArgs e) => SaveFocusedEntryToDb();
 
-        private void UiTimer_Tick(object? sender, EventArgs e) => OnPropertyChanged(nameof(TimerElapsedDisplay));
+        private void UiTimer_Tick(object? sender, EventArgs e)
+        {
+            OnPropertyChanged(nameof(TimerElapsedDisplay));
+            OnPropertyChanged(nameof(TimeOfDayLabel));
+            OnPropertyChanged(nameof(TimerElapsedLevel));
+            OnPropertyChanged(nameof(SessionProgressValue));
+            OnPropertyChanged(nameof(IsOvertime));
+            OnPropertyChanged(nameof(OvertimeDisplay));
+            OnPropertyChanged(nameof(CurrentTimeMarkerPercent));
+
+            // Idle detection check
+            if (SettingsManager.IdleDetectionEnabled && _focusedEntry != null && _focusedEntry.IsTimerRunning)
+            {
+                var idleMinutes = (DateTime.Now - _lastInputTime).TotalMinutes;
+                if (idleMinutes >= SettingsManager.IdleThresholdMinutes && !_isIdleNudgeShown)
+                {
+                    _isIdleNudgeShown = true;
+                    var ticket = string.IsNullOrWhiteSpace(_focusedEntry.TicketNumber) ? "current entry" : _focusedEntry.TicketNumber;
+                    IdleNudgeRequested?.Invoke($"You've been idle for {(int)idleMinutes} min", $"Still working on {ticket}? Elapsed: {TimerElapsedDisplay}");
+                }
+            }
+        }
+
+        private void CheckInTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_focusedEntry == null || !_focusedEntry.IsTimerRunning) return;
+            var ticket = string.IsNullOrWhiteSpace(_focusedEntry.TicketNumber) ? "current entry" : _focusedEntry.TicketNumber;
+            TrayNotificationRequested?.Invoke($"Still working on {ticket}?", $"Elapsed: {TimerElapsedDisplay}");
+        }
+
+        private bool _eodFiredToday;
+        private DateTime _eodFiredDate = DateTime.MinValue;
+
+        private void EodTimer_Tick(object? sender, EventArgs e)
+        {
+            if (!SettingsManager.EodReminderEnabled) return;
+            if (_eodFiredDate == DateTime.Today && _eodFiredToday) return;
+
+            if (TimeSpan.TryParse(SettingsManager.EodReminderTime, out var eodTime))
+            {
+                if (DateTime.Now.TimeOfDay >= eodTime)
+                {
+                    _eodFiredToday = true;
+                    _eodFiredDate = DateTime.Today;
+                    EodReminderRequested?.Invoke();
+                }
+            }
+        }
+
+        public void RegisterUserInput()
+        {
+            _lastInputTime = DateTime.Now;
+            _isIdleNudgeShown = false;
+        }
+
+        public bool HasUnsubmittedEntry
+        {
+            get
+            {
+                if (_focusedEntry == null || _isMainTabFocused) return false;
+                var hasStart = !string.IsNullOrWhiteSpace(StartTimeField);
+                var hasEnd = !string.IsNullOrWhiteSpace(EndTimeField);
+                return hasStart && hasEnd;
+            }
+        }
+
+        public void StartCheckInTimer()
+        {
+            if (SettingsManager.CheckInEnabled && _focusedEntry != null && _focusedEntry.IsTimerRunning)
+            {
+                _checkInTimer.Interval = TimeSpan.FromMinutes(SettingsManager.CheckInIntervalMinutes);
+                if (!_checkInTimer.IsEnabled)
+                    _checkInTimer.Start();
+            }
+        }
+
+        public void StopCheckInTimer()
+        {
+            _checkInTimer.Stop();
+        }
 
         private void TimeRecords_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
@@ -100,13 +205,207 @@ namespace TimeTrack.ViewModels
         public int CurrentIdCount
         {
             set => _currentIdCount = value;
+            get => _currentIdCount;
+        }
+
+        public int EntryCount => _timeRecords.Count;
+
+        public string EntryCountBadge => _timeRecords.Count > 0 ? $"Main ({_timeRecords.Count})" : "Main";
+
+        public bool IsFocusMode
+        {
+            get => _isFocusMode;
+            set { _isFocusMode = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsFocusModeVisible)); }
+        }
+
+        public bool IsFocusModeVisible => !IsFocusMode;
+
+        public string TimeOfDayLabel
+        {
+            get
+            {
+                var hour = DateTime.Now.Hour;
+                return hour switch
+                {
+                < 6 => "🌙 Late Night",
+                < 9 => "🌅 Early Morning",
+                < 12 => "☀️ Morning",
+                < 14 => "🕛 Midday",
+                < 17 => "🌤️ Afternoon",
+                < 20 => "🌆 Evening",
+                < 23 => " twilight",
+                _ => "🌙 Night"
+                };
+            }
+        }
+
+        public string ContextSummary
+        {
+            get => _contextSummary;
+            set { _contextSummary = value; OnPropertyChanged(); }
+        }
+
+        public TimerLevel TimerElapsedLevel
+        {
+            get
+            {
+                if (_focusedEntry == null || !_focusedEntry.IsTimerRunning || string.IsNullOrWhiteSpace(_focusedEntry.TimerStartedAt))
+                    return TimerLevel.Normal;
+                if (DateTime.TryParse(_focusedEntry.TimerStartedAt, out var startedAt))
+                {
+                    var elapsed = DateTime.Now - startedAt;
+                    if (elapsed.TotalMinutes >= SettingsManager.TimerWarningMinutes)
+                        return TimerLevel.Warning;
+                    if (elapsed.TotalMinutes >= SettingsManager.TimerCautionMinutes)
+                        return TimerLevel.Caution;
+                }
+                return TimerLevel.Normal;
+            }
+        }
+
+        public double SessionProgressValue
+        {
+            get
+            {
+                if (_focusedEntry == null || !_focusedEntry.IsTimerRunning || string.IsNullOrWhiteSpace(_focusedEntry.TimerStartedAt))
+                    return 0;
+                if (DateTime.TryParse(_focusedEntry.TimerStartedAt, out var startedAt))
+                {
+                    var elapsed = DateTime.Now - startedAt;
+                    var expected = TimeSpan.FromMinutes(SettingsManager.ExpectedSessionMinutes);
+                    return Math.Min(100, elapsed.TotalSeconds / expected.TotalSeconds * 100);
+                }
+                return 0;
+            }
+        }
+
+        public bool IsOvertime
+        {
+            get
+            {
+                if (_focusedEntry == null || !_focusedEntry.IsTimerRunning || string.IsNullOrWhiteSpace(_focusedEntry.TimerStartedAt))
+                    return false;
+                if (DateTime.TryParse(_focusedEntry.TimerStartedAt, out var startedAt))
+                {
+                    var elapsed = DateTime.Now - startedAt;
+                    return elapsed.TotalMinutes > SettingsManager.ExpectedSessionMinutes;
+                }
+                return false;
+            }
+        }
+
+        public string OvertimeDisplay
+        {
+            get
+            {
+                if (!IsOvertime) return string.Empty;
+                if (DateTime.TryParse(_focusedEntry?.TimerStartedAt, out var startedAt))
+                {
+                    var elapsed = DateTime.Now - startedAt;
+                    var overtime = elapsed - TimeSpan.FromMinutes(SettingsManager.ExpectedSessionMinutes);
+                    return $"Overtime +{(int)overtime.TotalHours}h {overtime.Minutes:D2}m";
+                }
+                return string.Empty;
+            }
+        }
+
+        public double DayProgressValue
+        {
+            get
+            {
+                double totalSeconds = 0;
+                foreach (var entry in _timeRecords)
+                {
+                    if (entry.Duration.HasValue)
+                        totalSeconds += entry.Duration.Value.TotalSeconds;
+                }
+                var target = TimeSpan.FromHours(8).TotalSeconds;
+                return Math.Min(100, totalSeconds / target * 100);
+            }
+        }
+
+        public string DayAtAGlanceSummary
+        {
+            get
+            {
+                int count = _timeRecords.Count;
+                if (count == 0) return "No entries yet today";
+                return $"{count} {(count == 1 ? "entry" : "entries")} · {HoursTotal} logged · {GapsTotal} gaps";
+            }
+        }
+
+        public List<DayTimelineSegment> DayTimelineSegments
+        {
+            get
+            {
+                var segments = new List<DayTimelineSegment>();
+                foreach (var entry in _timeRecords.OrderBy(e => e.StartTime))
+                {
+                    if (entry.StartTime == null || entry.EndTime == null) continue;
+                    var start = entry.StartTime.Value.ToTimeSpan();
+                    var end = entry.EndTime.Value.ToTimeSpan();
+                    if (end <= start) continue;
+
+                    segments.Add(new DayTimelineSegment
+                    {
+                        StartPercent = start.TotalMinutes / (12 * 60) * 100,
+                        WidthPercent = (end - start).TotalMinutes / (12 * 60) * 100,
+                        TicketNumber = entry.TicketNumber,
+                        HasTicket = !string.IsNullOrWhiteSpace(entry.TicketNumber)
+                    });
+                }
+                return segments;
+            }
+        }
+
+        public double CurrentTimeMarkerPercent
+        {
+            get
+            {
+                if (!IsViewingToday) return -1;
+                var now = DateTime.Now.TimeOfDay;
+                return now.TotalMinutes / (12 * 60) * 100;
+            }
+        }
+
+        public ObservableCollection<string> RecentTickets { get; } = new();
+
+        private int _dayStreak;
+        public int DayStreak
+        {
+            get => _dayStreak;
+            set { _dayStreak = value; OnPropertyChanged(); }
+        }
+
+        public string StreakDisplay => _dayStreak > 0 ? $"{_dayStreak} day streak" : string.Empty;
+
+        public ObservableCollection<string> ParkingLotItems { get; } = new();
+
+        public void RefreshRecentTickets()
+        {
+            RecentTickets.Clear();
+            foreach (var ticket in Database.GetRecentTickets(10))
+                RecentTickets.Add(ticket);
+        }
+
+        public void RefreshDayStreak()
+        {
+            DayStreak = Database.GetDayStreak();
+            OnPropertyChanged(nameof(StreakDisplay));
+        }
+
+        public void AddParkingLotItem(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+            var timestamp = DateTime.Now.ToString("hh:mm tt");
+            ParkingLotItems.Add($"[{timestamp}] {text.Trim()}");
         }
 
         public ObservableCollection<TimeEntry> Entries
         {
             get => _timeRecords;
-            set 
-            { 
+            set
+            {
                 if (_timeRecords == value)
                     return;
 
@@ -119,7 +418,9 @@ namespace TimeTrack.ViewModels
                 _timeRecords = value ?? new ObservableCollection<TimeEntry>();
                 _timeRecords.CollectionChanged += TimeRecords_CollectionChanged;
                 AddChangedHandlerToAllEntries();
-                OnPropertyChanged(); 
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(EntryCount));
+                OnPropertyChanged(nameof(EntryCountBadge));
             }
         }
 
@@ -132,9 +433,9 @@ namespace TimeTrack.ViewModels
         public string StartTimeField
         {
             get => _startTime;
-            set 
-            { 
-                _startTime = value; 
+            set
+            {
+                _startTime = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(EntryDurationDisplay));
                 if (_focusedEntry != null) _focusedEntry.StartTime = value;
@@ -145,9 +446,9 @@ namespace TimeTrack.ViewModels
         public string EndTimeField
         {
             get => _endTime;
-            set 
-            { 
-                _endTime = value; 
+            set
+            {
+                _endTime = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(EntryDurationDisplay));
                 if (_focusedEntry != null) _focusedEntry.EndTime = value;
@@ -278,7 +579,7 @@ namespace TimeTrack.ViewModels
             {
                 if (_focusedEntry == null || !_focusedEntry.IsTimerRunning || string.IsNullOrWhiteSpace(_focusedEntry.TimerStartedAt))
                     return string.Empty;
-                
+
                 if (DateTime.TryParse(_focusedEntry.TimerStartedAt, out var startedAt))
                 {
                     var elapsed = DateTime.Now - startedAt;
@@ -300,6 +601,7 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             SaveFocusedEntryToDb();
+            StartCheckInTimer();
         }
 
         public void StopTimer()
@@ -311,6 +613,7 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(IsTimerRunning));
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             SaveFocusedEntryToDb();
+            StopCheckInTimer();
         }
 
         private void ResetTimer()
@@ -327,7 +630,7 @@ namespace TimeTrack.ViewModels
         public void SplitEntry()
         {
             if (_isMainTabFocused || _focusedEntry == null) return;
-            
+
             // Stop timer and stamp end time on current entry
             if (_focusedEntry.IsTimerRunning)
             {
@@ -337,15 +640,15 @@ namespace TimeTrack.ViewModels
             {
                 EndTimeField = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
             }
-            
+
             // Save current entry state
             SaveFocusedEntryToDb();
-            
+
             // Create new entry with start time = now
             string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
             var newDraft = Database.SaveDraft(string.Empty, string.Empty, startTime, string.Empty, isActive: false);
             if (newDraft == null) return;
-            
+
             _openEntries.Add(newDraft);
             SetFocusEntry(newDraft);
         }
@@ -356,6 +659,21 @@ namespace TimeTrack.ViewModels
         {
             SaveFocusedEntryToDb();
             string startTime = DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture);
+
+            // Continue from Last Entry: auto-fill start time from last submitted entry's end time
+            if (SettingsManager.ContinueFromLastEntry && _timeRecords.Count > 0)
+            {
+                var lastEntry = _timeRecords
+                    .Where(e => e.EndTime.HasValue)
+                    .OrderByDescending(e => e.EndTime!.Value)
+                    .FirstOrDefault();
+                if (lastEntry?.EndTime != null)
+                {
+                    startTime = DateTime.Today.Add(lastEntry.EndTime.Value.ToTimeSpan())
+                        .ToString("hh:mm tt", CultureInfo.CurrentCulture);
+                }
+            }
+
             var draft = Database.SaveDraft(string.Empty, string.Empty, startTime, string.Empty, isActive: false);
             if (draft == null) return;
             _openEntries.Add(draft);
@@ -405,6 +723,28 @@ namespace TimeTrack.ViewModels
             OnPropertyChanged(nameof(TimerElapsedDisplay));
             LoadFocusedEntryIntoFields();
             SyncUiTimerState();
+
+            // Context Recovery: show "What was I doing?" summary
+            if (SettingsManager.ContextSummaryEnabled)
+            {
+                UpdateContextSummary(entry);
+            }
+        }
+
+        private void UpdateContextSummary(DraftEntry entry)
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            if (!string.IsNullOrWhiteSpace(entry.TicketNumber))
+                parts.Add($"Ticket: {entry.TicketNumber}");
+            if (!string.IsNullOrWhiteSpace(entry.Notes))
+            {
+                var firstLine = entry.Notes.Split('\n')[0];
+                if (firstLine.Length > 60) firstLine = firstLine[..60] + "...";
+                parts.Add(firstLine);
+            }
+            if (entry.IsTimerRunning)
+                parts.Add("Timer running");
+            ContextSummary = parts.Count > 0 ? "Continuing: " + string.Join(" · ", parts) : string.Empty;
         }
 
         public void CloseEntry(DraftEntry entry)
@@ -498,6 +838,8 @@ namespace TimeTrack.ViewModels
             entry.TimeEntryChanged += OnTimeEntryChanged;
             _timeRecords.Add(entry);
             UpdateTimeTotals();
+            OnPropertyChanged(nameof(EntryCount));
+            OnPropertyChanged(nameof(EntryCountBadge));
         }
 
         public bool InsertBlankEntry(int index)
@@ -510,6 +852,8 @@ namespace TimeTrack.ViewModels
 
             _timeRecords.Insert(index, new TimeEntry(_date, ++_currentIdCount));
             UpdateTimeTotals();
+            OnPropertyChanged(nameof(EntryCount));
+            OnPropertyChanged(nameof(EntryCountBadge));
             return true;
         }
 
@@ -536,6 +880,8 @@ namespace TimeTrack.ViewModels
             }
 
             AddEntry(_date, ++_currentIdCount, (TimeSpan)startTime, (TimeSpan)endTime, _ticketNo, _notes);
+            RefreshRecentTickets();
+            RefreshDayStreak();
             return true;
         }
 
@@ -554,6 +900,8 @@ namespace TimeTrack.ViewModels
             UpdateTimeTotals();
             SetStartTimeField();
             Database.Update(Entries);
+            OnPropertyChanged(nameof(EntryCount));
+            OnPropertyChanged(nameof(EntryCountBadge));
         }
 
         // Expose the generated command with the old name for backward compatibility
@@ -575,6 +923,8 @@ namespace TimeTrack.ViewModels
             UpdateTimeTotals();
             SetStartTimeField();
             Database.Update(Entries);
+            OnPropertyChanged(nameof(EntryCount));
+            OnPropertyChanged(nameof(EntryCountBadge));
             return toDelete.Count;
         }
 
@@ -633,12 +983,16 @@ namespace TimeTrack.ViewModels
             HoursTotal = $"{(int)time.TotalHours}h {time.Minutes}m";
             GapsTotal = $"{(int)gap.TotalHours}h {gap.Minutes}m";
             BillableUnits = (totalUnits / 10.0).ToString("F1");
+            OnPropertyChanged(nameof(DayProgressValue));
+            OnPropertyChanged(nameof(DayAtAGlanceSummary));
+            OnPropertyChanged(nameof(DayTimelineSegments));
+            OnPropertyChanged(nameof(CurrentTimeMarkerPercent));
         }
 
         public void UpdateSelectedTime()
         {
             TimeSpan? duration = null;
-            
+
             // First priority: Show time for selected grid entry
             if (SelectedItem != null)
             {
@@ -655,15 +1009,15 @@ namespace TimeTrack.ViewModels
             // Second priority: Calculate from input fields (for entry being created)
             var startTime = StartTimeFieldAsTime();
             var endTime = EndTimeFieldAsTime();
-            
+
             if (startTime.HasValue && endTime.HasValue)
             {
                 duration = endTime.Value - startTime.Value;
-                
+
                 // Handle overnight shifts (end time before start time)
                 if (duration < TimeSpan.Zero)
                     duration = duration.Value + TimeSpan.FromDays(1);
-                
+
                 SelectedHours = duration.Value.Hours.ToString();
                 SelectedMins = duration.Value.Minutes.ToString();
                 return;
@@ -698,7 +1052,9 @@ namespace TimeTrack.ViewModels
 
         private void SyncUiTimerState()
         {
-            if (_focusedEntry != null && _focusedEntry.IsTimerRunning)
+            bool needTimer = (_focusedEntry != null && _focusedEntry.IsTimerRunning)
+                || SettingsManager.TimeOfDayLabelEnabled;
+            if (needTimer)
             {
                 if (!_uiTimer.IsEnabled)
                     _uiTimer.Start();
@@ -733,6 +1089,12 @@ namespace TimeTrack.ViewModels
             _uiTimer.Tick -= UiTimer_Tick;
             _uiTimer.Stop();
 
+            _checkInTimer.Tick -= CheckInTimer_Tick;
+            _checkInTimer.Stop();
+
+            _eodTimer.Tick -= EodTimer_Tick;
+            _eodTimer.Stop();
+
             if (_timeRecords != null)
             {
                 _timeRecords.CollectionChanged -= TimeRecords_CollectionChanged;
@@ -748,5 +1110,13 @@ namespace TimeTrack.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+    }
+
+    public class DayTimelineSegment
+    {
+        public double StartPercent { get; set; }
+        public double WidthPercent { get; set; }
+        public string TicketNumber { get; set; } = string.Empty;
+        public bool HasTicket { get; set; }
     }
 }

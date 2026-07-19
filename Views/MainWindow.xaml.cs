@@ -85,11 +85,20 @@ namespace TimeTrack.Views
                     _timeKeeper,
                     nameof(_timeKeeper.PropertyChanged),
                     TimeKeeper_PropertyChanged);
+
+                _timeKeeper.TrayNotificationRequested += OnTrayNotificationRequested;
+                _timeKeeper.IdleNudgeRequested += OnIdleNudgeRequested;
+                _timeKeeper.EodReminderRequested += OnEodReminderRequested;
             }
 
             Closed += MainWindow_Closed;
             StateChanged += MainWindow_StateChanged;
             Closing += MainWindow_Closing;
+
+            // Register user input for idle detection
+            this.PreviewMouseMove += (s, e) => _timeKeeper?.RegisterUserInput();
+            this.PreviewMouseDown += (s, e) => _timeKeeper?.RegisterUserInput();
+            this.PreviewKeyDown += (s, e) => _timeKeeper?.RegisterUserInput();
 
             _statusTimer.Tick += (s, e) =>
             {
@@ -121,6 +130,18 @@ namespace TimeTrack.Views
 
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
+            // Unsubmitted entry warning on close
+            if (SettingsManager.UnsubmittedWarningEnabled && _timeKeeper != null && _timeKeeper.HasUnsubmittedEntry)
+            {
+                if (ModernDialog.Confirm(
+                    "You have an unsubmitted entry. Submit before closing?\n\nClick 'No' to close anyway (the draft will be saved).",
+                    "Unsubmitted Entry"))
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
             if (SettingsManager.CloseToTray && SettingsManager.ShowTrayIcon && !_closeToTrayRequested)
             {
                 e.Cancel = true;
@@ -318,6 +339,38 @@ namespace TimeTrack.Views
 
             if (TrayIcon != null && SettingsManager.ShowTrayIcon)
                 TrayIcon.Visibility = Visibility.Visible;
+
+            ApplyAccessibilitySettings();
+        }
+
+        private void ApplyAccessibilitySettings()
+        {
+            // Apply font size scale
+            var scale = SettingsManager.FontSize switch
+            {
+                FontSizeScale.Small => 0.85,
+                FontSizeScale.Medium => 1.0,
+                FontSizeScale.Large => 1.15,
+                FontSizeScale.ExtraLarge => 1.3,
+                _ => 1.0
+            };
+            if (scale != 1.0)
+            {
+                Application.Current.Resources["GlobalFontSizeScale"] = scale;
+            }
+
+            // Apply font family
+            var fontFamily = SettingsManager.FontFamily switch
+            {
+                FontFamilyOption.AtkinsonHyperlegible => "Atkinson Hyperlegible",
+                FontFamilyOption.Lexend => "Lexend",
+                FontFamilyOption.OpenDyslexic => "OpenDyslexic",
+                _ => "Segoe UI"
+            };
+            if (fontFamily != "Segoe UI")
+            {
+                Application.Current.Resources["GlobalFontFamily"] = new System.Windows.Media.FontFamily(fontFamily);
+            }
         }
 
         private void LoadEntriesForDate(DateTime date)
@@ -378,7 +431,19 @@ namespace TimeTrack.Views
 
                 Database.Update(_timeKeeper.Entries);
                 UpdateSelectAllHeaderState();
-                ShowStatus("Entry submitted successfully");
+
+                // Completion Feedback
+                if (SettingsManager.CompletionFeedbackEnabled)
+                {
+                    var duration = _timeKeeper.EntryDurationDisplay;
+                    ShowStatus(string.IsNullOrWhiteSpace(duration)
+                        ? "✓ Entry submitted successfully"
+                        : $"✓ Entry submitted ({duration})");
+                }
+                else
+                {
+                    ShowStatus("Entry submitted successfully");
+                }
             }
             else
             {
@@ -886,6 +951,19 @@ namespace TimeTrack.Views
         private void BtnMainTab(object sender, RoutedEventArgs e)
         {
             if (_timeKeeper == null) return;
+
+            // Unsubmitted entry warning
+            if (SettingsManager.UnsubmittedWarningEnabled && _timeKeeper.HasUnsubmittedEntry)
+            {
+                var ticket = string.IsNullOrWhiteSpace(_timeKeeper.TicketNumberField) ? "entry" : _timeKeeper.TicketNumberField;
+                if (!ModernDialog.Confirm(
+                    $"You have an entry ready to submit on {ticket}. Submit now?",
+                    "Unsubmitted Entry"))
+                {
+                    return;
+                }
+            }
+
             _timeKeeper.FocusMainTab();
         }
 
@@ -925,6 +1003,66 @@ namespace TimeTrack.Views
             if (_timeKeeper == null) return;
             if (sender is not FrameworkElement { Tag: TimeTrack.Data.DraftEntry draft }) return;
             _timeKeeper.CloseEntry(draft);
+        }
+
+        private void BtnFocusMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            _timeKeeper.IsFocusMode = !_timeKeeper.IsFocusMode;
+            ShowStatus(_timeKeeper.IsFocusMode ? "Focus mode enabled" : "Focus mode disabled");
+        }
+
+        private void BtnQuickStart_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            if (_timeKeeper.IsMainTabFocused)
+            {
+                _timeKeeper.NewEntry();
+                FldTicketNumber?.Focus();
+            }
+            _timeKeeper.StartTimer();
+            ShowStatus("Quick start: timer running");
+        }
+
+        private void OnTrayNotificationRequested(string title, string message)
+        {
+            try { TrayIcon?.ShowNotification(title, message); }
+            catch { }
+        }
+
+        private void OnIdleNudgeRequested(string title, string message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (SettingsManager.NotificationStyleMode == NotificationStyle.Calm)
+                    ShowStatus($"{title} — {message}", 10000);
+                else
+                    ModernDialog.ShowInfo($"{title}\n\n{message}", "Idle Nudge");
+            });
+        }
+
+        private void OnEodReminderRequested()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_timeKeeper == null) return;
+                var summary = _timeKeeper.DayAtAGlanceSummary;
+                try { TrayIcon?.ShowNotification("End of Day Review", summary); }
+                catch { }
+                ShowStatus($"EOD: {summary}", 8000);
+            });
+        }
+
+        private void BtnParkingLot_Click(object sender, RoutedEventArgs e)
+        {
+            if (_timeKeeper == null) return;
+            // Simple approach: use ModernDialog to get input
+            var result = ModernDialog.ShowInput("Park a quick thought:", "Parking Lot");
+            if (!string.IsNullOrWhiteSpace(result))
+            {
+                _timeKeeper.AddParkingLotItem(result);
+                ShowStatus("Parked!", 3000);
+            }
         }
     }
 }
