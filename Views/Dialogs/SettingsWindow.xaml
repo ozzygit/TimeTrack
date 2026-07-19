@@ -229,6 +229,10 @@
                                 Tag="&#xE8B7;"
                                 Style="{StaticResource NavButtonStyle}"
                                 Checked="NavButton_Checked"/>
+                    <RadioButton x:Name="AccessibilityTab" Content="Accessibility"
+                                Tag="&#xE776;"
+                                Style="{StaticResource NavButtonStyle}"
+                                Checked="NavButton_Checked"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -390,6 +394,13 @@
                                              FontFamily="Segoe UI" FontSize="13"
                                              Foreground="{DynamicResource TextBrush}"
                                              Checked="ThemeRadio_Checked"/>
+                                <RadioButton x:Name="ThemeHighContrast"
+                                             Content="High Contrast"
+                                             GroupName="ThemeGroup"
+                                             FontFamily="Segoe UI" FontSize="13"
+                                             Foreground="{DynamicResource TextBrush}"
+                                             Margin="0,0,0,8"
+                                             Checked="ThemeRadio_Checked"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -475,6 +486,257 @@
                                     <Button Content="Open Backup Folder" Click="OpenBackupFolder_Click"
                                             Padding="16,6"/>
                                 </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Accessibility Panel -->
+                    <StackPanel x:Name="AccessibilityPanel" Visibility="Collapsed">
+                        <TextBlock Text="Accessibility" Style="{StaticResource SectionHeaderStyle}"/>
+                        <TextBlock Text="Optional features designed to help with focus, time awareness, and reduced cognitive load. All features can be individually toggled."
+                                  Style="{StaticResource SectionDescriptionStyle}"/>
+
+                        <!-- Master Toggle -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                            <StackPanel>
+                                <CheckBox x:Name="ChkMasterToggle" Content="Enable all accessibility features"
+                                         FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         Checked="MasterToggle_Changed" Unchecked="MasterToggle_Changed"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 1. Time Visualisation -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Time Visualisation" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,12" Foreground="{DynamicResource TextBrush}"/>
+
+                                <CheckBox x:Name="ChkDayTimeline" Content="Show day timeline bar on Main tab"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkTimerColourCoding" Content="Colour-code timer by elapsed duration"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                                <StackPanel Margin="24,0,0,8">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="Long session threshold (amber): " FontSize="12"
+                                                   Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtTimerCaution" Width="50" FontSize="12" Padding="4,2"
+                                                 BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                        <TextBlock Text="minutes" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Very long session threshold (red): " FontSize="12"
+                                                   Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtTimerWarning" Width="50" FontSize="12" Padding="4,2"
+                                                 BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                        <TextBlock Text="minutes" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <CheckBox x:Name="ChkTimeOfDayLabel" Content="Show time-of-day label (Morning, Afternoon, etc.)"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkSessionProgress" Content="Show progress bar for current session"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                                <StackPanel Margin="24,0,0,8" Orientation="Horizontal">
+                                    <TextBlock Text="Expected session length: " FontSize="12"
+                                               Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="TxtExpectedSession" Width="50" FontSize="12" Padding="4,2"
+                                             BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="minutes" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="ChkOvertimeMode" Content="Show overtime when session exceeds expected length"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2. Reminders & Nudges -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Reminders &amp; Nudges" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,12" Foreground="{DynamicResource TextBrush}"/>
+
+                                <CheckBox x:Name="ChkCheckIn" Content="Periodic check-in notifications while timer running"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                                <StackPanel Margin="24,0,0,8" Orientation="Horizontal">
+                                    <TextBlock Text="Minutes between check-ins: " FontSize="12"
+                                               Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="TxtCheckInInterval" Width="50" FontSize="12" Padding="4,2"
+                                             BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="minutes" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="ChkIdleDetection" Content="Detect idle time and show a nudge"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                                <StackPanel Margin="24,0,0,8">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="Minutes before idle nudge: " FontSize="12"
+                                                   Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtIdleThreshold" Width="50" FontSize="12" Padding="4,2"
+                                                 BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                        <TextBlock Text="minutes" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Auto-pause after (0 = disabled): " FontSize="12"
+                                                   Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtAutoPause" Width="50" FontSize="12" Padding="4,2"
+                                                 BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                        <TextBlock Text="minutes" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <CheckBox x:Name="ChkEodReminder" Content="End-of-day summary reminder"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,4"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                                <StackPanel Margin="24,0,0,8" Orientation="Horizontal">
+                                    <TextBlock Text="Reminder time (24h): " FontSize="12"
+                                               Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="TxtEodTime" Width="60" FontSize="12" Padding="4,2"
+                                             BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="e.g. 17:00" FontSize="12" Foreground="{DynamicResource SubtleBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <CheckBox x:Name="ChkUnsubmittedWarning" Content="Warn about unsubmitted entries when switching tabs or closing"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkContextSummary" Content="Show 'What was I doing?' summary when refocusing a timer tab"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 3. Cognitive Load -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Cognitive Load" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,12" Foreground="{DynamicResource TextBrush}"/>
+
+                                <CheckBox x:Name="ChkContinueFromLast" Content="Auto-fill start time from last entry's end time"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkRecentTickets" Content="Show recently used ticket numbers as dropdown suggestions"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkQuickStart" Content="Show Quick Start button for one-click timer start"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkSmartPresets" Content="Enable user-defined ticket/notes presets"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkParkingLot" Content="Show distraction parking lot for quick thought capture"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkParkEntries" Content="Allow parking partially completed entries without deleting"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 4. Sensory & Focus -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Sensory &amp; Focus" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,12" Foreground="{DynamicResource TextBrush}"/>
+
+                                <CheckBox x:Name="ChkFocusMode" Content="Enable focus mode toggle (hides non-essential UI)"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkEntryCountBadge" Content="Show entry count badge on Main tab"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkReduceMotion" Content="Reduce animations and motion effects"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <TextBlock Text="Font size:" FontSize="13" Margin="0,0,0,4" Foreground="{DynamicResource TextBrush}"/>
+                                <ComboBox x:Name="CmbFontSize" FontSize="13" Margin="0,0,0,8" Width="160" HorizontalAlignment="Left"
+                                          BorderBrush="{DynamicResource BorderBrush}">
+                                    <ComboBoxItem Content="Small" Tag="Small"/>
+                                    <ComboBoxItem Content="Medium" Tag="Medium" IsSelected="True"/>
+                                    <ComboBoxItem Content="Large" Tag="Large"/>
+                                    <ComboBoxItem Content="Extra Large" Tag="ExtraLarge"/>
+                                </ComboBox>
+
+                                <TextBlock Text="Font family:" FontSize="13" Margin="0,0,0,4" Foreground="{DynamicResource TextBrush}"/>
+                                <ComboBox x:Name="CmbFontFamily" FontSize="13" Margin="0,0,0,8" Width="200" HorizontalAlignment="Left"
+                                          BorderBrush="{DynamicResource BorderBrush}">
+                                    <ComboBoxItem Content="Segoe UI" Tag="SegoeUI" IsSelected="True"/>
+                                    <ComboBoxItem Content="Atkinson Hyperlegible" Tag="AtkinsonHyperlegible"/>
+                                    <ComboBoxItem Content="Lexend" Tag="Lexend"/>
+                                    <ComboBoxItem Content="OpenDyslexic" Tag="OpenDyslexic"/>
+                                </ComboBox>
+
+                                <TextBlock Text="Notification style:" FontSize="13" Margin="0,0,0,4" Foreground="{DynamicResource TextBrush}"/>
+                                <ComboBox x:Name="CmbNotificationStyle" FontSize="13" Margin="0,0,0,8" Width="160" HorizontalAlignment="Left"
+                                          BorderBrush="{DynamicResource BorderBrush}">
+                                    <ComboBoxItem Content="Calm (muted)" Tag="Calm" IsSelected="True"/>
+                                    <ComboBoxItem Content="Standard" Tag="Standard"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 5. Motivation -->
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                               BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Motivation" FontWeight="SemiBold"
+                                          FontSize="14" Margin="0,0,0,12" Foreground="{DynamicResource TextBrush}"/>
+
+                                <CheckBox x:Name="ChkCompletionFeedback" Content="Show confirmation feedback when submitting an entry"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkStreakCounter" Content="Show daily streak counter"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
+
+                                <CheckBox x:Name="ChkDayAtAGlance" Content="Show day-at-a-glance progress summary"
+                                         FontFamily="Segoe UI" FontSize="13" Margin="0,0,0,8"
+                                         Foreground="{DynamicResource TextBrush}" IsChecked="True"
+                                         Checked="SubToggle_Changed" Unchecked="SubToggle_Changed"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

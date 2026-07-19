@@ -23,6 +23,7 @@ namespace TimeTrack.Views.Dialogs
             LoadShortcuts();
             LoadTheme();
             LoadTraySettings();
+            LoadAccessibilitySettings();
         }
 
         private void LoadTheme()
@@ -35,6 +36,7 @@ namespace TimeTrack.Views.Dialogs
                 case ThemeMode.KimbieDark:       ThemeKimbieDark.IsChecked       = true; break;
                 case ThemeMode.SolarizedDark:    ThemeSolarizedDark.IsChecked    = true; break;
                 case ThemeMode.TomorrowNightBlue: ThemeTomorrowNightBlue.IsChecked = true; break;
+                case ThemeMode.HighContrast:    ThemeHighContrast.IsChecked    = true; break;
                 default:                      ThemeSystemDefault.IsChecked = true; break;
             }
         }
@@ -56,6 +58,7 @@ namespace TimeTrack.Views.Dialogs
             if (ThemeKimbieDark.IsChecked       == true) return ThemeMode.KimbieDark;
             if (ThemeSolarizedDark.IsChecked    == true) return ThemeMode.SolarizedDark;
             if (ThemeTomorrowNightBlue.IsChecked == true) return ThemeMode.TomorrowNightBlue;
+            if (ThemeHighContrast.IsChecked    == true) return ThemeMode.HighContrast;
             return ThemeMode.SystemDefault;
         }
 
@@ -96,6 +99,7 @@ namespace TimeTrack.Views.Dialogs
                 if (KeyboardPanel != null) KeyboardPanel.Visibility = Visibility.Collapsed;
                 if (AppearancePanel != null) AppearancePanel.Visibility = Visibility.Collapsed;
                 if (DataPanel != null) DataPanel.Visibility = Visibility.Collapsed;
+                if (AccessibilityPanel != null) AccessibilityPanel.Visibility = Visibility.Collapsed;
 
                 // Show selected panel
                 if (radioButton == GeneralTab && GeneralPanel != null)
@@ -118,6 +122,11 @@ namespace TimeTrack.Views.Dialogs
                     DataPanel.Visibility = Visibility.Visible;
                     LoadBackups();
                     EnlargeForDataTab();
+                }
+                else if (radioButton == AccessibilityTab && AccessibilityPanel != null)
+                {
+                    AccessibilityPanel.Visibility = Visibility.Visible;
+                    RestoreWindowSize();
                 }
             }
         }
@@ -208,6 +217,7 @@ namespace TimeTrack.Views.Dialogs
                 KeyboardTab.Content = string.Empty;
                 AppearanceTab.Content = string.Empty;
                 DataTab.Content = string.Empty;
+                AccessibilityTab.Content = string.Empty;
             }
             else
             {
@@ -217,6 +227,7 @@ namespace TimeTrack.Views.Dialogs
                 KeyboardTab.Content = "Keyboard Shortcuts";
                 AppearanceTab.Content = "Appearance";
                 DataTab.Content = "Data";
+                AccessibilityTab.Content = "Accessibility";
             }
         }
 
@@ -239,6 +250,7 @@ namespace TimeTrack.Views.Dialogs
             SettingsManager.ConfirmDelete = ChkConfirmDelete.IsChecked == true;
             SettingsManager.StartWithWindows = ChkStartWithWindows.IsChecked == true;
             SettingsManager.ApplyStartWithWindows();
+            SaveAccessibilitySettings();
             SettingsManager.Save();
 
             DialogResult = true;
@@ -364,6 +376,157 @@ namespace TimeTrack.Views.Dialogs
                 Process.Start(psi);
             }
             Application.Current.Shutdown();
+        }
+
+        // ── Accessibility Settings ──
+
+        private static readonly string[] _accessibilityCheckBoxes = new[]
+        {
+            nameof(ChkDayTimeline), nameof(ChkTimerColourCoding), nameof(ChkTimeOfDayLabel),
+            nameof(ChkSessionProgress), nameof(ChkOvertimeMode), nameof(ChkCheckIn),
+            nameof(ChkIdleDetection), nameof(ChkEodReminder), nameof(ChkUnsubmittedWarning),
+            nameof(ChkContextSummary), nameof(ChkContinueFromLast), nameof(ChkRecentTickets),
+            nameof(ChkQuickStart), nameof(ChkSmartPresets), nameof(ChkParkingLot),
+            nameof(ChkParkEntries), nameof(ChkFocusMode), nameof(ChkEntryCountBadge),
+            nameof(ChkReduceMotion), nameof(ChkCompletionFeedback), nameof(ChkStreakCounter),
+            nameof(ChkDayAtAGlance)
+        };
+
+        private void LoadAccessibilitySettings()
+        {
+            ChkDayTimeline.IsChecked = SettingsManager.DayTimelineEnabled;
+            ChkTimerColourCoding.IsChecked = SettingsManager.TimerColourCodingEnabled;
+            TxtTimerCaution.Text = SettingsManager.TimerCautionMinutes.ToString();
+            TxtTimerWarning.Text = SettingsManager.TimerWarningMinutes.ToString();
+            ChkTimeOfDayLabel.IsChecked = SettingsManager.TimeOfDayLabelEnabled;
+            ChkSessionProgress.IsChecked = SettingsManager.SessionProgressEnabled;
+            TxtExpectedSession.Text = SettingsManager.ExpectedSessionMinutes.ToString();
+            ChkOvertimeMode.IsChecked = SettingsManager.OvertimeModeEnabled;
+            ChkCheckIn.IsChecked = SettingsManager.CheckInEnabled;
+            TxtCheckInInterval.Text = SettingsManager.CheckInIntervalMinutes.ToString();
+            ChkIdleDetection.IsChecked = SettingsManager.IdleDetectionEnabled;
+            TxtIdleThreshold.Text = SettingsManager.IdleThresholdMinutes.ToString();
+            TxtAutoPause.Text = SettingsManager.AutoPauseThresholdMinutes.ToString();
+            ChkEodReminder.IsChecked = SettingsManager.EodReminderEnabled;
+            TxtEodTime.Text = SettingsManager.EodReminderTime;
+            ChkUnsubmittedWarning.IsChecked = SettingsManager.UnsubmittedWarningEnabled;
+            ChkContextSummary.IsChecked = SettingsManager.ContextSummaryEnabled;
+            ChkContinueFromLast.IsChecked = SettingsManager.ContinueFromLastEntry;
+            ChkRecentTickets.IsChecked = SettingsManager.RecentTicketsEnabled;
+            ChkQuickStart.IsChecked = SettingsManager.QuickStartEnabled;
+            ChkSmartPresets.IsChecked = SettingsManager.SmartPresetsEnabled;
+            ChkParkingLot.IsChecked = SettingsManager.ParkingLotEnabled;
+            ChkParkEntries.IsChecked = SettingsManager.ParkEntriesEnabled;
+            ChkFocusMode.IsChecked = SettingsManager.FocusModeEnabled;
+            ChkEntryCountBadge.IsChecked = SettingsManager.EntryCountBadgeEnabled;
+            ChkReduceMotion.IsChecked = SettingsManager.ReduceMotion;
+            ChkCompletionFeedback.IsChecked = SettingsManager.CompletionFeedbackEnabled;
+            ChkStreakCounter.IsChecked = SettingsManager.StreakCounterEnabled;
+            ChkDayAtAGlance.IsChecked = SettingsManager.DayAtAGlanceEnabled;
+
+            // ComboBoxes
+            SelectComboBoxByTag(CmbFontSize, SettingsManager.FontSize.ToString());
+            SelectComboBoxByTag(CmbFontFamily, SettingsManager.FontFamily.ToString());
+            SelectComboBoxByTag(CmbNotificationStyle, SettingsManager.NotificationStyleMode.ToString());
+
+            // Master toggle reflects whether all sub-toggles are on
+            UpdateMasterToggle();
+            UpdateSubSettingEnabledState();
+        }
+
+        private static void SelectComboBoxByTag(ComboBox combo, string tag)
+        {
+            foreach (ComboBoxItem item in combo.Items)
+            {
+                if ((string)item.Tag == tag)
+                {
+                    item.IsSelected = true;
+                    return;
+                }
+            }
+        }
+
+        private void SaveAccessibilitySettings()
+        {
+            SettingsManager.DayTimelineEnabled = ChkDayTimeline.IsChecked == true;
+            SettingsManager.TimerColourCodingEnabled = ChkTimerColourCoding.IsChecked == true;
+            if (int.TryParse(TxtTimerCaution.Text, out var caution)) SettingsManager.TimerCautionMinutes = caution;
+            if (int.TryParse(TxtTimerWarning.Text, out var warning)) SettingsManager.TimerWarningMinutes = warning;
+            SettingsManager.TimeOfDayLabelEnabled = ChkTimeOfDayLabel.IsChecked == true;
+            SettingsManager.SessionProgressEnabled = ChkSessionProgress.IsChecked == true;
+            if (int.TryParse(TxtExpectedSession.Text, out var expected)) SettingsManager.ExpectedSessionMinutes = expected;
+            SettingsManager.OvertimeModeEnabled = ChkOvertimeMode.IsChecked == true;
+            SettingsManager.CheckInEnabled = ChkCheckIn.IsChecked == true;
+            if (int.TryParse(TxtCheckInInterval.Text, out var checkIn)) SettingsManager.CheckInIntervalMinutes = checkIn;
+            SettingsManager.IdleDetectionEnabled = ChkIdleDetection.IsChecked == true;
+            if (int.TryParse(TxtIdleThreshold.Text, out var idle)) SettingsManager.IdleThresholdMinutes = idle;
+            if (int.TryParse(TxtAutoPause.Text, out var autoPause)) SettingsManager.AutoPauseThresholdMinutes = autoPause;
+            SettingsManager.EodReminderEnabled = ChkEodReminder.IsChecked == true;
+            SettingsManager.EodReminderTime = TxtEodTime.Text;
+            SettingsManager.UnsubmittedWarningEnabled = ChkUnsubmittedWarning.IsChecked == true;
+            SettingsManager.ContextSummaryEnabled = ChkContextSummary.IsChecked == true;
+            SettingsManager.ContinueFromLastEntry = ChkContinueFromLast.IsChecked == true;
+            SettingsManager.RecentTicketsEnabled = ChkRecentTickets.IsChecked == true;
+            SettingsManager.QuickStartEnabled = ChkQuickStart.IsChecked == true;
+            SettingsManager.SmartPresetsEnabled = ChkSmartPresets.IsChecked == true;
+            SettingsManager.ParkingLotEnabled = ChkParkingLot.IsChecked == true;
+            SettingsManager.ParkEntriesEnabled = ChkParkEntries.IsChecked == true;
+            SettingsManager.FocusModeEnabled = ChkFocusMode.IsChecked == true;
+            SettingsManager.EntryCountBadgeEnabled = ChkEntryCountBadge.IsChecked == true;
+            SettingsManager.ReduceMotion = ChkReduceMotion.IsChecked == true;
+            SettingsManager.CompletionFeedbackEnabled = ChkCompletionFeedback.IsChecked == true;
+            SettingsManager.StreakCounterEnabled = ChkStreakCounter.IsChecked == true;
+            SettingsManager.DayAtAGlanceEnabled = ChkDayAtAGlance.IsChecked == true;
+
+            if (CmbFontSize.SelectedItem is ComboBoxItem fontSizeItem && fontSizeItem.Tag is string fsTag)
+            if (Enum.TryParse<FontSizeScale>(fsTag, out var fs)) SettingsManager.FontSize = fs;
+            if (CmbFontFamily.SelectedItem is ComboBoxItem fontFamilyItem && fontFamilyItem.Tag is string ffTag)
+            if (Enum.TryParse<FontFamilyOption>(ffTag, out var ff)) SettingsManager.FontFamily = ff;
+            if (CmbNotificationStyle.SelectedItem is ComboBoxItem nsItem && nsItem.Tag is string nsTag)
+            if (Enum.TryParse<NotificationStyle>(nsTag, out var ns)) SettingsManager.NotificationStyleMode = ns;
+        }
+
+        private void MasterToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            var isOn = ChkMasterToggle.IsChecked == true;
+            foreach (var name in _accessibilityCheckBoxes)
+            {
+                if (FindName(name) is CheckBox cb)
+                    cb.IsChecked = isOn;
+            }
+            UpdateSubSettingEnabledState();
+        }
+
+        private void SubToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateMasterToggle();
+            UpdateSubSettingEnabledState();
+        }
+
+        private void UpdateMasterToggle()
+        {
+            bool allOn = true;
+            foreach (var name in _accessibilityCheckBoxes)
+            {
+                if (FindName(name) is CheckBox cb && cb.IsChecked != true)
+                {
+                    allOn = false;
+                    break;
+                }
+            }
+            ChkMasterToggle.IsChecked = allOn;
+        }
+
+        private void UpdateSubSettingEnabledState()
+        {
+            // Enable/disable sub-setting controls based on parent toggle
+            TxtTimerCaution.IsEnabled = ChkTimerColourCoding.IsChecked == true;
+            TxtTimerWarning.IsEnabled = ChkTimerColourCoding.IsChecked == true;
+            TxtExpectedSession.IsEnabled = ChkSessionProgress.IsChecked == true;
+            TxtCheckInInterval.IsEnabled = ChkCheckIn.IsChecked == true;
+            TxtIdleThreshold.IsEnabled = ChkIdleDetection.IsChecked == true;
+            TxtAutoPause.IsEnabled = ChkIdleDetection.IsChecked == true;
+            TxtEodTime.IsEnabled = ChkEodReminder.IsChecked == true;
         }
     }
 }

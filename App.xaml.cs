@@ -194,6 +194,9 @@ namespace TimeTrack
             {
                 var mainWindow = new MainWindow();
                 mainWindow.Show();
+
+                // First-run accessibility prompt
+                ShowAccessibilityWelcomePromptIfNeeded(mainWindow);
             }
             catch (Exception ex)
             {
@@ -206,6 +209,53 @@ namespace TimeTrack
 
                 Shutdown(1);
             }
+        }
+
+        private static void ShowAccessibilityWelcomePromptIfNeeded(Window owner)
+        {
+            if (SettingsManager.AccessibilityPromptShown)
+                return;
+
+            var dialog = new WelcomeDialog { Owner = owner };
+            if (dialog.ShowDialog() == true)
+            {
+                switch (dialog.Result)
+                {
+                    case WelcomeDialog.WelcomeResult.EnableAll:
+                        // All features already default to true, so nothing to change
+                        break;
+                    case WelcomeDialog.WelcomeResult.KeepSimple:
+                        SettingsManager.DayTimelineEnabled = false;
+                        SettingsManager.TimerColourCodingEnabled = false;
+                        SettingsManager.TimeOfDayLabelEnabled = false;
+                        SettingsManager.SessionProgressEnabled = false;
+                        SettingsManager.OvertimeModeEnabled = false;
+                        SettingsManager.CheckInEnabled = false;
+                        SettingsManager.IdleDetectionEnabled = false;
+                        SettingsManager.EodReminderEnabled = false;
+                        SettingsManager.UnsubmittedWarningEnabled = false;
+                        SettingsManager.ContextSummaryEnabled = false;
+                        SettingsManager.ContinueFromLastEntry = false;
+                        SettingsManager.RecentTicketsEnabled = false;
+                        SettingsManager.QuickStartEnabled = false;
+                        SettingsManager.SmartPresetsEnabled = false;
+                        SettingsManager.ParkingLotEnabled = false;
+                        SettingsManager.ParkEntriesEnabled = false;
+                        SettingsManager.FocusModeEnabled = false;
+                        SettingsManager.EntryCountBadgeEnabled = false;
+                        SettingsManager.CompletionFeedbackEnabled = false;
+                        SettingsManager.StreakCounterEnabled = false;
+                        SettingsManager.DayAtAGlanceEnabled = false;
+                        break;
+                    case WelcomeDialog.WelcomeResult.Customise:
+                        var settingsWindow = new SettingsWindow { Owner = owner };
+                        settingsWindow.ShowDialog();
+                        break;
+                }
+            }
+
+            SettingsManager.AccessibilityPromptShown = true;
+            SettingsManager.Save();
         }
     }
 }
