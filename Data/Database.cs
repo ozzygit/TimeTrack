@@ -1001,9 +1001,9 @@ public static class Database
             using var conn = OpenConnection();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT DISTINCT ticket_number
+                SELECT DISTINCT case_number
                 FROM time_entries
-                WHERE ticket_number IS NOT NULL AND ticket_number != ''
+                WHERE case_number IS NOT NULL AND case_number != ''
                 ORDER BY date DESC, id DESC
                 LIMIT @limit";
             cmd.Parameters.AddWithValue("@limit", limit);
@@ -1028,7 +1028,7 @@ public static class Database
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
                 SELECT DISTINCT date FROM time_entries
-                WHERE ticket_number IS NOT NULL AND ticket_number != ''
+                WHERE case_number IS NOT NULL AND case_number != ''
                 ORDER BY date DESC LIMIT 365";
             var dates = new HashSet<DateTime>();
             using var reader = cmd.ExecuteReader();
