@@ -353,3 +353,7 @@ timetrack_v2.db-wal
 timetrack_settings.xml
 time_track_log.txt
 Backups/
+
+# Devin local config (do not commit)
+AGENTS.local.md
+.devin/config.local.json

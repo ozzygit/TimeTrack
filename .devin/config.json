@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Exec(git)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "read_config_from": {
+    "agents_standard": true,
+    "windsurf": false,
+    "cursor": false,
+    "claude": false,
+    "opencode": false,
+    "vscode": false,
+    "zed": false
+  }
+}
