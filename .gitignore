@@ -357,3 +357,6 @@ Backups/
 # Devin local config (do not commit)
 AGENTS.local.md
 .devin/config.local.json
+
+# Playwright MCP artifacts
+.playwright-mcp/
