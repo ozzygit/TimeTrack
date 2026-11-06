@@ -11,7 +11,7 @@
         xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewModels:TimeKeeperViewModel, IsDesignTimeCreatable=False}"
-        Title="{x:Static utils:AppVersion.MainWindowTitle}" Height="675" Width="800" MinWidth="700" MinHeight="500"
+        Title="{x:Static utils:AppVersion.MainWindowTitle}" Height="675" Width="840" MinWidth="700" MinHeight="500"
         Icon="/Resources/Timetrack.ico" Background="{DynamicResource WindowBackground}"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" ResizeMode="CanResizeWithGrip"
@@ -1236,6 +1236,8 @@
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="Ticket Number" Width="140"
                                 Binding="{Binding TicketNumber}"/>
+                            <DataGridTextColumn Header="Project Code" Width="110"
+                                Binding="{Binding ProjectCode}"/>
                             <DataGridTextColumn Header="Notes" Width="*" Binding="{Binding Notes}">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource NotesCellTextStyle}"/>
@@ -1341,13 +1343,15 @@
                         <!-- Fields row: horizontal layout -->
                         <Grid Grid.Row="0">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="155"/>
+                                <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="12"/>
-                                <ColumnDefinition Width="155"/>
+                                <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="12"/>
-                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="150"/>
                                 <ColumnDefinition Width="12"/>
-                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="135"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
@@ -1408,10 +1412,23 @@
                                           StaysOpenOnEdit="False"/>
                             </StackPanel>
 
-                            <!-- Preset Dropdown -->
+                            <!-- Project Code (ComboBox with recent project codes) -->
                             <StackPanel Grid.Column="6">
+                                <TextBlock Text="Project Code" Style="{StaticResource LabelStyle}"/>
+                                <ComboBox Name="FldProjectCode"
+                                          IsEditable="True"
+                                          Text="{Binding ProjectCodeField, UpdateSourceTrigger=PropertyChanged}"
+                                          ItemsSource="{Binding RecentProjectCodes}"
+                                          GotFocus="InputField_GotFocus"
+                                          TabIndex="3"
+                                          IsTextSearchEnabled="True"
+                                          StaysOpenOnEdit="False"/>
+                            </StackPanel>
+
+                            <!-- Preset Dropdown -->
+                            <StackPanel Grid.Column="8">
                                 <TextBlock Text="Preset" Style="{StaticResource LabelStyle}"/>
-                                <ComboBox Name="CmbPreset" TabIndex="5"
+                                <ComboBox Name="CmbPreset" TabIndex="6"
                                           SelectionChanged="CmbPreset_SelectionChanged"
                                           ToolTip="Select a preset to auto-fill ticket number and notes">
                                     <ComboBoxItem Content="—" IsSelected="True"/>
@@ -1603,7 +1620,7 @@
                                          AcceptsReturn="True"
                                          SpellCheck.IsEnabled="True"
                                          VerticalScrollBarVisibility="Auto"
-                                         TabIndex="3"/>
+                                         TabIndex="4"/>
                                 <TextBlock Grid.Row="2" Text="{Binding NotesCharacterCount}"
                                            FontSize="11"
                                            Foreground="{DynamicResource SubtleBrush}"
@@ -1656,7 +1673,7 @@
                             </Button>
 
                             <Button Name="BtnSub" Grid.Column="3" Height="36" MinWidth="130"
-                                  TabIndex="4"
+                                  TabIndex="5"
                                   Command="{x:Static views:MainWindow.SubmitCommand}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">

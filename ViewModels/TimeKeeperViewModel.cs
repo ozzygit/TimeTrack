@@ -27,6 +27,7 @@ namespace TimeTrack.ViewModels
         private string _startTime = string.Empty;
         private string _endTime = string.Empty;
         private string _ticketNo = string.Empty;
+        private string _projectCode = string.Empty;
         private string _notes = string.Empty;
         private string _hoursTotal = "-";
         private string _gapsTotal = "-";
@@ -82,6 +83,7 @@ namespace TimeTrack.ViewModels
                 _eodTimer.Start();
 
             RefreshRecentTickets();
+            RefreshRecentProjectCodes();
             RefreshDayStreak();
             RefreshParkingLotItems();
         }
@@ -388,6 +390,8 @@ namespace TimeTrack.ViewModels
 
         public ObservableCollection<string> RecentTickets { get; } = new();
 
+        public ObservableCollection<string> RecentProjectCodes { get; } = new();
+
         private int _dayStreak;
         public int DayStreak
         {
@@ -404,6 +408,13 @@ namespace TimeTrack.ViewModels
             RecentTickets.Clear();
             foreach (var ticket in Database.GetRecentTickets(10))
                 RecentTickets.Add(ticket);
+        }
+
+        public void RefreshRecentProjectCodes()
+        {
+            RecentProjectCodes.Clear();
+            foreach (var code in Database.GetRecentProjectCodes(10))
+                RecentProjectCodes.Add(code);
         }
 
         public void RefreshDayStreak()
@@ -513,6 +524,17 @@ namespace TimeTrack.ViewModels
                 _ticketNo = value;
                 OnPropertyChanged();
                 if (_focusedEntry != null) _focusedEntry.TicketNumber = value;
+            }
+        }
+
+        public string ProjectCodeField
+        {
+            get => _projectCode;
+            set
+            {
+                _projectCode = value;
+                OnPropertyChanged();
+                if (_focusedEntry != null) _focusedEntry.ProjectCode = value;
             }
         }
 
@@ -731,7 +753,7 @@ namespace TimeTrack.ViewModels
             SaveFocusedEntryToDb();
             string startTimeStr = entry.StartTime?.ToString("hh:mm tt", CultureInfo.CurrentCulture) ?? string.Empty;
             string endTimeStr = entry.EndTime?.ToString("hh:mm tt", CultureInfo.CurrentCulture) ?? string.Empty;
-            var draft = Database.SaveDraft(entry.TicketNumber, entry.Notes, startTimeStr, endTimeStr, isActive: false);
+            var draft = Database.SaveDraft(entry.TicketNumber, entry.Notes, startTimeStr, endTimeStr, isActive: false, projectCode: entry.ProjectCode);
             if (draft == null) return;
             draft.EditingEntry = (entry.Date, entry.ID);
             _openEntries.Add(draft);
@@ -782,6 +804,8 @@ namespace TimeTrack.ViewModels
             var parts = new System.Collections.Generic.List<string>();
             if (!string.IsNullOrWhiteSpace(entry.TicketNumber))
                 parts.Add($"Ticket: {entry.TicketNumber}");
+            if (!string.IsNullOrWhiteSpace(entry.ProjectCode))
+                parts.Add($"Project: {entry.ProjectCode}");
             if (!string.IsNullOrWhiteSpace(entry.Notes))
             {
                 var firstLine = entry.Notes.Split('\n')[0];
@@ -830,6 +854,7 @@ namespace TimeTrack.ViewModels
         {
             if (_focusedEntry == null) return;
             _focusedEntry.TicketNumber = _ticketNo;
+            _focusedEntry.ProjectCode = _projectCode;
             _focusedEntry.Notes = _notes;
             _focusedEntry.StartTime = _startTime;
             _focusedEntry.EndTime = _endTime;
@@ -863,12 +888,14 @@ namespace TimeTrack.ViewModels
             if (_focusedEntry == null)
             {
                 TicketNumberField = string.Empty;
+                ProjectCodeField = string.Empty;
                 NotesField = string.Empty;
                 SetStartTimeField();
                 EndTimeField = string.Empty;
                 return;
             }
             TicketNumberField = _focusedEntry.TicketNumber;
+            ProjectCodeField = _focusedEntry.ProjectCode;
             NotesField = _focusedEntry.Notes;
             StartTimeField = string.IsNullOrWhiteSpace(_focusedEntry.StartTime)
                 ? DateTime.Now.ToString("hh:mm tt", CultureInfo.CurrentCulture)
@@ -878,9 +905,9 @@ namespace TimeTrack.ViewModels
 
         // Methods
 
-        public void AddEntry(DateTime date, int id, TimeSpan startTime, TimeSpan endTime, string ticketNumber = "", string notes = "")
+        public void AddEntry(DateTime date, int id, TimeSpan startTime, TimeSpan endTime, string ticketNumber = "", string notes = "", string projectCode = "")
         {
-            var entry = new TimeEntry(date, id, TimeOnly.FromTimeSpan(startTime), TimeOnly.FromTimeSpan(endTime), ticketNumber, notes);
+            var entry = new TimeEntry(date, id, TimeOnly.FromTimeSpan(startTime), TimeOnly.FromTimeSpan(endTime), ticketNumber, notes, projectCode);
             entry.TimeEntryChanged += OnTimeEntryChanged;
             _timeRecords.Add(entry);
             UpdateTimeTotals();
@@ -920,13 +947,15 @@ namespace TimeTrack.ViewModels
                     existing.StartTime = TimeOnly.FromTimeSpan((TimeSpan)startTime);
                     existing.EndTime = TimeOnly.FromTimeSpan((TimeSpan)endTime);
                     existing.TicketNumber = _ticketNo;
+                    existing.ProjectCode = _projectCode;
                     existing.Notes = _notes;
                     return true;
                 }
             }
 
-            AddEntry(_date, ++_currentIdCount, (TimeSpan)startTime, (TimeSpan)endTime, _ticketNo, _notes);
+            AddEntry(_date, ++_currentIdCount, (TimeSpan)startTime, (TimeSpan)endTime, _ticketNo, _notes, _projectCode);
             RefreshRecentTickets();
+            RefreshRecentProjectCodes();
             RefreshDayStreak();
             return true;
         }
@@ -987,6 +1016,7 @@ namespace TimeTrack.ViewModels
             SetStartTimeField();
             EndTimeField = string.Empty;
             TicketNumberField = string.Empty;
+            ProjectCodeField = string.Empty;
             NotesField = string.Empty;
             UpdateSelectedTime(); // Clear the selected time display
         }

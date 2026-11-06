@@ -10,7 +10,7 @@ namespace TimeTrack.Data
     {
         private readonly int _id;
 
-        public DraftEntry(int id, string ticketNumber, string notes, string startTime, string endTime, bool isActive = false)
+        public DraftEntry(int id, string ticketNumber, string notes, string startTime, string endTime, bool isActive = false, string projectCode = "")
         {
             _id = id;
             TicketNumber = ticketNumber;
@@ -18,6 +18,7 @@ namespace TimeTrack.Data
             StartTime = startTime;
             EndTime = endTime;
             IsActive = isActive;
+            ProjectCode = projectCode;
         }
 
         public int Id => _id;
@@ -33,6 +34,9 @@ namespace TimeTrack.Data
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TabDisplay))]
         private string ticketNumber = string.Empty;
+
+        [ObservableProperty]
+        private string projectCode = string.Empty;
 
         [ObservableProperty]
         private string notes = string.Empty;

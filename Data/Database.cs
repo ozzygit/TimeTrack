@@ -334,6 +334,7 @@ public static class Database
                 start_time   TEXT,
                 end_time     TEXT,
                 case_number  TEXT,
+                project_code TEXT,
                 notes        TEXT,
                 recorded     INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (date, id)
@@ -344,6 +345,7 @@ public static class Database
             Exec(conn, @"CREATE TABLE IF NOT EXISTS drafts (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
                 ticket_number TEXT,
+                project_code  TEXT,
                 notes         TEXT,
                 start_time    TEXT,
                 end_time      TEXT,
@@ -357,6 +359,8 @@ public static class Database
             try { Exec(conn, "ALTER TABLE drafts ADD COLUMN is_timer_running INTEGER NOT NULL DEFAULT 0"); } catch { }
             try { Exec(conn, "ALTER TABLE drafts ADD COLUMN timer_started_at TEXT"); } catch { }
             try { Exec(conn, "ALTER TABLE time_entries ADD COLUMN deleted_at TEXT"); } catch { }
+            try { Exec(conn, "ALTER TABLE time_entries ADD COLUMN project_code TEXT"); } catch { }
+            try { Exec(conn, "ALTER TABLE drafts ADD COLUMN project_code TEXT"); } catch { }
 
             Exec(conn, @"CREATE TABLE IF NOT EXISTS notes_history (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -410,7 +414,7 @@ public static class Database
             using var conn = OpenConnection();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT date, id, start_time, end_time, case_number, notes, recorded
+                SELECT date, id, start_time, end_time, case_number, notes, recorded, project_code
                 FROM time_entries
                 WHERE date = @date AND deleted_at IS NULL
                 ORDER BY start_time, end_time, id";
@@ -452,8 +456,8 @@ public static class Database
                     using var cmd = conn.CreateCommand();
                     cmd.Transaction = tx;
                     cmd.CommandText = @"
-                        INSERT OR REPLACE INTO time_entries (date, id, start_time, end_time, case_number, notes, recorded)
-                        VALUES (@date, @id, @start, @end, @case, @notes, @recorded)";
+                        INSERT OR REPLACE INTO time_entries (date, id, start_time, end_time, case_number, notes, recorded, project_code)
+                        VALUES (@date, @id, @start, @end, @case, @notes, @recorded, @projectCode)";
                     cmd.Parameters.AddWithValue("@date", DateToString(entry.Date));
                     cmd.Parameters.AddWithValue("@id", entry.ID);
                     cmd.Parameters.AddWithValue("@start", (object?)TimeOnlyToString(entry.StartTime) ?? DBNull.Value);
@@ -461,6 +465,7 @@ public static class Database
                     cmd.Parameters.AddWithValue("@case", (object?)entry.TicketNumber ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@notes", (object?)entry.Notes ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@recorded", entry.Recorded ? 1 : 0);
+                    cmd.Parameters.AddWithValue("@projectCode", (object?)entry.ProjectCode ?? DBNull.Value);
                     cmd.ExecuteNonQuery();
                 }
 
@@ -658,7 +663,7 @@ public static class Database
         {
             using var conn = OpenConnection();
             using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT id, ticket_number, notes, start_time, end_time, is_active, is_timer_running, timer_started_at FROM drafts ORDER BY parked_at";
+            cmd.CommandText = "SELECT id, ticket_number, notes, start_time, end_time, is_active, is_timer_running, timer_started_at, project_code FROM drafts ORDER BY parked_at";
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
                 result.Add(ReadDraftEntry(reader));
@@ -670,15 +675,15 @@ public static class Database
         return result;
     }
 
-    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime, string endTime = "", bool isActive = false)
+    public static DraftEntry? SaveDraft(string ticketNumber, string notes, string startTime, string endTime = "", bool isActive = false, string projectCode = "")
     {
         try
         {
             using var conn = OpenConnection();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                INSERT INTO drafts (ticket_number, notes, start_time, end_time, parked_at, is_active, is_timer_running, timer_started_at)
-                VALUES (@ticket, @notes, @start, @end, @parkedAt, @active, @timerRunning, @timerStartedAt);
+                INSERT INTO drafts (ticket_number, notes, start_time, end_time, parked_at, is_active, is_timer_running, timer_started_at, project_code)
+                VALUES (@ticket, @notes, @start, @end, @parkedAt, @active, @timerRunning, @timerStartedAt, @projectCode);
                 SELECT last_insert_rowid()";
             cmd.Parameters.AddWithValue("@ticket", ticketNumber);
             cmd.Parameters.AddWithValue("@notes", notes);
@@ -688,8 +693,9 @@ public static class Database
             cmd.Parameters.AddWithValue("@active", isActive ? 1 : 0);
             cmd.Parameters.AddWithValue("@timerRunning", 0);
             cmd.Parameters.AddWithValue("@timerStartedAt", string.Empty);
+            cmd.Parameters.AddWithValue("@projectCode", projectCode);
             var newId = Convert.ToInt32(cmd.ExecuteScalar());
-            return new DraftEntry(newId, ticketNumber, notes, startTime, endTime, isActive);
+            return new DraftEntry(newId, ticketNumber, notes, startTime, endTime, isActive, projectCode);
         }
         catch (Exception ex)
         {
@@ -728,9 +734,11 @@ public static class Database
             cmd.CommandText = @"
                 UPDATE drafts
                 SET ticket_number = @ticket, notes = @notes, start_time = @start,
-                    end_time = @end, is_active = @active, is_timer_running = @timerRunning, timer_started_at = @timerStartedAt
+                    end_time = @end, is_active = @active, is_timer_running = @timerRunning, timer_started_at = @timerStartedAt,
+                    project_code = @projectCode
                 WHERE id = @id";
             cmd.Parameters.AddWithValue("@ticket", draft.TicketNumber);
+            cmd.Parameters.AddWithValue("@projectCode", draft.ProjectCode);
             cmd.Parameters.AddWithValue("@notes", draft.Notes);
             cmd.Parameters.AddWithValue("@start", draft.StartTime);
             cmd.Parameters.AddWithValue("@end", draft.EndTime);
@@ -877,7 +885,8 @@ public static class Database
         var ticketNumber = r.IsDBNull(4) ? string.Empty : r.GetString(4);
         var notes = r.IsDBNull(5) ? string.Empty : r.GetString(5);
         var recorded = !r.IsDBNull(6) && r.GetInt32(6) != 0;
-        return new TimeEntry(date, id, startTime, endTime, ticketNumber, notes, recorded);
+        var projectCode = r.IsDBNull(7) ? string.Empty : r.GetString(7);
+        return new TimeEntry(date, id, startTime, endTime, ticketNumber, notes, projectCode, recorded);
     }
 
     private static DraftEntry ReadDraftEntry(SqliteDataReader r)
@@ -890,7 +899,8 @@ public static class Database
         var isActive = !r.IsDBNull(5) && r.GetInt32(5) != 0;
         var isTimerRunning = !r.IsDBNull(6) && r.GetInt32(6) != 0;
         var timerStartedAt = r.IsDBNull(7) ? string.Empty : r.GetString(7);
-        var draft = new DraftEntry(id, ticket, notes, start, end, isActive);
+        var projectCode = r.IsDBNull(8) ? string.Empty : r.GetString(8);
+        var draft = new DraftEntry(id, ticket, notes, start, end, isActive, projectCode);
         draft.IsTimerRunning = isTimerRunning;
         draft.TimerStartedAt = timerStartedAt;
         return draft;
@@ -1016,6 +1026,33 @@ public static class Database
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to get recent tickets: {ex.Message}");
+        }
+        return result;
+    }
+
+    public static List<string> GetRecentProjectCodes(int limit = 10)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = OpenConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT DISTINCT project_code
+                FROM time_entries
+                WHERE project_code IS NOT NULL AND project_code != ''
+                ORDER BY date DESC, id DESC
+                LIMIT @limit";
+            cmd.Parameters.AddWithValue("@limit", limit);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                result.Add(reader.GetString(0));
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get recent project codes: {ex.Message}");
         }
         return result;
     }

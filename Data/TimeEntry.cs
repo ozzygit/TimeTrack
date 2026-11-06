@@ -37,7 +37,7 @@ namespace TimeTrack.Data
                 ?? throw new InvalidOperationException("No SynchronizationContext available");
         }
 
-        public TimeEntry(DateTime date, int id, TimeOnly? startTime, TimeOnly? endTime, string? ticketNumber, string? notes, bool recorded = false)
+        public TimeEntry(DateTime date, int id, TimeOnly? startTime, TimeOnly? endTime, string? ticketNumber, string? notes, string? projectCode = null, bool recorded = false)
         {
             _synchronizationContext = SynchronizationContext.Current
                 ?? throw new InvalidOperationException("No SynchronizationContext available");
@@ -50,6 +50,7 @@ namespace TimeTrack.Data
             Notes = notes ?? string.Empty;
             Recorded = recorded;
             TicketNumber = ticketNumber ?? string.Empty;
+            ProjectCode = projectCode ?? string.Empty;
         }
 
         public DateTime Date => date;
@@ -85,6 +86,9 @@ namespace TimeTrack.Data
 
         [ObservableProperty]
         private string ticketNumber = string.Empty;
+
+        [ObservableProperty]
+        private string projectCode = string.Empty;
 
         [ObservableProperty]
         private string notes = string.Empty;
