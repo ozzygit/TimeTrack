@@ -20,7 +20,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Version metadata -->
-    <Version>3.0.5</Version>
+    <Version>3.0.6</Version>
     <AssemblyVersion>$(Version.Split('.')[0]).$(Version.Split('.')[1]).0.$(Version.Split('.')[2])</AssemblyVersion>
 
     <!-- Disable automatic Git version suffix -->
